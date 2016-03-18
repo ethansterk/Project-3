@@ -19,7 +19,7 @@ public class OutputWriter {
 	 * Since there is only one instance of the WriteOutput, there is no need
 	 * for a public constructor.
 	 */
-	public OutputWriter() {
+	private OutputWriter() {
 
 	}
 	

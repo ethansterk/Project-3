@@ -3,7 +3,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-
+/**
+ * 
+ * @author Ethan (ejs334) and Laura (ln233)
+ * 
+ */
 public class Logger {
 	
 	private static Logger instance = new Logger();
