@@ -23,7 +23,7 @@ public class TupleWriter {
 	/**
 	 * Constructs a TupleWriter with a given file name. Allocates
 	 * the buffer.
-	 * @param fileName Name of file containing table.
+	 * @param fileName Directory of the file containing the appropriate query answers
 	 */
 	public TupleWriter(String fileName) {
 		FileOutputStream fout = null;
@@ -57,9 +57,7 @@ public class TupleWriter {
 		}
 		
 		//clear buffer
-		buffer = ByteBuffer.allocate(4096);
-		//TODO add metadata to new buffer --here or in writeTuple()?
-		
+		buffer = ByteBuffer.allocate(4096);		
 	}
 	
 	/**
@@ -67,16 +65,11 @@ public class TupleWriter {
 	 * when full.
 	 * @param t Tuple to be written to file
 	 */
-	public void writeTuple(Tuple t) {
-		//t null implies last tuple to write
-		if (t == null) {
-			writeNewPage();
-		}
-		
+	public void writeTuple(Tuple t) {		
 		//break tuple into manageable chunks
 		ArrayList<String> data = t.getValues();
 		
-		if (buffer.limit() == 0) { //first write to page
+		if (buffer.position() == 0) { //first write to page
 			numAtt = data.size();
 			numTuples = 0; //temporary placeholder
 			buffer.putInt(numAtt);
@@ -85,7 +78,7 @@ public class TupleWriter {
 		
 		//check if buffer is full
 		int tupleByteLength = 4 * data.size();
-		if(buffer.capacity() - buffer.limit() < tupleByteLength) {
+		if(buffer.limit() - buffer.position() < tupleByteLength) {
 			writeNewPage();
 		}
 		

@@ -23,7 +23,7 @@ public class ScanOperator extends Operator {
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
 		t = new Table(tablename, alias);
-		tr = new TupleReader(tablename);
+		tr = new TupleReader(tablename, alias);
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class ScanOperator extends Operator {
 	@Override
 	public void reset() {
 		if(project_three_io) {
-			tr = new TupleReader(tablename);
+			tr = new TupleReader(tablename, alias);
 		}
 		else {
 			pointer = 0;			

@@ -2,9 +2,11 @@ import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
@@ -12,9 +14,9 @@ import org.junit.Test;
 public class CheckOutputs {
 	
 	//have to change these three values depending on what we're running and where we've put the results
-	private int numFiles = 8;				
-	private String expectedDir = "expected_output";
-	private String testDir = "output";
+	private int numFiles = 2;				
+	private String expectedDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator + "expected";
+	private String testDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator+ "output";
 	
 	private File expected;
 	private File testfile;
@@ -24,10 +26,11 @@ public class CheckOutputs {
 		for (int i = 1; i < numFiles; i++) {
 			expected = new File(expectedDir + File.separator + "query" + i);
 			testfile = new File(testDir + File.separator + "query" + i);
+			System.out.println(i);
 			
 			boolean compare;
 			try {
-				compare = compareTwoFiles(expected, testfile);
+				compare = compareTwoFilesByte(expected, testfile);
 				assertEquals(true, compare);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -37,8 +40,7 @@ public class CheckOutputs {
 	}
 
 	//http://stackoverflow.com/questions/21764299/comparing-two-files-in-java
-	public boolean compareTwoFiles(File one, File two) throws IOException {
-
+	public boolean compareTwoFilesHR(File one, File two) throws IOException {
     BufferedReader br1 = new BufferedReader(new FileReader(one));
     BufferedReader br2 = new BufferedReader(new FileReader(two));
 
@@ -59,5 +61,29 @@ public class CheckOutputs {
     br2.close();
 
     return list1.equals(list2);
+	}
+	
+	//http://javaonlineguide.net/2014/10/compare-two-files-in-java-example-code.html
+	@SuppressWarnings("resource")
+	public boolean compareTwoFilesByte(File one, File two) throws IOException {
+		FileInputStream fis1 = new FileInputStream(one);
+        FileInputStream fis2 = new FileInputStream(two);
+        
+        int n = 0;
+        byte[] b1;
+        byte[] b2;
+        while ((n = fis1.available()) > 0) {
+            b1 = new byte[4096];
+            b2 = new byte[4096];
+            fis1.read(b1);
+            fis2.read(b2);
+            if (Arrays.equals(b1,b2)==false)
+                {
+            		System.out.println(b1[4095] + "\n" + b2[4095]);
+            		System.out.println("Fail");
+                    return false;
+                }
+        } 
+        return true;
 	}
 }

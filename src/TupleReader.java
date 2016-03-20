@@ -25,6 +25,7 @@ public class TupleReader {
 	private int numAtt; //number of attributes
 	private int numTuplesLeft; //number of tuples on page
 	private String tableName;
+	private ArrayList<String> fields = new ArrayList<String>();
 	
 	/**
 	 * Initialize the TupleReader. Retrieves the file channel. Allocates
@@ -32,11 +33,25 @@ public class TupleReader {
 	 * file. Assigns the tableName as simply fileName.
 	 * @param fileName Name of the file containing the table's tuples.
 	 */
-	public TupleReader(String fileName) {
+	public TupleReader(String fileName, String alias) {
+		Schema sch = DatabaseCatalog.getInstance().getSchema(fileName);
+		String tableDir = sch.getTableDir();
+		ArrayList<String> tempFields = sch.getCols();
+		
+		if (alias != null) {
+			for (String c : tempFields) {
+				fields.add(alias + "." + c);
+			}
+		}
+		else {
+			for (String c : tempFields)
+				fields.add(fileName + "." + c);
+		}
+		
 		//retrieve the file channel
 		FileInputStream fin = null;
 		try {
-			fin = new FileInputStream(fileName);
+			fin = new FileInputStream(tableDir);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -69,6 +84,7 @@ public class TupleReader {
 			//see documentation -- assigns all to zero
 			buffer = ByteBuffer.allocate(4096);
 		}
+		buffer = ByteBuffer.allocate(4096);
 		
 		try {
 			if (fc.read(buffer) < 1) {
@@ -78,8 +94,9 @@ public class TupleReader {
 			e.printStackTrace();
 		}
 
-		numAtt = buffer.getInt();
-		numTuplesLeft = buffer.getInt();
+		numAtt = buffer.getInt(0);
+		numTuplesLeft = buffer.getInt(4);
+		buffer.position(8);
 		numPagesLeft--;
 	}
 	
@@ -102,9 +119,8 @@ public class TupleReader {
 		//trim off trailing comma "5,6,7,8," -> "5,6,7,8"
 		data = data.substring(0, data.length() - 1);
 		
-		ArrayList<String> fields = DatabaseCatalog.getInstance().getSchema(tableName).getCols();
-		
 		Tuple t = new Tuple(data, fields);
+		numTuplesLeft--;
 		return t;
 	}
 	

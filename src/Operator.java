@@ -15,6 +15,8 @@ import java.io.PrintStream;
  */
 public abstract class Operator {
 	
+	private boolean project_three_io = true;
+	
 	/**
 	 * Get the next tuple of the Operator's output.
 	 * 
@@ -40,22 +42,33 @@ public abstract class Operator {
 		String filename = outputDir + File.separator + "query" + queryNumber;
 		File f = new File(filename);
 		
-		try {
-			
-			PrintStream output = new PrintStream(f);
+		if (project_three_io) {
+			TupleWriter tw = new TupleWriter(filename);
 			Tuple t = getNextTuple();
+			
 			while (t != null) {
-				//write Tuple t to a PrintStream
-				//System.out.println(t.tupleString());
-				output.println(t.tupleString());
+				tw.writeTuple(t);
 				t = getNextTuple();
 			}
-			output.flush();
-			output.close();
-			
-		} catch (FileNotFoundException e) {
-			System.out.println("Error in finding file for dumping");
-			e.printStackTrace();
+			tw.writeNewPage();
+		}
+		else {
+			try {
+				PrintStream output = new PrintStream(f);
+				Tuple t = getNextTuple();
+				while (t != null) {
+					//write Tuple t to a PrintStream
+					//System.out.println(t.tupleString());
+					output.println(t.tupleString());
+					t = getNextTuple();
+				}
+				output.flush();
+				output.close();
+				
+			} catch (FileNotFoundException e) {
+				System.out.println("Error in finding file for dumping");
+				e.printStackTrace();
+			}
 		}
 	}
 }

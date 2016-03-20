@@ -58,6 +58,8 @@ public class Parser {
 					List<OrderByElement> orderByElements = plainSelect.getOrderByElements();
 					boolean distinct = (plainSelect.getDistinct() != null);
 					
+					System.out.println(plainSelect.toString());
+					
 					//construct and "do stuff" with query plan
 					QueryPlan qp = new QueryPlan(fromItem, where, selectItems, joins, orderByElements, distinct);
 					Operator root = qp.getRoot();
