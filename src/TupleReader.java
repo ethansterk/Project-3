@@ -19,14 +19,21 @@ import java.util.ArrayList;
  */
 public class TupleReader {
 
-	FileChannel fc;
-	ByteBuffer buffer;
-	long numPagesLeft;
-	int numAtt; //number of attributes
-	int numTuplesLeft; //number of tuples on page
-	String tableName;
+	private FileChannel fc;
+	private ByteBuffer buffer;
+	private long numPagesLeft;
+	private int numAtt; //number of attributes
+	private int numTuplesLeft; //number of tuples on page
+	private String tableName;
 	
+	/**
+	 * Initialize the TupleReader. Retrieves the file channel. Allocates
+	 * the buffer. Calculates the number of pages that need to be read from
+	 * file. Assigns the tableName as simply fileName.
+	 * @param fileName Name of the file containing the table's tuples.
+	 */
 	public TupleReader(String fileName) {
+		//retrieve the file channel
 		FileInputStream fin = null;
 		try {
 			fin = new FileInputStream(fileName);
@@ -34,7 +41,6 @@ public class TupleReader {
 			e.printStackTrace();
 		}
 		fc = fin.getChannel();
-		buffer = ByteBuffer.allocate( 4096 );
 		
 		//calculate number of pages for file
 		long numBytes = -1;
@@ -49,7 +55,32 @@ public class TupleReader {
 			numPagesLeft = numBytes / 4096 + 1;
 		}
 		
+		buffer = ByteBuffer.allocate( 4096 );
 		tableName = fileName;
+	}
+	
+	/**
+	 * Fills the buffer with tuples once all existing tuples have been
+	 * read in. If this is the second-to-last page, it also clears the
+	 * leftover tuples from the previous page.
+	 */
+	private void readNewPage() {
+		if (numPagesLeft == 1) {
+			//see documentation -- assigns all to zero
+			buffer = ByteBuffer.allocate(4096);
+		}
+		
+		try {
+			if (fc.read(buffer) < 1) {
+				System.out.println("ERR: reached end of FileChannel");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		numAtt = buffer.getInt();
+		numTuplesLeft = buffer.getInt();
+		numPagesLeft--;
 	}
 	
 	/**
@@ -68,36 +99,13 @@ public class TupleReader {
 		for (int i = 0; i < numAtt; i++) {
 			data += buffer.getInt() + ",";
 		}
+		//trim off trailing comma "5,6,7,8," -> "5,6,7,8"
 		data = data.substring(0, data.length() - 1);
 		
 		ArrayList<String> fields = DatabaseCatalog.getInstance().getSchema(tableName).getCols();
 		
 		Tuple t = new Tuple(data, fields);
 		return t;
-	}
-	
-	/**
-	 * Fills the buffer with tuples once all existing tuples have been
-	 * read in. If this is the second-to-last page, it also clears the
-	 * leftover tuples from the previous page.
-	 */
-	private void readNewPage() {
-		if (numPagesLeft == 1) {
-			System.out.println("CLEAR THE BUFFER");
-		}
-		
-		try {
-			if (fc.read(buffer) < 1) {
-				Logger.log("ERR: reached end of FileChannel");
-				//reached end of FileChannel
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		//assign numAtt, numTuples
-		numAtt = buffer.getInt();
-		numTuplesLeft = buffer.getInt();
-		numPagesLeft--;
 	}
 	
 	/**
