@@ -11,6 +11,8 @@ public class ScanOperator extends Operator {
 	private Table t;
 	private String alias = null;
 	private int pointer = 0;		//points to current tuple
+	private boolean project_three_io = true;
+	private TupleReader tr;
 	
 	/**
 	 * Initialize a scan operator with a specific table to scan.
@@ -21,6 +23,7 @@ public class ScanOperator extends Operator {
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
 		t = new Table(tablename, alias);
+		tr = new TupleReader(tablename);
 	}
 
 	/**
@@ -29,13 +32,24 @@ public class ScanOperator extends Operator {
 	 */
 	@Override
 	public Tuple getNextTuple() {
-		Tuple temp = t.getTuple(pointer);
-		pointer++;
-		return temp;
+		Tuple tuple = null;
+		if(project_three_io) {
+			tuple = tr.readNextTuple();
+		}
+		else {
+			tuple = t.getTuple(pointer);
+			pointer++;
+		}
+		return tuple;
 	}
 
 	@Override
 	public void reset() {
-		pointer = 0;
+		if(project_three_io) {
+			tr = new TupleReader(tablename);
+		}
+		else {
+			pointer = 0;			
+		}
 	}
 }

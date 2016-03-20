@@ -17,7 +17,14 @@ public class TupleWriter {
 
 	private FileChannel fc;
 	private ByteBuffer buffer;
+	private int numAtt;
+	private int numTuples;
 	
+	/**
+	 * Constructs a TupleWriter with a given file name. Allocates
+	 * the buffer.
+	 * @param fileName Name of file containing table.
+	 */
 	public TupleWriter(String fileName) {
 		FileOutputStream fout = null;
 		try {
@@ -26,9 +33,20 @@ public class TupleWriter {
 			e.printStackTrace();
 		}
 		fc = fout.getChannel();
+		
+		buffer = ByteBuffer.allocate(4096);
 	}
 	
+	/**
+	 * Writes out the current buffer to the output stream. Reallocates 
+	 * the buffer to start accepting more tuples.
+	 * Also, overwrites the metadata for the number of tuples now stored
+	 * in the current page being written out.
+	 */
 	public void writeNewPage() {
+		//overwrite metadata
+		buffer.putInt(4, numTuples);
+		
 		//flip buffer
 		buffer.flip();
 		//output buffer to channel
@@ -50,12 +68,24 @@ public class TupleWriter {
 	 * @param t Tuple to be written to file
 	 */
 	public void writeTuple(Tuple t) {
+		//t null implies last tuple to write
+		if (t == null) {
+			writeNewPage();
+		}
+		
 		//break tuple into manageable chunks
 		ArrayList<String> data = t.getValues();
 		
+		if (buffer.limit() == 0) { //first write to page
+			numAtt = data.size();
+			numTuples = 0; //temporary placeholder
+			buffer.putInt(numAtt);
+			buffer.putInt(numTuples);
+		}
+		
 		//check if buffer is full
-		int tupleLength = 4 * data.size();
-		if(buffer.capacity() - buffer.limit() < tupleLength) {
+		int tupleByteLength = 4 * data.size();
+		if(buffer.capacity() - buffer.limit() < tupleByteLength) {
 			writeNewPage();
 		}
 		
@@ -65,6 +95,7 @@ public class TupleWriter {
 			int data_i = Integer.valueOf(data.get(i));
 			buffer.putInt(data_i);
 		}
+		numTuples++;
 	}
 	
 	
