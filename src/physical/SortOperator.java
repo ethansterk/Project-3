@@ -1,11 +1,10 @@
 package physical;
-import OrderComparator;
-import Tuple;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import code.OrderComparator;
+import code.Tuple;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 
 /**

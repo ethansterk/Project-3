@@ -1,9 +1,8 @@
 package physical;
-import Tuple;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import code.Tuple;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SelectItem;

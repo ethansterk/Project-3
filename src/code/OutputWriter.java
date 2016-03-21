@@ -1,3 +1,4 @@
+package code;
 /**
  * The WriteOutput maintains a single PrintStream that will output the query files.
  * 

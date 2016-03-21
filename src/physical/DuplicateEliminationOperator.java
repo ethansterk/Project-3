@@ -1,8 +1,7 @@
 package physical;
-import Tuple;
-
 import java.util.List;
 
+import code.Tuple;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 
 /**

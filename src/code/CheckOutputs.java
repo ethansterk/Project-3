@@ -1,3 +1,4 @@
+package code;
 import static org.junit.Assert.*;
 
 import java.io.BufferedReader;

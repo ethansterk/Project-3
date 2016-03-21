@@ -1,7 +1,7 @@
 package physical;
-import Table;
-import Tuple;
-import TupleReader;
+import code.Table;
+import code.Tuple;
+import code.TupleReader;
 
 /**
  * The ScanOperator is a relational algebra operator that scans a base table.

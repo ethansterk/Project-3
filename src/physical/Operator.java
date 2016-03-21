@@ -1,11 +1,11 @@
 package physical;
-import OutputWriter;
-import Tuple;
-import TupleWriter;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+
+import code.OutputWriter;
+import code.Tuple;
+import code.TupleWriter;
 
 /**
  * The Operator class is an abstract representation of the relational algebra
