@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,17 +32,10 @@ public class CheckOutputs {
 			
 			boolean compare;
 			try {
-				if (project_three_io) {
+				if (project_three_io) 
 					compare = CompareTwoFilesbyByte(expected, testfile);
-					/*
-					String hashvalue1 = MD5HashFile(expectedDir + File.separator + "query" + i);
-					String hashvalue2 = MD5HashFile(testDir + File.separator + "query" + i);
-					
-					compare = hashvalue1.equals(hashvalue2);*/
-				}
-				else {
-					compare = compareTwoFilesHR(expected, testfile);
-				}				
+				else 
+					compare = compareTwoFilesHR(expected, testfile);			
 				assertEquals(true, compare);
 			} catch (Exception e) {
 				e.printStackTrace();

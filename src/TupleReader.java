@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -24,7 +23,6 @@ public class TupleReader {
 	private long numPagesLeft;
 	private int numAtt; //number of attributes
 	private int numTuplesLeft; //number of tuples on page
-	private String tableName;
 	private ArrayList<String> fields = new ArrayList<String>();
 	
 	/**
@@ -70,8 +68,7 @@ public class TupleReader {
 			numPagesLeft = numBytes / 4096 + 1;
 		}
 		
-		buffer = ByteBuffer.allocate( 4096 );
-		tableName = fileName;
+		buffer = ByteBuffer.allocate(4096);
 	}
 	
 	/**

@@ -47,8 +47,7 @@ public class TupleWriter {
 		//overwrite metadata
 		buffer.putInt(4, numTuples);
 		
-		//flip buffer
-		//buffer.flip();
+		//flip buffer, buffer.flip() doesn't work for this
 		buffer.position(0);
 		buffer.limit(buffer.capacity());
 		//output buffer to channel
@@ -58,7 +57,7 @@ public class TupleWriter {
 			e.printStackTrace();
 		}
 		
-		//clear buffer
+		//clear buffer, buffer.clear() doesn't work for this
 		buffer = ByteBuffer.allocate(4096);
 		numTuples = 0;
 		buffer.putInt(numAtt);
