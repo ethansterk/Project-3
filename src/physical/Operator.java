@@ -1,3 +1,8 @@
+package physical;
+import OutputWriter;
+import Tuple;
+import TupleWriter;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;

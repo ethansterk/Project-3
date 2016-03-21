@@ -1,3 +1,8 @@
+package physical;
+import Table;
+import Tuple;
+import TupleReader;
+
 /**
  * The ScanOperator is a relational algebra operator that scans a base table.
  * It opens a file scan on the appropriate data file on initialization.

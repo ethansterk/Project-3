@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.List;
 
+import physical.Operator;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.statement.Statement;

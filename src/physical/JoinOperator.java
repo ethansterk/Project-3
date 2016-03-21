@@ -1,3 +1,6 @@
+package physical;
+import EvaluateExpressionVisitor;
+import Tuple;
 import net.sf.jsqlparser.expression.Expression;
 
 /**

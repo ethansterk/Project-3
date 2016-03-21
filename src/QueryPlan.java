@@ -1,6 +1,13 @@
 import java.util.HashMap;
 import java.util.List;
 
+import physical.DuplicateEliminationOperator;
+import physical.JoinOperator;
+import physical.Operator;
+import physical.ProjectOperator;
+import physical.ScanOperator;
+import physical.SelectOperator;
+import physical.SortOperator;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
