@@ -46,6 +46,11 @@ public abstract class Operator {
 			TupleWriter tw = new TupleWriter(filename);
 			Tuple t = getNextTuple();
 			
+			//in the special case that there are no matching tuples whatsoever
+			if (t == null) {
+				return;
+			}
+			
 			while (t != null) {
 				tw.writeTuple(t);
 				t = getNextTuple();

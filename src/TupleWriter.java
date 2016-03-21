@@ -48,7 +48,9 @@ public class TupleWriter {
 		buffer.putInt(4, numTuples);
 		
 		//flip buffer
-		buffer.flip();
+		//buffer.flip();
+		buffer.position(0);
+		buffer.limit(buffer.capacity());
 		//output buffer to channel
 		try {
 			fc.write(buffer);
@@ -57,7 +59,10 @@ public class TupleWriter {
 		}
 		
 		//clear buffer
-		buffer = ByteBuffer.allocate(4096);		
+		buffer = ByteBuffer.allocate(4096);
+		numTuples = 0;
+		buffer.putInt(numAtt);
+		buffer.putInt(numTuples);
 	}
 	
 	/**

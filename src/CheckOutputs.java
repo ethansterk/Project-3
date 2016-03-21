@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,25 +16,37 @@ import org.junit.Test;
 public class CheckOutputs {
 	
 	//have to change these three values depending on what we're running and where we've put the results
-	private int numFiles = 2;				
+	private int numFiles = 15;				
 	private String expectedDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator + "expected";
 	private String testDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator+ "output";
 	
 	private File expected;
 	private File testfile;
+	
+	private boolean project_three_io = true;
 
 	@Test
 	public void test() {		
-		for (int i = 1; i < numFiles; i++) {
+		for (int i = 1; i <= numFiles; i++) {
 			expected = new File(expectedDir + File.separator + "query" + i);
 			testfile = new File(testDir + File.separator + "query" + i);
-			System.out.println(i);
+			System.out.println("query " + i);
 			
 			boolean compare;
 			try {
-				compare = compareTwoFilesByte(expected, testfile);
+				if (project_three_io) {
+					compare = CompareTwoFilesbyByte(expected, testfile);
+					/*
+					String hashvalue1 = MD5HashFile(expectedDir + File.separator + "query" + i);
+					String hashvalue2 = MD5HashFile(testDir + File.separator + "query" + i);
+					
+					compare = hashvalue1.equals(hashvalue2);*/
+				}
+				else {
+					compare = compareTwoFilesHR(expected, testfile);
+				}				
 				assertEquals(true, compare);
-			} catch (IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				assertEquals(true, false);
 			}
@@ -41,49 +55,52 @@ public class CheckOutputs {
 
 	//http://stackoverflow.com/questions/21764299/comparing-two-files-in-java
 	public boolean compareTwoFilesHR(File one, File two) throws IOException {
-    BufferedReader br1 = new BufferedReader(new FileReader(one));
-    BufferedReader br2 = new BufferedReader(new FileReader(two));
-
-    String thisLine = null;
-    String thatLine = null;
-
-    List<String> list1 = new ArrayList<String>();
-    List<String> list2 = new ArrayList<String>();
-
-    while ((thisLine = br1.readLine()) != null) {
-        list1.add(thisLine);
-    }
-    while ((thatLine = br2.readLine()) != null) {
-        list2.add(thatLine);
-    }
-
-    br1.close();
-    br2.close();
-
-    return list1.equals(list2);
+	    BufferedReader br1 = new BufferedReader(new FileReader(one));
+	    BufferedReader br2 = new BufferedReader(new FileReader(two));
+	
+	    String thisLine = null;
+	    String thatLine = null;
+	
+	    List<String> list1 = new ArrayList<String>();
+	    List<String> list2 = new ArrayList<String>();
+	
+	    while ((thisLine = br1.readLine()) != null) {
+	        list1.add(thisLine);
+	    }
+	    while ((thatLine = br2.readLine()) != null) {
+	        list2.add(thatLine);
+	    }
+	
+	    br1.close();
+	    br2.close();
+	
+	    return list1.equals(list2);
 	}
 	
 	//http://javaonlineguide.net/2014/10/compare-two-files-in-java-example-code.html
 	@SuppressWarnings("resource")
-	public boolean compareTwoFilesByte(File one, File two) throws IOException {
-		FileInputStream fis1 = new FileInputStream(one);
+	public boolean CompareTwoFilesbyByte(File one, File two) throws IOException
+    {
+        FileInputStream fis1 = new FileInputStream(one);
         FileInputStream fis2 = new FileInputStream(two);
-        
-        int n = 0;
-        byte[] b1;
-        byte[] b2;
-        while ((n = fis1.available()) > 0) {
-            b1 = new byte[4096];
-            b2 = new byte[4096];
-            fis1.read(b1);
-            fis2.read(b2);
-            if (Arrays.equals(b1,b2)==false)
-                {
-            		System.out.println(b1[4095] + "\n" + b2[4095]);
-            		System.out.println("Fail");
-                    return false;
+        if (one.length() == one.length())
+            {
+                int n=0;
+                byte[] b1;
+                byte[] b2;
+                while ((n = fis1.available()) > 0) {
+                    if (n>4096) n=4096;
+                    b1 = new byte[n];
+                    b2 = new byte[n];
+                    fis1.read(b1);
+                    fis2.read(b2);
+                    if (Arrays.equals(b1,b2)==false)
+                        {
+                            return false;
+                        }
                 }
-        } 
+            }
+        else return false;  // length is not matched. 
         return true;
-	}
+    }
 }
