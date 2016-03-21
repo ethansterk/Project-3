@@ -11,6 +11,14 @@ import java.util.List;
 
 import org.junit.Test;
 
+/**
+ * Test suite for comparing expected query results to what we're outputting.
+ * The first three class variables (numFiles, expectedDir, and testDir) have to be
+ * put in manually because we are unable to access args from this class.
+ * 
+ * @author Ethan (ejs334) and Laura (ln233)
+ *
+ */
 public class CheckOutputs {
 	
 	//have to change these three values depending on what we're running and where we've put the results
