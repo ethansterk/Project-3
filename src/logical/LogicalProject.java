@@ -17,4 +17,12 @@ public class LogicalProject extends LogicalOperator{
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
 	}
+
+	public LogicalOperator getChild() {
+		return child;
+	}
+
+	public List<SelectItem> getSelectItems() {
+		return selectItems;
+	}
 }

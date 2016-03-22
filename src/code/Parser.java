@@ -3,6 +3,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.List;
 
+import logical.LogicalOperator;
+import logical.PhysicalPlanBuilder;
 import physical.Operator;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParser;
@@ -60,12 +62,25 @@ public class Parser {
 					List<OrderByElement> orderByElements = plainSelect.getOrderByElements();
 					boolean distinct = (plainSelect.getDistinct() != null);
 					
-					System.out.println(plainSelect.toString());
+					//System.out.println(plainSelect.toString());
 					
 					//construct and "do stuff" with query plan
-					QueryPlan qp = new QueryPlan(fromItem, where, selectItems, joins, orderByElements, distinct);
-					Operator root = qp.getRoot();
-					root.dump();
+					//QueryPlan qp = new QueryPlan(fromItem, where, selectItems, joins, orderByElements, distinct);
+					//Operator root = qp.getRoot();
+					//root.dump();
+					
+					//Changes for P3 here:
+					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
+					//produces logical tree with root
+					File config = null;
+					LogicalOperator logRoot = builderL.getRoot();
+					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, config);
+					//produces physical tree with root
+					Operator phiRoot = builderP.getRoot();
+					//dump physical root
+					phiRoot.dump();
+					
+					
 					
 				} catch (Exception e) {
 					System.err.println("Exception occurred while returning tuples");

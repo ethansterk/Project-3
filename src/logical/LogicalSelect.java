@@ -12,6 +12,14 @@ public class LogicalSelect extends LogicalOperator{
 		this.condition = condition;
 	}
 	
+	public LogicalOperator getChild() {
+		return child;
+	}
+
+	public Expression getCondition() {
+		return condition;
+	}
+
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
 	}

@@ -17,4 +17,16 @@ public class LogicalJoin extends LogicalOperator{
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
 	}
+
+	public LogicalOperator getLeft() {
+		return left;
+	}
+
+	public LogicalOperator getRight() {
+		return right;
+	}
+
+	public Expression getCondition() {
+		return condition;
+	}
 }
