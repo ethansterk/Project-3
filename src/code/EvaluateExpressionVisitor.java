@@ -39,27 +39,22 @@ public class EvaluateExpressionVisitor implements ExpressionVisitor{
 	}
 	
 	public void visit(NullValue arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(Function arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(InverseExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(JdbcParameter arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(DoubleValue arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -73,17 +68,14 @@ public class EvaluateExpressionVisitor implements ExpressionVisitor{
 	}
 
 	public void visit(DateValue arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(TimeValue arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(TimestampValue arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -92,7 +84,6 @@ public class EvaluateExpressionVisitor implements ExpressionVisitor{
 	}
 
 	public void visit(StringValue arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -163,7 +154,6 @@ public class EvaluateExpressionVisitor implements ExpressionVisitor{
 	}
 
 	public void visit(Between arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -202,17 +192,14 @@ public class EvaluateExpressionVisitor implements ExpressionVisitor{
 	}
 
 	public void visit(InExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(IsNullExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(LikeExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -263,57 +250,46 @@ public class EvaluateExpressionVisitor implements ExpressionVisitor{
 	}
 
 	public void visit(SubSelect arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(CaseExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(WhenClause arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(ExistsExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(AllComparisonExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(AnyComparisonExpression arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(Concat arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(Matches arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(BitwiseAnd arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(BitwiseOr arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	public void visit(BitwiseXor arg0) {
-		// TODO Auto-generated method stub
 		
 	}
 

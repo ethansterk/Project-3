@@ -57,8 +57,6 @@ public class LogicalPlanBuilder {
 				HashMap<String,Expression> selectConditions = joinVisitor.getSelectConditions();
 				HashMap<String,Expression> joinConditions = joinVisitor.getJoinConditions();
 				
-				//1. Do selection (using selectConditions) on R if applicable; assign as temp
-				//TODO Where to store the alias names?
 				String[] wholeTableName = fromItem.toString().split(" ");
 				String tableName = wholeTableName[0];
 				String aliasName = "";
