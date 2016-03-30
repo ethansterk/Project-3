@@ -37,10 +37,11 @@ public class Parser {
 	public static void main(String[] args) {
 		String inputDir = args[0];	
 		String outputDir = args[1];
-		String loggerDir = args[2];//TODO change index of args later
+		String configDir = args[2];
+		String loggerDir = args[3];
 		DatabaseCatalog.createCatalog(inputDir);
 		OutputWriter.createStream(outputDir);
-		Logger.createLogger(loggerDir);//TODO change index of args later
+		Logger.createLogger(loggerDir);
 		
 		try {
 			CCJSqlParser parser = new CCJSqlParser(new FileReader(inputDir + File.separator + "queries.sql"));
@@ -72,9 +73,8 @@ public class Parser {
 					//Changes for P3 here:
 					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
 					//produces logical tree with root
-					File config = null;
 					LogicalOperator logRoot = builderL.getRoot();
-					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, config);
+					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, configDir);
 					//produces physical tree with root
 					Operator phiRoot = builderP.getRoot();
 					//dump physical root
