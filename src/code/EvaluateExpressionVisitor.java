@@ -12,6 +12,7 @@ import net.sf.jsqlparser.statement.select.SubSelect;
  * purpose is to break down and evaluate a select condition
  * (represented as an Expression) to a boolean that represents
  * whether this condition holds on a given tuple.
+ * 
  * @author Ethan Sterk (ejs334), Laura Ng (ln233)
  *
  */

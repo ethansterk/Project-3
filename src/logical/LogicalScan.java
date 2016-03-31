@@ -1,16 +1,34 @@
 package logical;
 
+/**
+ * LogicalScan is the logical equivalent of 
+ * ScanOperator. It is part of the visitor pattern
+ * used in the PhysicalPlanBuilder.
+ * 
+ * @author Ethan Sterk (ejs334) and Laura Ng (ln233)
+ *
+ */
 public class LogicalScan extends LogicalOperator{
-	private String tablename;
+	private String s;
 	
-	public LogicalScan(String tablename) {
-		this.tablename = tablename;
+	public LogicalScan(String s) {
+		this.s = s;
 	}
 	
+	/**
+	 * Getter method for the String representing the table to be scanned
+	 * in the form "Sailors" or "Sailors AS S"
+	 * 
+	 * @return s
+	 */
 	public String getTablename() {
-		return tablename;
+		return s;
 	}
 
+	/**
+	 * accept method that is used in PhysicalPlanBuilder
+	 * @param visitor
+	 */
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
 	}

@@ -3,13 +3,6 @@ package code;
 import java.util.HashMap;
 import java.util.List;
 
-import physical.DuplicateEliminationOperator;
-import physical.JoinOperator;
-import physical.Operator;
-import physical.ProjectOperator;
-import physical.ScanOperator;
-import physical.SelectOperator;
-import physical.SortOperator;
 import logical.LogicalDuplicateElimination;
 import logical.LogicalJoin;
 import logical.LogicalOperator;
@@ -24,6 +17,11 @@ import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
+/**
+ * 
+ * @author Ryu
+ *
+ */
 public class LogicalPlanBuilder {
 
 	private LogicalOperator root;
@@ -34,6 +32,9 @@ public class LogicalPlanBuilder {
 	private List<OrderByElement> orderByElements;
 	private boolean distinct;
 	
+	/**
+	 * Initializes the LogicalPlanBuilder with the necessary information
+	 */
 	public LogicalPlanBuilder(FromItem fromItem, Expression where, List<SelectItem> selectItems, List<Join> joins, List<OrderByElement> orderByElements, boolean distinct) {
 		this.fromItem = fromItem;
 		this.where = where;
