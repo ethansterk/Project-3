@@ -39,53 +39,33 @@ public class JoinOperator extends Operator {
 		Tuple tRight = null;
 		Tuple t = null;
 		
-		if(tLeftCurrent != null) {
+		while(tLeftCurrent != null) {
 			tRight = right.getNextTuple();
 			if(tRight != null) {
 				if (condition != null) {
-					Tuple temp = Tuple.merge(tLeftCurrent, tRight);
-					EvaluateExpressionVisitor visitor = new EvaluateExpressionVisitor(temp);
+					t = Tuple.merge(tLeftCurrent, tRight);
+					EvaluateExpressionVisitor visitor = new EvaluateExpressionVisitor(t);
 					condition.accept(visitor);
 					if(visitor.getResult()) {
-						t = temp;
+						return t;
 					}
 					else {
-						return this.getNextTuple();
+						continue;
 					}
 				}
 				//simple cross-product if no join conditions in WHERE clause
 				else {
 					t = Tuple.merge(tLeftCurrent, tRight);
+					return t;
 				}
 			}
-			//tRight==null, reached the end of the right child
 			else {
 				tLeftCurrent = left.getNextTuple();
-				//check that the left child hasn't also reached its end
-				if (tLeftCurrent == null) 
-					return null;
-				
 				right.reset();
-				tRight = right.getNextTuple();	//should be first tuple of right
-				if (tRight != null) {
-					if (condition != null) {
-						Tuple temp = Tuple.merge(tLeftCurrent, tRight);
-						EvaluateExpressionVisitor visitor = new EvaluateExpressionVisitor(temp);
-						condition.accept(visitor);
-						if(visitor.getResult()) {
-							t = temp;
-						}
-						else
-							return this.getNextTuple();
-					}
-					//simple cross-product if no join conditions in WHERE clause
-					else
-						t = Tuple.merge(tLeftCurrent, tRight);
-				}
 			}
 		}
-		//return t==null if tLeftCurrent==null
-		return t;
+		return null;
+
 	}
 
 	@Override
