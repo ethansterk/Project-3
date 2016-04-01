@@ -37,7 +37,7 @@ public class Parser {
 	public static void main(String[] args) {
 		String inputDir = args[0];	
 		String outputDir = args[1];
-		String configDir = args[2];
+		String tempDir = args[2];
 		String loggerDir = args[3];
 		DatabaseCatalog.createCatalog(inputDir);
 		OutputWriter.createStream(outputDir);
@@ -74,7 +74,7 @@ public class Parser {
 					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
 					//produces logical tree with root
 					LogicalOperator logRoot = builderL.getRoot();
-					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, configDir);
+					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, inputDir);
 					//produces physical tree with root
 					Operator phiRoot = builderP.getRoot();
 					//dump physical root

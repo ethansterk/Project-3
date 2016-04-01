@@ -31,7 +31,7 @@ public class PhysicalPlanBuilder {
 	 * @param configDir
 	 */
 	public PhysicalPlanBuilder(LogicalOperator root, String configDir) {
-		File config = new File(configDir + File.separator + "config.txt");
+		File config = new File(configDir + File.separator + "plan_builder_config.txt");
 		try {
 	        Scanner sc = new Scanner(config);   
 	        String joinMethod = sc.nextLine();
