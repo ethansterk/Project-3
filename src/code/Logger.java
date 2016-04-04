@@ -42,8 +42,6 @@ public class Logger {
 		    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 		    bufferedWriter.write(message + '\n');
 		    bufferedWriter.close();
-
-		    //System.out.println("Done");
 		} catch(IOException e) {
 		    System.out.println("COULD NOT LOG!!");
 		}

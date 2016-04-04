@@ -5,6 +5,7 @@ import net.sf.jsqlparser.expression.Expression;
 import java.util.Arrays;
 
 import code.EvaluateExpressionVisitor;
+import code.Logger;
 import code.Tuple;
 
 /**
@@ -54,10 +55,11 @@ public class BNLJOperator extends Operator{
 		
 		//for each block B of left 
 		while (buffer[0] != null) {
-		
 			//for each tuple s in right 
+			//Logger.log("buffer[0] is not null.");
 			while (tRightCurrent != null) {
-				
+				// TODO Problem: tRightCureent is null after reading new block.
+				//Logger.log("tRightCurrent is not null.");
 				//for each tuple r in left
 				while (currentIndex < buffer.length) {
 					Tuple tLeft = buffer[currentIndex];
@@ -91,8 +93,11 @@ public class BNLJOperator extends Operator{
 			}
 			//tRightCurrent is null --> reset inner relation pointer and read new block
 			right.reset();
+			tRightCurrent = right.getNextTuple();
 			readBlock();
+			//Logger.log("Block has been read.");
 		}
+		//Logger.log("Reached end of outer");
 		//buffer[0] is null, so we've reached end of outer relation
 		return null;
 	}
