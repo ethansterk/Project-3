@@ -34,7 +34,7 @@ public class BNLJOperator extends Operator{
 		currentIndex = 0;
 		tRightCurrent = right.getNextTuple();	//initialize the first inner relation tuple
 		int outerRelationNumAttr = left.getNextTuple().getFields().size();
-		left.reset();	//clear left again
+		this.left.reset();	//clear left again
 		int numTuples = bufferSize * 4096 / (4 * outerRelationNumAttr);
 		buffer = new Tuple[numTuples];
 		
@@ -56,12 +56,11 @@ public class BNLJOperator extends Operator{
 		while (buffer[0] != null) {
 			while (tRightCurrent != null) {
 				while (currentIndex < buffer.length) {
-					Tuple tLeft = buffer[currentIndex];
-					currentIndex++;
+					Tuple tLeft = buffer[currentIndex++];
 					
 					if (tLeft != null) {
+						t = Tuple.merge(tLeft, tRightCurrent);
 						if (condition != null) {
-							t = Tuple.merge(tLeft, tRightCurrent);
 							EvaluateExpressionVisitor visitor = new EvaluateExpressionVisitor(t);
 							condition.accept(visitor);
 							if(visitor.getResult()) {
@@ -72,26 +71,20 @@ public class BNLJOperator extends Operator{
 							}
 						}
 						else {
-							t = Tuple.merge(tLeft, tRightCurrent);
 							return t;
 						}
 					}
 					else {
-						//buffer not full, but we also reached end of outer relation
-						Logger.log("Reached end of outer.");
-						return null;
+						continue;
 					}
 				}
-				//currentIndex >= buffer.length --> reset currentIndex and advance inner tuple
 				currentIndex = 0;
 				tRightCurrent = right.getNextTuple();
 			}
-			//tRightCurrent is null --> reset inner relation pointer and read new block
 			right.reset();
 			tRightCurrent = right.getNextTuple();
 			readBlock();
 		}
-		Logger.log("End of outer relation (buffer is null).\n");
 		return null;
 	}
 
@@ -100,6 +93,9 @@ public class BNLJOperator extends Operator{
 		left.reset();
 		right.reset();
 		Arrays.fill(buffer, null);
+		currentIndex = 0;
+		tRightCurrent = right.getNextTuple();
+		readBlock();
 	}
 
 	/**
@@ -109,6 +105,7 @@ public class BNLJOperator extends Operator{
 		Arrays.fill(buffer, null);
 		for(int i = 0; i < buffer.length; i++) {
 			buffer[i] = left.getNextTuple();
+			//System.out.println(buffer[i].tupleString());
 			if(buffer[i] == null) {
 				return;
 			}
