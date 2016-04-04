@@ -45,9 +45,10 @@ public class TupleWriter {
 	 * in the current page being written out.
 	 */
 	public void writeNewPage() {
+
 		//overwrite metadata
 		buffer.putInt(4, numTuples);
-		
+	
 		//flip buffer, buffer.flip() doesn't work for this
 		buffer.position(0);
 		buffer.limit(buffer.capacity());
