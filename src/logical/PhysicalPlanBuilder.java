@@ -102,7 +102,8 @@ public class PhysicalPlanBuilder {
 			newOp = new BNLJOperator(left, right, e, bufferSize);
 			break;
 		case 2:
-			// TODO add SMJ
+			
+			newOp = new SMJOperator();
 			break;
 		default:
 			System.out.println("ERR: Join Type selection.");
@@ -119,7 +120,9 @@ public class PhysicalPlanBuilder {
 	public void visit(LogicalSort logicalSort) {
 		logicalSort.getChild().accept(this);
 		Operator child = ops.pop();
-		// TODO use config settings here
+		switch() {
+		
+		}
 		SortOperator newOp = new SortOperator(child, logicalSort.getList());
 		ops.push(newOp);
 	}
