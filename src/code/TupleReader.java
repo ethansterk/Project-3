@@ -123,6 +123,14 @@ public class TupleReader {
 	}
 	
 	/**
+	 * Getter method for the number of attributes for this table/buffer.
+	 * @return numAtt
+	 */
+	public int getNumAtt() {
+		return numAtt;
+	}
+	
+	/**
 	 * 
 	 */
 	public void close() {

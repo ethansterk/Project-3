@@ -27,7 +27,9 @@ public class ScanOperator extends Operator {
 		tablename = s.split(" ")[0];		//trims off the alias, if there's one
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
-		t = new Table(tablename, alias);
+		
+		if (project_three_io == false)
+			t = new Table(tablename, alias);
 		tr = new TupleReader(tablename, alias);
 	}
 
