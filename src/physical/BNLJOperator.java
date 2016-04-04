@@ -53,14 +53,8 @@ public class BNLJOperator extends Operator{
 	public Tuple getNextTuple() {
 		Tuple t = null;
 		
-		//for each block B of left 
 		while (buffer[0] != null) {
-			//for each tuple s in right 
-			//Logger.log("buffer[0] is not null.");
 			while (tRightCurrent != null) {
-				// TODO Problem: tRightCureent is null after reading new block.
-				//Logger.log("tRightCurrent is not null.");
-				//for each tuple r in left
 				while (currentIndex < buffer.length) {
 					Tuple tLeft = buffer[currentIndex];
 					currentIndex++;
@@ -84,6 +78,7 @@ public class BNLJOperator extends Operator{
 					}
 					else {
 						//buffer not full, but we also reached end of outer relation
+						Logger.log("Reached end of outer.");
 						return null;
 					}
 				}
@@ -95,14 +90,11 @@ public class BNLJOperator extends Operator{
 			right.reset();
 			tRightCurrent = right.getNextTuple();
 			readBlock();
-			//Logger.log("Block has been read.");
 		}
-		//Logger.log("Reached end of outer");
-		//buffer[0] is null, so we've reached end of outer relation
+		Logger.log("End of outer relation (buffer is null).\n");
 		return null;
 	}
 
-	// TODO where does this get used?
 	@Override
 	public void reset() {
 		left.reset();
@@ -115,14 +107,12 @@ public class BNLJOperator extends Operator{
 	 */
 	private void readBlock() {
 		Arrays.fill(buffer, null);
-		int i = 0;
-		while(i < buffer.length) {
+		for(int i = 0; i < buffer.length; i++) {
 			buffer[i] = left.getNextTuple();
 			if(buffer[i] == null) {
 				return;
 			}
-			
-			i++;
 		}
+		return;
 	}
 }
