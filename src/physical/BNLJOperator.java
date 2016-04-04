@@ -97,6 +97,7 @@ public class BNLJOperator extends Operator{
 		return null;
 	}
 
+	// TODO where does this get used?
 	@Override
 	public void reset() {
 		left.reset();
