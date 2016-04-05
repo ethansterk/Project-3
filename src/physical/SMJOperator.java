@@ -4,7 +4,7 @@ import code.Tuple;
 
 public class SMJOperator extends Operator {
 
-	public SMJOperator() {
+	public SMJOperator(Operator left, Operator right) {
 		
 	}
 	
