@@ -1,5 +1,6 @@
 package code;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -123,9 +124,14 @@ public class LogicalPlanBuilder {
 					}
 					if (selectE != null)
 						tempRight = new LogicalSelect(tempRight, selectE);
-					temp = new LogicalJoin(temp, tempRight, joinE);					
+					
+					ArrayList<String> tempTables = new ArrayList<String>();
+					tempTables.addAll(temp.getBaseTables());
+					temp = new LogicalJoin(temp, tempRight, joinE);
+					temp.addBaseTables(tempTables);
 				}
 				root = temp;
+				System.out.println("Base tables for root: " + root.getBaseTables());
 			}
 			else {
 				root = new LogicalScan(fromItem.toString());

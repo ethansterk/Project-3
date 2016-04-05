@@ -1,6 +1,7 @@
 package logical;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Basic abstract class that defines the accept method for all logical 
@@ -20,6 +21,10 @@ public abstract class LogicalOperator {
 	
 	public void addBaseTable(String table) {
 		baseTables.add(table);
+	}
+	
+	public void addBaseTables(Collection<String> tables) {
+		baseTables.addAll(tables);
 	}
 	
 	public ArrayList<String> getBaseTables() {
