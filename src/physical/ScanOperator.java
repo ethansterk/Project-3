@@ -30,7 +30,7 @@ public class ScanOperator extends Operator {
 		
 		if (project_three_io == false)
 			t = new Table(tablename, alias);
-		tr = new TupleReader(tablename, alias);
+		tr = new TupleReader(tablename, alias, false, null, null);
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class ScanOperator extends Operator {
 	@Override
 	public void reset() {
 		if(project_three_io) {
-			tr = new TupleReader(tablename, alias);
+			tr = new TupleReader(tablename, alias, false, null, null);
 		}
 		else {
 			pointer = 0;			

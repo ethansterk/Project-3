@@ -25,6 +25,8 @@ public class TupleReader {
 	private int numAtt; //number of attributes
 	private int numTuplesLeft; //number of tuples on page
 	private ArrayList<String> fields = new ArrayList<String>();
+	private boolean extsortFlag = false;
+	private String filePath = "";
 	
 	/**
 	 * Initialize the TupleReader. Retrieves the file channel. Allocates
@@ -32,29 +34,44 @@ public class TupleReader {
 	 * file. Assigns the tableName as simply fileName.
 	 * @param fileName Name of the file containing the table's tuples.
 	 */
-	public TupleReader(String fileName, String alias) {
-		Schema sch = DatabaseCatalog.getInstance().getSchema(fileName);
-		String tableDir = sch.getTableDir();
-		ArrayList<String> tempFields = sch.getCols();
-		
-		if (alias != null) {
-			for (String c : tempFields) {
-				fields.add(alias + "." + c);
+	public TupleReader(String fileName, String alias, boolean extsort, String filePath, ArrayList<String> fields) {
+		if (extsort) {
+			extsortFlag = true;
+			this.filePath = filePath;
+			this.fields = fields;
+			
+			FileInputStream fin = null;
+			try {
+				fin = new FileInputStream(fileName);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
 			}
+			fc = fin.getChannel();
 		}
 		else {
-			for (String c : tempFields)
-				fields.add(fileName + "." + c);
-		}
+			Schema sch = DatabaseCatalog.getInstance().getSchema(fileName);
+			String tableDir = sch.getTableDir();
+			ArrayList<String> tempFields = sch.getCols();
+			
+			if (alias != null) {
+				for (String c : tempFields) {
+					this.fields.add(alias + "." + c);
+				}
+			}
+			else {
+				for (String c : tempFields)
+					this.fields.add(fileName + "." + c);
+			}
 		
-		//retrieve the file channel
-		FileInputStream fin = null;
-		try {
-			fin = new FileInputStream(tableDir);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			//retrieve the file channel
+			FileInputStream fin = null;
+			try {
+				fin = new FileInputStream(tableDir);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			fc = fin.getChannel();
 		}
-		fc = fin.getChannel();
 		
 		//calculate number of pages for file
 		long numBytes = -1;
@@ -77,11 +94,7 @@ public class TupleReader {
 	 * read in. If this is the second-to-last page, it also clears the
 	 * leftover tuples from the previous page.
 	 */
-	private void readNewPage() {
-		if (numPagesLeft == 1) {
-			//see documentation -- assigns all to zero
-			buffer = ByteBuffer.allocate(4096);
-		}
+	public void readNewPage() {
 		buffer = ByteBuffer.allocate(4096);
 		
 		try {
@@ -120,6 +133,17 @@ public class TupleReader {
 		Tuple t = new Tuple(data, fields);
 		numTuplesLeft--;
 		return t;
+	}
+	
+	/**
+	 * Check if we've reached the end of the buffer. 
+	 * Returns:
+	 * 	-1 = no
+	 * 	0  = yes, but there's more pages
+	 * 	1  = yes, and there's no more pages
+	 */
+	public int reachedEnd() {
+		return (numTuplesLeft == 0 && numPagesLeft == 0) ? 1 : ((numTuplesLeft > 0) ? -1 : 0);
 	}
 	
 	/**

@@ -14,6 +14,7 @@ public class OutputWriter {
 
 	private static final OutputWriter instance = new OutputWriter();
 	private static String outputDir = "";
+	private static String tempDir = "";
 	private static int queryNumber = 0;
 	
 	/**
@@ -26,12 +27,22 @@ public class OutputWriter {
 	
 	/**
 	 * Creates the WriteOutput. This is called only once, from the
-	 * main() function in Parser. It constructs the WriteParser
+	 * main() function in Parser.
 	 * 
 	 * @param outputDir
 	 */
 	public static void createStream(String outputDirectory) {
 	    outputDir = outputDirectory;
+	}
+	
+	/**
+	 * Creates the stream for the temporary directory used in external sort merge.
+	 * This is called only once, from the main() function in Parser.
+	 * 
+	 * @param tempDir
+	 */
+	public static void createTempStream(String tempDirectory) {
+		tempDir = tempDirectory;
 	}
 	
 	/**
@@ -50,6 +61,15 @@ public class OutputWriter {
 	 */
 	public String getOutputDir() {
 		return outputDir;
+	}
+	
+	/**
+	 * Access method to return the temp. directory.
+	 * 
+	 * @return tempDir
+	 */
+	public String getTempDir() {
+		return tempDir;
 	}
 	
 	/**

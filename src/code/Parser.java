@@ -38,9 +38,10 @@ public class Parser {
 		String inputDir = args[0];	
 		String outputDir = args[1];
 		String tempDir = args[2];
-		String loggerDir = args[3];
+		String loggerDir = args[2];
 		DatabaseCatalog.createCatalog(inputDir);
 		OutputWriter.createStream(outputDir);
+		OutputWriter.createTempStream(tempDir);
 		Logger.createLogger(loggerDir);
 		
 		try {
