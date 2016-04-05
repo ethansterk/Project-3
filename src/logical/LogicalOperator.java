@@ -12,14 +12,14 @@ import java.util.Collection;
  */
 public abstract class LogicalOperator {
 
-	private ArrayList<String> baseTables = new ArrayList<String>();
+	//private ArrayList<String> baseTables = new ArrayList<String>();
 	/**
 	 * accept method that is used in PhysicalPlanBuilder
 	 * @param visitor
 	 */
 	public abstract void accept(PhysicalPlanBuilder visitor);
 	
-	public void addBaseTable(String table) {
+	/*public void addBaseTable(String table) {
 		baseTables.add(table);
 	}
 	
@@ -29,5 +29,5 @@ public abstract class LogicalOperator {
 	
 	public ArrayList<String> getBaseTables() {
 		return baseTables;
-	}
+	}*/
 }

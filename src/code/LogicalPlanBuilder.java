@@ -91,20 +91,26 @@ public class LogicalPlanBuilder {
 				
 				LogicalOperator temp = new LogicalScan(fromItem.toString());
 				Expression e;
+				ArrayList<String> leftBaseTables = new ArrayList<String>();
+				String rightBaseTable = null;
 				if(usesAliases) {
 					String aliasName = wholeTableName[2];
 					e = selectConditions.get(aliasName);
-					temp.addBaseTable(aliasName);
+					leftBaseTables.add(aliasName);
 				}
 				else {
 					e = selectConditions.get(tableName);
-					temp.addBaseTable(tableName);
+					leftBaseTables.add(tableName);
 				}
 				if (e != null) {
 					temp = new LogicalSelect(temp,e);
 				}
 				
+				
 				for (Join j : joins) {
+					if (rightBaseTable != null)
+						leftBaseTables.add(rightBaseTable);
+					
 					String tempWholeTableName = j.getRightItem().toString();
 					String[] split = tempWholeTableName.split(" ");
 					String tempTableName = split[0];
@@ -115,23 +121,21 @@ public class LogicalPlanBuilder {
 						String tempAliasName = split[2];
 						selectE = selectConditions.get(tempAliasName);
 						joinE = joinConditions.get(tempAliasName);
-						temp.addBaseTable(tempAliasName); // TODO not sure if this is correct -- make sure adding to correct operator
+						rightBaseTable = tempAliasName;
 					}
 					else {
 						selectE = selectConditions.get(tempTableName);
 						joinE = joinConditions.get(tempTableName);
-						temp.addBaseTable(tempTableName); // TODO not sure if this is correct -- make sure adding to correct operator
+						rightBaseTable = tempTableName;
 					}
 					if (selectE != null)
 						tempRight = new LogicalSelect(tempRight, selectE);
 					
-					ArrayList<String> tempTables = new ArrayList<String>();
-					tempTables.addAll(temp.getBaseTables());
-					temp = new LogicalJoin(temp, tempRight, joinE);
-					temp.addBaseTables(tempTables);
+					ArrayList<String> tempList = new ArrayList<String>();
+					tempList.addAll(leftBaseTables);
+					temp = new LogicalJoin(temp, tempRight, joinE, tempList, rightBaseTable);
 				}
-				root = temp;
-				System.out.println("Base tables for root: " + root.getBaseTables());
+				root = temp;	
 			}
 			else {
 				root = new LogicalScan(fromItem.toString());

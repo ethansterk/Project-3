@@ -90,6 +90,8 @@ public class PhysicalPlanBuilder {
 		Operator right = ops.pop();
 		Operator left = ops.pop();
 		
+		System.out.println("Left base tables for join: " + logicalJoin.getLeftBaseTables());
+		System.out.println("Right base table for join: " + logicalJoin.getRightBaseTable());
 		int joinType = Integer.valueOf(joinMethod[0]);
 		Expression e = logicalJoin.getCondition();
 		Operator newOp = null;

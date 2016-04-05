@@ -1,5 +1,7 @@
 package logical;
 
+import java.util.ArrayList;
+
 import net.sf.jsqlparser.expression.Expression;
 
 /**
@@ -15,11 +17,15 @@ public class LogicalJoin extends LogicalOperator{
 	private LogicalOperator left;
 	private LogicalOperator right;
 	private Expression condition;
+	private ArrayList<String> leftBaseTables;
+	private String rightBaseTable;
 	
-	public LogicalJoin(LogicalOperator left, LogicalOperator right, Expression condition) {
+	public LogicalJoin(LogicalOperator left, LogicalOperator right, Expression condition, ArrayList<String> leftBaseTables, String rightBaseTable) {
 		this.left = left;
 		this.right = right;
 		this.condition = condition;
+		this.leftBaseTables = leftBaseTables;
+		this.rightBaseTable = rightBaseTable;
 	}
 
 	/**
@@ -52,5 +58,13 @@ public class LogicalJoin extends LogicalOperator{
 	 */
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
+	}
+
+	public ArrayList<String> getLeftBaseTables() {
+		return leftBaseTables;
+	}
+
+	public String getRightBaseTable() {
+		return rightBaseTable;
 	}
 }
