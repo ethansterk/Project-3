@@ -47,12 +47,12 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 
 public class SortColumnExpressionVisitor implements ExpressionVisitor {
 
-	private Stack<String> sortCols;
+	private String rightBaseTable;
 	private ArrayList<String> leftSortCols;
 	private ArrayList<String> rightSortCols;
 	
-	public SortColumnExpressionVisitor() {
-		sortCols = new Stack<String>();
+	public SortColumnExpressionVisitor(String rightBaseTable) {
+		this.rightBaseTable = rightBaseTable;
 		leftSortCols = new ArrayList<String>();
 		rightSortCols = new ArrayList<String>();
 	}
@@ -229,7 +229,13 @@ public class SortColumnExpressionVisitor implements ExpressionVisitor {
 	@Override
 	public void visit(Column arg0) {
 		String colName = arg0.getWholeColumnName();
-		sortCols.add(colName);
+		String tableName = arg0.getTable().getName();
+		if (tableName.equals(rightBaseTable)) {
+			rightSortCols.add(colName);
+		}
+		else {
+			leftSortCols.add(colName);
+		}
 	}
 
 	@Override

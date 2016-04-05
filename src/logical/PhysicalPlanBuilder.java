@@ -1,6 +1,7 @@
 package logical;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Stack;
 
@@ -90,8 +91,8 @@ public class PhysicalPlanBuilder {
 		Operator right = ops.pop();
 		Operator left = ops.pop();
 		
-		System.out.println("Left base tables for join: " + logicalJoin.getLeftBaseTables());
-		System.out.println("Right base table for join: " + logicalJoin.getRightBaseTable());
+		//System.out.println("Left base tables for join: " + logicalJoin.getLeftBaseTables());
+		//System.out.println("Right base table for join: " + logicalJoin.getRightBaseTable());
 		int joinType = Integer.valueOf(joinMethod[0]);
 		Expression e = logicalJoin.getCondition();
 		Operator newOp = null;
@@ -103,31 +104,31 @@ public class PhysicalPlanBuilder {
 			int bufferSize = Integer.valueOf(joinMethod[1]);
 			newOp = new BNLJOperator(left, right, e, bufferSize);
 			break;
-		/*case 2:
+		case 2:
 			// determine what left and right children need to be sorted on (use condition)
-			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor();
+			//ArrayList<String> leftBaseTables = logicalJoin.getLeftBaseTables();
+			String rightBaseTable = logicalJoin.getRightBaseTable();
+			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor(rightBaseTable);
 			e.accept(visitor);
-			HashMap<String,ArrayList<String>> sortCols = visitor.getSortCols();
-			ArrayList<String> leftSortCols = sortCols.get(); 
 			// create two sorts as children (left and right)
 			int sortType = Integer.valueOf(sortMethod[0]);
 			Operator leftOp = null;
 			Operator rightOp = null;
 			switch(sortType) {
 			case 0:
-				leftOp = new SortOperator(left, null); // TODO
-				rightOp = new SortOperator(right, null); // TODO
+				leftOp = new SortOperator(left, visitor.getLeftSortCols());
+				rightOp = new SortOperator(right, visitor.getRightSortCols());
 				break;
 			case 1:
 				int numSortBuffers = Integer.valueOf(sortMethod[1]);
 				// TODO Edit as needed for external sort's constructor
-				leftOp = new ExternalSortOperator(left, numSortBuffers,);
-				rightOp = new ExternalSortOperator(right, numSortBuffers,);
+				//leftOp = new ExternalSortOperator(left, numSortBuffers,);
+				//rightOp = new ExternalSortOperator(right, numSortBuffers,);
 				break;
 			}
 			// create SMJOperator with sorts as its children
 			newOp = new SMJOperator(leftOp, rightOp);
-			break;*/
+			break;
 		default:
 			System.out.println("ERR: Join Type selection.");
 		}

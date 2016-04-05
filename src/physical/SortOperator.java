@@ -38,6 +38,18 @@ public class SortOperator extends Operator {
 		createCollection();
 	}
 	
+	public SortOperator(Operator child, ArrayList<String> sortCols) {
+		this.child = child;
+		if (sortCols == null)
+			sortCols = null;
+		else {
+			for (String x : sortCols) {
+				columns.add(x);
+			}
+		}
+		createCollection();
+	}
+
 	/**
 	 * Helper method used to write-to-buffer the contents of the child operator.
 	 */

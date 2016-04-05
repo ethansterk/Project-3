@@ -1,8 +1,5 @@
 package logical;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 /**
  * Basic abstract class that defines the accept method for all logical 
  * operators. Mirrors the Operator class in the physical package.
@@ -12,22 +9,10 @@ import java.util.Collection;
  */
 public abstract class LogicalOperator {
 
-	//private ArrayList<String> baseTables = new ArrayList<String>();
 	/**
 	 * accept method that is used in PhysicalPlanBuilder
 	 * @param visitor
 	 */
 	public abstract void accept(PhysicalPlanBuilder visitor);
 	
-	/*public void addBaseTable(String table) {
-		baseTables.add(table);
-	}
-	
-	public void addBaseTables(Collection<String> tables) {
-		baseTables.addAll(tables);
-	}
-	
-	public ArrayList<String> getBaseTables() {
-		return baseTables;
-	}*/
 }
