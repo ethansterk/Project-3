@@ -21,7 +21,7 @@ public class LogicalDuplicateElimination extends LogicalOperator {
 		if (child instanceof LogicalSort)
 			this.child = child;
 		else
-			this.child = new LogicalSort(child, list);
+			this.child = new LogicalSort(child, list, true);
 		this.list = list;
 	}
 	

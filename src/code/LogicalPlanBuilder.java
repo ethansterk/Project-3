@@ -156,7 +156,7 @@ public class LogicalPlanBuilder {
 	private LogicalOperator checkForSorting(LogicalOperator childOp) {
 		LogicalOperator temp = null;
 		if (orderByElements != null)
-			temp = new LogicalSort(childOp, orderByElements);
+			temp = new LogicalSort(childOp, orderByElements, false);
 		else
 			temp = childOp;
 		

@@ -36,6 +36,10 @@ public class OrderComparator implements Comparator<Tuple> {
 
 	//overrides compare(T o1, T o2)
 	public int compare(Tuple o1, Tuple o2) {
+		/*if (o1 == null && o2 == null) return 0;
+		else */if (o1 == null) return 1;
+		else if (o2 == null) return -1;
+					
 		ArrayList<String> fields = o1.getFields();
 		
 		for (String colname : columnPriority) {

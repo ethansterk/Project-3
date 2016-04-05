@@ -43,6 +43,7 @@ public class ExternalSortOperator extends Operator {
 	TupleReader tr;
 	
 	public ExternalSortOperator(Operator child, int numBufferPages, List<OrderByElement> list) {
+		System.out.println("Made an ExternalSortOperator");
 		this.child = child;
 		this.B = numBufferPages;
 		if (list == null)
@@ -87,6 +88,7 @@ public class ExternalSortOperator extends Operator {
 			Collections.sort(buffer, oc);
 			
 			String filename = tempDir + File.separator + id + "-p0-" + fileNum;
+			File f = new File(filename);		//don't delete!
 			forcePrint(numTuples, filename);
 			
 			readBPages();
@@ -134,7 +136,8 @@ public class ExternalSortOperator extends Operator {
 				topTuples[i] = bufferPool.get(i).readNextTuple();
 			}
 			
-			String filename = tempDir + File.separator + id + "-p" + thisPass + "-" + writingFileNum;			
+			String filename = tempDir + File.separator + id + "-p" + thisPass + "-" + writingFileNum;
+			File f = new File(filename);		//don't delete!
 			int t = 0;
 			while (bufferPool.size() > 0) {
 				//compare the tuples at the top of each buffer
@@ -154,9 +157,12 @@ public class ExternalSortOperator extends Operator {
 				else {
 					bufferPool.remove(t);
 					Tuple[] tempTuples = new Tuple[topTuples.length - 1];
+					int j = 0;
 					for (int i = 0; i < topTuples.length; i++) {
-						if (i != t) 
-							tempTuples[i] = topTuples[i];
+						if (i != t) {
+							tempTuples[j] = topTuples[i];
+							j++;
+						}
 					}
 				}
 
@@ -183,7 +189,7 @@ public class ExternalSortOperator extends Operator {
 	 */
 	private void readBPages() {
 		buffer = new ArrayList<Tuple>();
-		for(int i = 0; i < buffer.size(); i++) {
+		for(int i = 0; i < numTuples; i++) {
 			buffer.add(child.getNextTuple());
 			//System.out.println(buffer.get(i).tupleString());
 			if(buffer.get(i) == null) {
@@ -227,9 +233,8 @@ public class ExternalSortOperator extends Operator {
 			tw.writeNewPage();
 		}
 		else {
-			File f = new File(fileLoc);
 			try {
-				PrintStream output = new PrintStream(f);
+				PrintStream output = new PrintStream(fileLoc);
 				
 				for (int i = 0; i < numTuples; i++) {
 					Tuple tup = buffer.get(i);

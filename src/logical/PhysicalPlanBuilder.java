@@ -1,8 +1,6 @@
 package logical;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Stack;
 
@@ -103,7 +101,7 @@ public class PhysicalPlanBuilder {
 			int bufferSize = Integer.valueOf(joinMethod[1]);
 			newOp = new BNLJOperator(left, right, e, bufferSize);
 			break;
-		case 2:
+		/*case 2:
 			// determine what left and right children need to be sorted on (use condition)
 			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor();
 			e.accept(visitor);
@@ -127,7 +125,7 @@ public class PhysicalPlanBuilder {
 			}
 			// create SMJOperator with sorts as its children
 			newOp = new SMJOperator(leftOp, rightOp);
-			break;
+			break;*/
 		default:
 			System.out.println("ERR: Join Type selection.");
 		}
@@ -146,6 +144,11 @@ public class PhysicalPlanBuilder {
 		
 		int sortType = Integer.valueOf(sortMethod[0]);
 		Operator newOp = null;
+		
+		//ensure that implementation of DISTINCT doesn't use unbounded state (always uses P2's sorting method)
+		if (logicalSort.getDistinct())
+			sortType = 0;
+		
 		switch(sortType) {
 		case 0:
 			newOp = new SortOperator(child, logicalSort.getList());
@@ -155,7 +158,6 @@ public class PhysicalPlanBuilder {
 			newOp = new ExternalSortOperator(child, numSortBuffers, logicalSort.getList());
 			break;
 		}
-		newOp = new SortOperator(child, logicalSort.getList());
 		ops.push(newOp);
 	}
 

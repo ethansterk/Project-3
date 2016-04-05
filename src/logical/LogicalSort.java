@@ -18,8 +18,9 @@ public class LogicalSort extends LogicalOperator{
 	private LogicalOperator child;
 	private ArrayList<String> columns = new ArrayList<String>();
 	private List<OrderByElement> list;
+	private boolean distinct;
 	
-	public LogicalSort(LogicalOperator child, List<OrderByElement> list) {
+	public LogicalSort(LogicalOperator child, List<OrderByElement> list, boolean distinct) {
 		this.child = child;
 		if (list == null)
 			list = null;
@@ -29,6 +30,7 @@ public class LogicalSort extends LogicalOperator{
 			}
 		}
 		this.list = list;
+		this.distinct = distinct;
 	}
 	
 	/**
@@ -54,6 +56,15 @@ public class LogicalSort extends LogicalOperator{
 	 */
 	public ArrayList<String> getColumns() {
 		return columns;
+	}
+	
+	/**
+	 * Getter method for the boolean telling us if this sortop is
+	 * the result of a DISTINCT keyword.
+	 * @return distinct
+	 */
+	public boolean getDistinct() {
+		return distinct;
 	}
 
 	/**

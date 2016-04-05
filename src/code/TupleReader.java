@@ -42,7 +42,7 @@ public class TupleReader {
 			
 			FileInputStream fin = null;
 			try {
-				fin = new FileInputStream(fileName);
+				fin = new FileInputStream(filePath);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
