@@ -144,7 +144,7 @@ public class PhysicalPlanBuilder {
 		logicalSort.getChild().accept(this);
 		Operator child = ops.pop();
 		
-		/*int sortType = Integer.valueOf(sortMethod[0]);
+		int sortType = Integer.valueOf(sortMethod[0]);
 		Operator newOp = null;
 		switch(sortType) {
 		case 0:
@@ -152,11 +152,10 @@ public class PhysicalPlanBuilder {
 			break;
 		case 1:
 			int numSortBuffers = Integer.valueOf(sortMethod[1]);
-			// TODO Edit as needed for external sort's constructor
-			newOp = new ExternalSortOperator(child, numSortBuffers,etc.);
+			newOp = new ExternalSortOperator(child, numSortBuffers, logicalSort.getList());
 			break;
-		}*/
-		Operator newOp = new SortOperator(child, logicalSort.getList());
+		}
+		newOp = new SortOperator(child, logicalSort.getList());
 		ops.push(newOp);
 	}
 
