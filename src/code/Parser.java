@@ -63,13 +63,6 @@ public class Parser {
 					List<OrderByElement> orderByElements = plainSelect.getOrderByElements();
 					boolean distinct = (plainSelect.getDistinct() != null);
 					
-					//System.out.println(plainSelect.toString());
-					
-					//construct and "do stuff" with query plan
-					//QueryPlan qp = new QueryPlan(fromItem, where, selectItems, joins, orderByElements, distinct);
-					//Operator root = qp.getRoot();
-					//root.dump();
-					
 					//Changes for P3 here:
 					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
 					//produces logical tree with root
@@ -77,8 +70,14 @@ public class Parser {
 					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, inputDir);
 					//produces physical tree with root
 					Operator phiRoot = builderP.getRoot();
+					//get time before dump
+					long timeBefore = System.currentTimeMillis();
 					//dump physical root
 					phiRoot.dump();
+					long timeAfter = System.currentTimeMillis();
+					long elapsedTime = timeAfter - timeBefore;
+					int queryNum = OutputWriter.getInstance().getQueryNumber();
+					System.out.println("Time to run query" + queryNum + " = " + elapsedTime + " ms");
 					
 					
 					
