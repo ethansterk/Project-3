@@ -102,7 +102,8 @@ public class PhysicalPlanBuilder {
 			newOp = new BNLJOperator(left, right, e, bufferSize);
 			break;
 		case 2:
-			
+			// create two sorts as children (left and right)
+			// sort on 
 			newOp = new SMJOperator();
 			break;
 		default:
@@ -120,10 +121,20 @@ public class PhysicalPlanBuilder {
 	public void visit(LogicalSort logicalSort) {
 		logicalSort.getChild().accept(this);
 		Operator child = ops.pop();
-		switch() {
 		
-		}
-		SortOperator newOp = new SortOperator(child, logicalSort.getList());
+		/*int sortType = Integer.valueOf(sortMethod[0]);
+		Operator newOp = null;
+		switch(sortType) {
+		case 0:
+			newOp = new SortOperator(child, logicalSort.getList());
+			break;
+		case 1:
+			int numSortBuffers = Integer.valueOf(sortMethod[1]);
+			// TODO Edit as needed for external sort's constructor
+			newOp = new ExternalSortOperator(child, numSortBuffers,etc.);
+			break;
+		}*/
+		Operator newOp = new SortOperator(child, logicalSort.getList());
 		ops.push(newOp);
 	}
 

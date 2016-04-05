@@ -33,7 +33,7 @@ public class CheckOutputs {
 	private File expected;
 	private File testfile;
 	
-	private boolean project_three_io = true;
+	private boolean project_three_io = false;
 
 	@Test
 	public void test() {		
@@ -73,7 +73,7 @@ public class CheckOutputs {
 	    while ((thatLine = br2.readLine()) != null) {
 	        list2.add(thatLine);
 	    }
-	
+	    
 	    br1.close();
 	    br2.close();
 	
