@@ -1,6 +1,8 @@
 package logical;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Stack;
 
@@ -102,9 +104,29 @@ public class PhysicalPlanBuilder {
 			newOp = new BNLJOperator(left, right, e, bufferSize);
 			break;
 		case 2:
+			// determine what left and right children need to be sorted on (use condition)
+			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor();
+			e.accept(visitor);
+			HashMap<String,ArrayList<String>> sortCols = visitor.getSortCols();
+			ArrayList<String> leftSortCols = sortCols.get(); 
 			// create two sorts as children (left and right)
-			// sort on 
-			newOp = new SMJOperator();
+			int sortType = Integer.valueOf(sortMethod[0]);
+			Operator leftOp = null;
+			Operator rightOp = null;
+			switch(sortType) {
+			case 0:
+				leftOp = new SortOperator(left, null); // TODO
+				rightOp = new SortOperator(right, null); // TODO
+				break;
+			case 1:
+				int numSortBuffers = Integer.valueOf(sortMethod[1]);
+				// TODO Edit as needed for external sort's constructor
+				leftOp = new ExternalSortOperator(left, numSortBuffers,);
+				rightOp = new ExternalSortOperator(right, numSortBuffers,);
+				break;
+			}
+			// create SMJOperator with sorts as its children
+			newOp = new SMJOperator(leftOp, rightOp);
 			break;
 		default:
 			System.out.println("ERR: Join Type selection.");
