@@ -33,7 +33,7 @@ public class CheckOutputs {
 	private File expected;
 	private File testfile;
 	
-	private boolean project_three_io = false;
+	private boolean project_three_io = true;
 
 	@Test
 	public void test() {		

@@ -20,6 +20,7 @@ public class DatabaseCatalog {
 	
 	private static final DatabaseCatalog instance = new DatabaseCatalog();
 	private static final HashMap<String,Schema> schemas = new HashMap<String,Schema>();
+	private static HashMap<String,String> tableFromAlias = new HashMap<String,String>();
 	
 	/**
 	 * Since there is only one instance of the DBCatalog, there is no need
@@ -71,5 +72,13 @@ public class DatabaseCatalog {
 	 */
 	public Schema getSchema(String name) {
 		return schemas.get(name);
+	}
+	
+	public void addAlias(String alias, String table) {
+		tableFromAlias.put(alias, table);
+	}
+	
+	public String getTableFromAlias(String alias) {
+		return tableFromAlias.get(alias);
 	}
 }

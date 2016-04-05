@@ -58,42 +58,72 @@ public class LogicalPlanBuilder {
 				HashMap<String,Expression> selectConditions = joinVisitor.getSelectConditions();
 				HashMap<String,Expression> joinConditions = joinVisitor.getJoinConditions();
 				
+				//Initialize the Alias -> TableName HashMap in DBCatalog
+				DatabaseCatalog db = DatabaseCatalog.getInstance();
+				boolean usesAliases;
+				
 				String[] wholeTableName = fromItem.toString().split(" ");
 				String tableName = wholeTableName[0];
-				String aliasName = "";
-				if (wholeTableName.length > 1)
-					aliasName = wholeTableName[2];
+				if (wholeTableName.length > 1) {
+					usesAliases = true;
+					String aliasName = wholeTableName[2];
+					db.addAlias(aliasName, tableName);
+				}
+				else {
+					usesAliases = false;
+					db.addAlias(tableName, tableName);
+				}
+				
+				//initialize HashMap from aliases to table names here
+				for (Join j : joins) {
+					String tempWholeTableName = j.getRightItem().toString();
+					String[] split = tempWholeTableName.split(" ");
+					String table = split[0];
+					if (usesAliases) {
+						String alias = split[2];
+						db.addAlias(alias, table);
+					}
+					else {
+						db.addAlias(table, table);
+					}
+				}
 				
 				LogicalOperator temp = new LogicalScan(fromItem.toString());
-				
-				Expression e = selectConditions.get(tableName);
-				if (e == null && aliasName != "")
+				Expression e;
+				if(usesAliases) {
+					String aliasName = wholeTableName[2];
 					e = selectConditions.get(aliasName);
-				if (e != null)
-					temp = new LogicalSelect(temp, e);
+					temp.addBaseTable(aliasName);
+				}
+				else {
+					e = selectConditions.get(tableName);
+					temp.addBaseTable(tableName);
+				}
+				if (e != null) {
+					temp = new LogicalSelect(temp,e);
+				}
 				
-				//2. Start going through joins
 				for (Join j : joins) {
-					//2a. Do selection on (j)
-					//tempWholeTableName could be "Reserves" or "Reserves AS R"
 					String tempWholeTableName = j.getRightItem().toString();
 					String[] split = tempWholeTableName.split(" ");
 					String tempTableName = split[0];
-					String tempAliasName = "";
-					if (split.length > 1)
-						tempAliasName = split[2];
-					
 					LogicalOperator tempRight = new LogicalScan(tempWholeTableName);
-					Expression ex = selectConditions.get(tempTableName);
-					if (ex == null && aliasName != "")
-						ex = selectConditions.get(tempAliasName);
-					if (ex != null)
-						tempRight = new LogicalSelect(tempRight, ex);
-					//2b. and 2c. and 2d. Join with temp on applicable join selection; assign as temp
-					Expression joinCondition = joinConditions.get(tempTableName);
-					if (joinCondition == null && aliasName != "")
-						joinCondition = joinConditions.get(tempAliasName);
-					temp = new LogicalJoin(temp, tempRight, joinCondition);
+					Expression selectE;
+					Expression joinE;
+					if (usesAliases) {
+						String tempAliasName = split[2];
+						selectE = selectConditions.get(tempAliasName);
+						joinE = joinConditions.get(tempAliasName);
+						temp.addBaseTable(tempAliasName); // TODO not sure if this is correct -- make sure adding to correct operator
+					}
+					else {
+						selectE = selectConditions.get(tempTableName);
+						joinE = joinConditions.get(tempTableName);
+						temp.addBaseTable(tempTableName); // TODO not sure if this is correct -- make sure adding to correct operator
+					}
+					if (selectE != null)
+						tempRight = new LogicalSelect(tempRight, selectE);
+					temp = new LogicalJoin(temp, tempRight, joinE);					
 				}
 				root = temp;
 			}
