@@ -103,7 +103,7 @@ public class Parser {
 		File temp = new File(tempDir);
 		String[] files = temp.list();
 		for (String s : files) {
-			File f = new File(s);
+			File f = new File(tempDir + File.separator + s);
 			if (f.exists()) f.delete();
 		}
 	}

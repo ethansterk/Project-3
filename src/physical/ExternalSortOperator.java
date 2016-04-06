@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
 
 import code.OrderComparator;
 import code.OutputWriter;
@@ -28,7 +28,7 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
  */
 public class ExternalSortOperator extends Operator {
 
-	private boolean binaryIO = true;
+	private boolean binaryIO = false;
 	private Operator child;
 	private ArrayList<String> columns = new ArrayList<String>();
 	private ArrayList<String> fields = new ArrayList<String>();
@@ -40,9 +40,11 @@ public class ExternalSortOperator extends Operator {
 	private int passes = 0;
 	private int runs = 0;
 	private String finalFileLocation = "";
-	OrderComparator oc;
-	TupleReader tr;
-	TupleWriter tw;
+	private OrderComparator oc;
+	private TupleReader tr;
+	private TupleWriter tw;
+	private Scanner sc;
+	private PrintStream p;
 	
 	public ExternalSortOperator(Operator child, int numBufferPages, List<OrderByElement> list) {
 		this.child = child;
@@ -61,20 +63,26 @@ public class ExternalSortOperator extends Operator {
 		//calculate size of buffer
 		fields = this.child.getNextTuple().getFields();
 		int numAttr = fields.size();
-		this.child.reset();	//clear left again
+		this.child.reset();	//clear the child again
 		numTuples = B * 4096 / (4 * numAttr);
 		
 		oc = new OrderComparator(columns, fields);
 		
 		doPassZero();
 		
-		buffer = new ArrayList<Tuple>();
 		doMergePass();
-		while (runs > 1) {
-			buffer = new ArrayList<Tuple>();
+		while (runs > 1)
 			doMergePass();
+		
+		if (binaryIO)
+			tr = new TupleReader(null, null, true, finalFileLocation, fields);
+		else {
+			try {
+				sc = new Scanner(new File(finalFileLocation));
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 		}
-		tr = new TupleReader(null, null, true, finalFileLocation, fields);
 	}
 	
 	/**
@@ -92,9 +100,23 @@ public class ExternalSortOperator extends Operator {
 			
 			String filename = tempDir + File.separator + id + "-p0-" + fileNum;
 			File f = new File(filename);		//don't delete!
-			tw = new TupleWriter(filename);
-			for (Tuple t : buffer) 
-				if (t != null) tw.writeTuple(t);
+			if (binaryIO) {
+				tw = new TupleWriter(filename);
+				for (Tuple t : buffer) 
+					if (t != null) tw.writeTuple(t);
+			}
+			else {
+				try {
+					p = new PrintStream(filename);
+					for (Tuple t : buffer)
+						if (t != null)
+							p.println(t.tupleString());
+					p.flush();
+					p.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
 
 			readBPages();
 			fileNum++;			
@@ -107,6 +129,7 @@ public class ExternalSortOperator extends Operator {
 	 * for input and 1 page (via TupleWriter) for output, resulting in a (B - 1)-way merge each pass.
 	 */
 	private void doMergePass() {
+		buffer = new ArrayList<Tuple>();		//clear buffer for use as output buffer in merge passes
 		int readingFileNum = 0;
 		int writingFileNum = 0;
 		int thisPass = passes + 1;
@@ -118,71 +141,143 @@ public class ExternalSortOperator extends Operator {
 		}
 		
 		while (readingFileNum < runs) {
-			//create the buffer pool
-			ArrayList<TupleReader> bufferPool = new ArrayList<TupleReader>();
-			Tuple[] bufferTuples = new Tuple[B - 1];
-			for (int i = 0; i < B - 1; i++) {
-				if (readingFileNum < runs) {
-					String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
-					bufferPool.add(new TupleReader(null, null, true, filePath, fields));
-					//bufferPool.get(i).readNewPage();
-					if (bufferPool.get(i).reachedEnd() != 1)
-						bufferTuples[i] = bufferPool.get(i).readNextTuple();
-					else {
-						bufferPool.remove(i);
-						i--;
-					}
-					readingFileNum++;
-				}
-			}
-			
 			String filename = tempDir + File.separator + id + "-p" + thisPass + "-" + writingFileNum;
 			File f = new File(filename);		//don't delete!
-			tw = new TupleWriter(filename);
 			
-			int t = 0;
-			while (bufferPool.size() > 0 && bufferTuples.length > 0) {
-				//compare the tuples at the top of each buffer
-				for (int i = 0; i < bufferTuples.length; i++) {
-					if (bufferTuples[i] == null)
-						continue;
-					int comp = oc.compare(bufferTuples[t], bufferTuples[i]);
-					if (comp > 0) {
-						t = i;
+			if (binaryIO) {
+				//create the buffer pool
+				ArrayList<TupleReader> bufferPool = new ArrayList<TupleReader>();
+				Tuple[] bufferTuples = new Tuple[B - 1];
+				for (int i = 0; i < B - 1; i++) {
+					if (readingFileNum < runs) {
+						String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
+						bufferPool.add(new TupleReader(null, null, true, filePath, fields));
+						if (bufferPool.get(i).reachedEnd() != 1)
+							bufferTuples[i] = bufferPool.get(i).readNextTuple();
+						else {
+							bufferPool.remove(i);
+							i--;
+						}
+						readingFileNum++;
 					}
 				}
 				
-				//terminate if can't pull anymore tuples
-				if (bufferTuples[t] == null)
-					break;
-
-				//write the next tuple to the output buffer
-				//writeToBuffer(bufferTuples[t], filename);
-				tw.writeTuple(bufferTuples[t]);
+				tw = new TupleWriter(filename);
 				
-				//refresh the buffer pool
-				if (bufferPool.get(t).reachedEnd() != 1) {
-					bufferTuples[t] = bufferPool.get(t).readNextTuple();
-				}
-				else {
-					bufferPool.remove(t);
-					Tuple[] tempTuples = new Tuple[bufferTuples.length - 1];
-					int j = 0;
+				int t = 0;
+				while (bufferPool.size() > 0 && bufferTuples.length > 0) {
+					//compare the tuples at the top of each buffer
 					for (int i = 0; i < bufferTuples.length; i++) {
-						if (i != t) {
-							tempTuples[j] = bufferTuples[i];
-							j++;
+						if (bufferTuples[i] == null)
+							continue;
+						int comp = oc.compare(bufferTuples[t], bufferTuples[i]);
+						if (comp > 0) {
+							t = i;
 						}
 					}
-					bufferTuples = new Tuple[tempTuples.length];
-					bufferTuples = tempTuples;
-				}
+					
+					//terminate if can't pull anymore tuples
+					if (bufferTuples[t] == null)
+						break;
 
-				t = 0;
+					//write the next tuple to the output buffer
+					tw.writeTuple(bufferTuples[t]);
+					
+					//refresh the buffer pool
+					if (bufferPool.get(t).reachedEnd() != 1) {
+						bufferTuples[t] = bufferPool.get(t).readNextTuple();
+					}
+					else {
+						bufferPool.remove(t);
+						Tuple[] tempTuples = new Tuple[bufferTuples.length - 1];
+						int j = 0;
+						for (int i = 0; i < bufferTuples.length; i++) {
+							if (i != t) {
+								tempTuples[j] = bufferTuples[i];
+								j++;
+							}
+						}
+						bufferTuples = new Tuple[tempTuples.length];
+						bufferTuples = tempTuples;
+					}
+
+					t = 0;
+				}
+				//make sure last page is written 
+				tw.writeNewPage();
 			}
-			//make sure last page is written
-			//forcePrint(buffer.size(), filename);   
-			tw.writeNewPage();
+			//human-readable version of above code
+			else {
+				//create the buffer pool
+				ArrayList<Scanner> bufferPool = new ArrayList<Scanner>();
+				Tuple[] bufferTuples = new Tuple[B - 1];
+				for (int i = 0; i < B - 1; i++) {
+					if (readingFileNum < runs) {
+						String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
+						try {
+							bufferPool.add(new Scanner(new File(filePath)));
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						}
+						if (bufferPool.get(i).hasNextLine()) {
+							bufferTuples[i] = new Tuple(bufferPool.get(i).nextLine(), fields);
+						}
+						else {
+							bufferPool.remove(i);
+							i--;
+						}
+						readingFileNum++;
+					}
+				}
+				
+				try {
+					p = new PrintStream(filename);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+				
+				int t = 0;
+				while (bufferPool.size() > 0 && bufferTuples.length > 0) {
+					//compare the tuples at the top of each buffer
+					for (int i = 0; i < bufferTuples.length; i++) {
+						if (bufferTuples[i] == null)
+							continue;
+						int comp = oc.compare(bufferTuples[t], bufferTuples[i]);
+						if (comp > 0) {
+							t = i;
+						}
+					}
+					
+					//terminate if can't pull anymore tuples
+					if (bufferTuples[t] == null)
+						break;
+
+					//write the next tuple to the output buffer
+					p.println(bufferTuples[t].tupleString());
+					
+					//refresh the buffer pool
+					if (bufferPool.get(t).hasNextLine()) {
+						bufferTuples[t] = new Tuple(bufferPool.get(t).nextLine(), fields);
+					}
+					else {
+						bufferPool.remove(t);
+						Tuple[] tempTuples = new Tuple[bufferTuples.length - 1];
+						int j = 0;
+						for (int i = 0; i < bufferTuples.length; i++) {
+							if (i != t) {
+								tempTuples[j] = bufferTuples[i];
+								j++;
+							}
+						}
+						bufferTuples = new Tuple[tempTuples.length];
+						bufferTuples = tempTuples;
+					}
+
+					t = 0;
+				}
+				p.flush();
+				p.close();
+			}
 			
 			//repeat with new buffer pool for next run
 			writingFileNum++;
@@ -214,11 +309,23 @@ public class ExternalSortOperator extends Operator {
 
 	@Override
 	public Tuple getNextTuple() {
-		return tr.readNextTuple();
+		if (binaryIO)
+			return tr.readNextTuple();
+		else {
+			if (sc.hasNextLine())
+				return new Tuple(sc.nextLine(), fields);
+			else
+				return null;
+		}
 	}
 
 	@Override
 	public void reset() {
 		tr = new TupleReader(null, null, true, finalFileLocation, fields);
+		try {
+			sc = new Scanner(new File(finalFileLocation));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 }
