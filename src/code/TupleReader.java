@@ -94,7 +94,7 @@ public class TupleReader {
 	 * read in. If this is the second-to-last page, it also clears the
 	 * leftover tuples from the previous page.
 	 */
-	public void readNewPage() {
+	private void readNewPage() {
 		buffer = ByteBuffer.allocate(4096);
 		
 		try {

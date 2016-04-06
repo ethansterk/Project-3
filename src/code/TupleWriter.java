@@ -45,7 +45,6 @@ public class TupleWriter {
 	 * in the current page being written out.
 	 */
 	public void writeNewPage() {
-
 		//overwrite metadata
 		buffer.putInt(4, numTuples);
 	
@@ -71,7 +70,7 @@ public class TupleWriter {
 	 * when full.
 	 * @param t Tuple to be written to file
 	 */
-	public void writeTuple(Tuple t) {		
+	public void writeTuple(Tuple t) {	
 		//break tuple into manageable chunks
 		ArrayList<String> data = t.getValues();
 		

@@ -20,7 +20,7 @@ import code.TupleWriter;
  */
 public abstract class Operator {
 	
-	private boolean project_three_io = false;
+	private boolean project_three_io = true;
 	
 	/**
 	 * Get the next tuple of the Operator's output.
@@ -45,6 +45,7 @@ public abstract class Operator {
 	 * null (no more output) and writes each tuple to a suitable PrintStream.
 	 */
 	public void dump() {
+		reset();
 		int queryNumber = OutputWriter.getInstance().getQueryNumber();
 		String outputDir = OutputWriter.getInstance().getOutputDir();
 		

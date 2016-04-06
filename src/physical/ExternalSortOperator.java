@@ -42,6 +42,7 @@ public class ExternalSortOperator extends Operator {
 	private String finalFileLocation = "";
 	OrderComparator oc;
 	TupleReader tr;
+	TupleWriter tw;
 	
 	public ExternalSortOperator(Operator child, int numBufferPages, List<OrderByElement> list) {
 		this.child = child;
@@ -67,8 +68,10 @@ public class ExternalSortOperator extends Operator {
 		
 		doPassZero();
 		
+		buffer = new ArrayList<Tuple>();
 		doMergePass();
 		while (runs > 1) {
+			buffer = new ArrayList<Tuple>();
 			doMergePass();
 		}
 		tr = new TupleReader(null, null, true, finalFileLocation, fields);
@@ -89,10 +92,12 @@ public class ExternalSortOperator extends Operator {
 			
 			String filename = tempDir + File.separator + id + "-p0-" + fileNum;
 			File f = new File(filename);		//don't delete!
-			forcePrint(numTuples, filename);
-			
+			tw = new TupleWriter(filename);
+			for (Tuple t : buffer) 
+				if (t != null) tw.writeTuple(t);
+
 			readBPages();
-			fileNum++;
+			fileNum++;			
 		}
 		this.runs = fileNum;
 	}
@@ -115,64 +120,69 @@ public class ExternalSortOperator extends Operator {
 		while (readingFileNum < runs) {
 			//create the buffer pool
 			ArrayList<TupleReader> bufferPool = new ArrayList<TupleReader>();
-			Tuple[] topTuples = new Tuple[B - 1];
+			Tuple[] bufferTuples = new Tuple[B - 1];
 			for (int i = 0; i < B - 1; i++) {
-				//prevent an error from trying to read from a file that doesn't exist
-				if (readingFileNum >= runs)
-					continue;
-				else {
+				if (readingFileNum < runs) {
 					String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
 					bufferPool.add(new TupleReader(null, null, true, filePath, fields));
-					bufferPool.get(i).readNewPage();
-					topTuples[i] = bufferPool.get(i).readNextTuple();
+					//bufferPool.get(i).readNewPage();
+					if (bufferPool.get(i).reachedEnd() != 1)
+						bufferTuples[i] = bufferPool.get(i).readNextTuple();
+					else {
+						bufferPool.remove(i);
+						i--;
+					}
+					readingFileNum++;
 				}
-				readingFileNum++;
 			}
-			
-			//create the remaining buffer page for output
-			buffer = new ArrayList<Tuple>();
 			
 			String filename = tempDir + File.separator + id + "-p" + thisPass + "-" + writingFileNum;
 			File f = new File(filename);		//don't delete!
+			tw = new TupleWriter(filename);
 			
 			int t = 0;
-			while (bufferPool.size() > 0 && topTuples.length > 0) {
+			while (bufferPool.size() > 0 && bufferTuples.length > 0) {
 				//compare the tuples at the top of each buffer
-				for (int i = 0; i < topTuples.length; i++) {
-					int comp = oc.compare(topTuples[t], topTuples[i]);
+				for (int i = 0; i < bufferTuples.length; i++) {
+					if (bufferTuples[i] == null)
+						continue;
+					int comp = oc.compare(bufferTuples[t], bufferTuples[i]);
 					if (comp > 0) {
 						t = i;
 					}
 				}
 				
 				//terminate if can't pull anymore tuples
-				if (topTuples[t] == null)
+				if (bufferTuples[t] == null)
 					break;
 
-				//write the next tuple to the remaining buffer
-				writeToBuffer(topTuples[t], filename);
+				//write the next tuple to the output buffer
+				//writeToBuffer(bufferTuples[t], filename);
+				tw.writeTuple(bufferTuples[t]);
 				
 				//refresh the buffer pool
 				if (bufferPool.get(t).reachedEnd() != 1) {
-					topTuples[t] = bufferPool.get(t).readNextTuple();
+					bufferTuples[t] = bufferPool.get(t).readNextTuple();
 				}
 				else {
 					bufferPool.remove(t);
-					Tuple[] tempTuples = new Tuple[topTuples.length - 1];
+					Tuple[] tempTuples = new Tuple[bufferTuples.length - 1];
 					int j = 0;
-					for (int i = 0; i < topTuples.length; i++) {
+					for (int i = 0; i < bufferTuples.length; i++) {
 						if (i != t) {
-							tempTuples[j] = topTuples[i];
+							tempTuples[j] = bufferTuples[i];
 							j++;
 						}
 					}
-					topTuples = new Tuple[tempTuples.length];
-					topTuples = tempTuples;
+					bufferTuples = new Tuple[tempTuples.length];
+					bufferTuples = tempTuples;
 				}
 
 				t = 0;
 			}
-			forcePrint(buffer.size(), filename);   //make sure last page is written
+			//make sure last page is written
+			//forcePrint(buffer.size(), filename);   
+			tw.writeNewPage();
 			
 			//repeat with new buffer pool for next run
 			writingFileNum++;
@@ -200,61 +210,6 @@ public class ExternalSortOperator extends Operator {
 			}
 		}
 		return;
-	}
-	
-	/**
-	 * Writes a tuple to the output buffer during a merge pass.
-	 * If the buffer is full, call forcePrint. 
-	 */
-	private void writeToBuffer(Tuple t, String fileLoc) {
-		int tuplesPerPage = numTuples / B;		//will be a whole number b/c of how we compute numTuples
-		buffer.add(t);
-		
-		//force a page to print
-		if (buffer.size() == tuplesPerPage) {
-			forcePrint(tuplesPerPage, fileLoc);
-		}
-	}
-	
-	/**
-	 * Forces the output buffer to disk one page at a time.
-	 */
-	private void forcePrint(int numTuples, String fileLoc) {
-		if (binaryIO) {
-			TupleWriter tw = new TupleWriter(fileLoc);
-
-			for (int i = 0; i < numTuples; i++) {
-				Tuple tup = buffer.get(i);
-				
-				//if (last) buffer isn't completely full, stop writing early
-				if (tup == null)
-					break;
-				else
-					tw.writeTuple(tup);
-			}
-			tw.writeNewPage();
-		}
-		else {
-			try {
-				PrintStream output = new PrintStream(fileLoc);
-				
-				for (int i = 0; i < numTuples; i++) {
-					Tuple tup = buffer.get(i);
-					
-					//if (last) buffer isn't completely full, stop writing early
-					if (tup == null)
-						break;
-					else
-						output.println(tup.tupleString());
-				}
-				output.flush();
-				output.close();
-				
-			} catch (FileNotFoundException e) {
-				System.out.println("Error in finding file for writing tuples for external sort.");
-				e.printStackTrace();
-			}
-		}
 	}
 
 	@Override

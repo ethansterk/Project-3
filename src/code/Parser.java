@@ -45,6 +45,7 @@ public class Parser {
 		Logger.createLogger(loggerDir);
 		
 		try {
+			cleanTempDir(tempDir);
 			CCJSqlParser parser = new CCJSqlParser(new FileReader(inputDir + File.separator + "queries.sql"));
 			Statement statement;
 			while ((statement = parser.Statement()) != null) {
@@ -81,16 +82,29 @@ public class Parser {
 					//Logger.log("Time to run query" + queryNum + " = " + elapsedTime + " ms");
 					System.out.println("Time to run query" + queryNum + " = " + elapsedTime + " ms");
 					
-					
-					
 				} catch (Exception e) {
 					System.err.println("Exception occurred while returning tuples");
 					e.printStackTrace();
 				}
+				
+				//clean tempDir after every statement/query
+				cleanTempDir(tempDir);
 			}
 		} catch (Exception e) {
 			System.err.println("Exception occurred during parsing");
 			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Helper function: wipes the tempDir clean of any files
+	 */
+	private static void cleanTempDir(String tempDir) {
+		File temp = new File(tempDir);
+		String[] files = temp.list();
+		for (String s : files) {
+			File f = new File(s);
+			if (f.exists()) f.delete();
 		}
 	}
 
