@@ -78,6 +78,7 @@ public class Parser {
 					long timeAfter = System.currentTimeMillis();
 					long elapsedTime = timeAfter - timeBefore;
 					int queryNum = OutputWriter.getInstance().getQueryNumber();
+					//Logger.log("Time to run query" + queryNum + " = " + elapsedTime + " ms");
 					System.out.println("Time to run query" + queryNum + " = " + elapsedTime + " ms");
 					
 					

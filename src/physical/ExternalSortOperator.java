@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,7 +44,6 @@ public class ExternalSortOperator extends Operator {
 	TupleReader tr;
 	
 	public ExternalSortOperator(Operator child, int numBufferPages, List<OrderByElement> list) {
-		System.out.println("Made an ExternalSortOperator");
 		this.child = child;
 		this.B = numBufferPages;
 		if (list == null)
@@ -115,6 +115,7 @@ public class ExternalSortOperator extends Operator {
 		while (readingFileNum < runs) {
 			//create the buffer pool
 			ArrayList<TupleReader> bufferPool = new ArrayList<TupleReader>();
+			Tuple[] topTuples = new Tuple[B - 1];
 			for (int i = 0; i < B - 1; i++) {
 				//prevent an error from trying to read from a file that doesn't exist
 				if (readingFileNum >= runs)
@@ -123,30 +124,31 @@ public class ExternalSortOperator extends Operator {
 					String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
 					bufferPool.add(new TupleReader(null, null, true, filePath, fields));
 					bufferPool.get(i).readNewPage();
+					topTuples[i] = bufferPool.get(i).readNextTuple();
 				}
 				readingFileNum++;
 			}
 			
 			//create the remaining buffer page for output
 			buffer = new ArrayList<Tuple>();
-
-			//grab the first Tuples to be compared and merged
-			Tuple[] topTuples = new Tuple[B - 1];
-			for (int i = 0; i < B - 1; i++) {
-				topTuples[i] = bufferPool.get(i).readNextTuple();
-			}
 			
 			String filename = tempDir + File.separator + id + "-p" + thisPass + "-" + writingFileNum;
 			File f = new File(filename);		//don't delete!
+			
 			int t = 0;
-			while (bufferPool.size() > 0) {
+			while (bufferPool.size() > 0 && topTuples.length > 0) {
 				//compare the tuples at the top of each buffer
 				for (int i = 0; i < topTuples.length; i++) {
 					int comp = oc.compare(topTuples[t], topTuples[i]);
-					if (comp > 0) 
+					if (comp > 0) {
 						t = i;
+					}
 				}
 				
+				//terminate if can't pull anymore tuples
+				if (topTuples[t] == null)
+					break;
+
 				//write the next tuple to the remaining buffer
 				writeToBuffer(topTuples[t], filename);
 				
@@ -164,6 +166,8 @@ public class ExternalSortOperator extends Operator {
 							j++;
 						}
 					}
+					topTuples = new Tuple[tempTuples.length];
+					topTuples = tempTuples;
 				}
 
 				t = 0;
@@ -191,7 +195,6 @@ public class ExternalSortOperator extends Operator {
 		buffer = new ArrayList<Tuple>();
 		for(int i = 0; i < numTuples; i++) {
 			buffer.add(child.getNextTuple());
-			//System.out.println(buffer.get(i).tupleString());
 			if(buffer.get(i) == null) {
 				return;
 			}
@@ -201,7 +204,7 @@ public class ExternalSortOperator extends Operator {
 	
 	/**
 	 * Writes a tuple to the output buffer during a merge pass.
-	 * Forces the output buffer to disk one page at a time. 
+	 * If the buffer is full, call forcePrint. 
 	 */
 	private void writeToBuffer(Tuple t, String fileLoc) {
 		int tuplesPerPage = numTuples / B;		//will be a whole number b/c of how we compute numTuples
@@ -214,8 +217,7 @@ public class ExternalSortOperator extends Operator {
 	}
 	
 	/**
-	 * For pass 0, 
-	 * For merge pass, forces the output buffer to disk one page at a time.
+	 * Forces the output buffer to disk one page at a time.
 	 */
 	private void forcePrint(int numTuples, String fileLoc) {
 		if (binaryIO) {
@@ -263,6 +265,5 @@ public class ExternalSortOperator extends Operator {
 	@Override
 	public void reset() {
 		tr = new TupleReader(null, null, true, finalFileLocation, fields);
-		
 	}
 }

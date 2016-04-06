@@ -105,10 +105,18 @@ public class TupleReader {
 			e.printStackTrace();
 		}
 
-		numAtt = buffer.getInt(0);
-		numTuplesLeft = buffer.getInt(4);
+		if (extsortFlag) {
+			numAtt = fields.size();
+			numTuplesLeft = 4088 / (4 * numAtt);
+		}
+		else {
+			numAtt = buffer.getInt(0);
+			numTuplesLeft = buffer.getInt(4);
+		}
 		buffer.position(8);
 		numPagesLeft--;
+		if (filePath.contains("p7-0"))
+			System.out.println(numAtt + " " + numTuplesLeft);
 	}
 	
 	/**
