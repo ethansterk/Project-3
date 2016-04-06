@@ -115,8 +115,6 @@ public class TupleReader {
 		}
 		buffer.position(8);
 		numPagesLeft--;
-		if (filePath.contains("p7-0"))
-			System.out.println(numAtt + " " + numTuplesLeft);
 	}
 	
 	/**
