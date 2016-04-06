@@ -20,7 +20,7 @@ import code.TupleWriter;
  */
 public abstract class Operator {
 	
-	private boolean project_three_io = true;
+	private boolean project_three_io = false;
 	
 	/**
 	 * Get the next tuple of the Operator's output.
