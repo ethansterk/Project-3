@@ -127,7 +127,7 @@ public class PhysicalPlanBuilder {
 				break;
 			}
 			// create SMJOperator with sorts as its children
-			newOp = new SMJOperator(leftOp, rightOp, e);
+			newOp = new SMJOperator(leftOp, rightOp, e, visitor.getLeftSortCols(), visitor.getRightSortCols());
 			break;
 		default:
 			System.out.println("ERR: Join Type selection.");
