@@ -20,7 +20,7 @@ import code.TupleWriter;
  */
 public abstract class Operator {
 	
-	private boolean project_three_io = true;
+	private boolean project_three_io = false;
 	
 	/**
 	 * Get the next tuple of the Operator's output.
@@ -35,6 +35,10 @@ public abstract class Operator {
 	 * return the first tuple in that Operator's output.
 	 */
 	public abstract void reset();
+	
+	public void reset(int i) {
+		System.out.println("Should not be called from Operator class.");
+	}
 	
 	/**
 	 * Repeatedly calls getNextTuple() until next tuple is 

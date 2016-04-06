@@ -99,4 +99,9 @@ public class SortOperator extends Operator {
 		collection.clear();
 		child.reset();
 	}
+	
+	@Override
+	public void reset(int i) {
+		pointer = i; // TODO check for 0-index
+	}
 }
