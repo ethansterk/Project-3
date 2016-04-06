@@ -17,6 +17,7 @@ public class SMJOperator extends Operator {
 	private ArrayList<String> rSortCols;
 	private ArrayList<String> sSortCols;
 	private int sPartitionIndex;
+	private boolean lastWasInPartition;
 	
 	public SMJOperator(Operator left, Operator right, Expression condition, ArrayList<String> leftSortCols, ArrayList<String> rightSortCols) {
 		R = left;
@@ -33,48 +34,49 @@ public class SMJOperator extends Operator {
 			System.out.println("I made a horribly wrong assumption.");
 		}
 		sPartitionIndex = 0;
+		lastWasInPartition = false;
 	}
 	
 	@Override
 	public Tuple getNextTuple() {
-		while (Tr != null && Gs != null) {
-			System.out.println("Entered SMJ getNextTuple()");
-			System.out.println("Tr = " + Tr.tupleString());
-			System.out.println("Gs = " + Gs.tupleString());
-			while (lesser(Tr,Gs)) {
-				System.out.println("Tr < Gs");
+		while (Tr != null/* && Ts != null*/) {
+			if (Ts == null) {
 				Tr = R.getNextTuple();
+				S.reset(sPartitionIndex);
+				Ts = S.getNextTuple();
+				//if (Ts == null) return null;
 				if (Tr == null) return null;
 			}
-			while (greater(Tr,Gs)) {
-				System.out.println("Tr > Gs");
-				Gs = S.getNextTuple();
-				sPartitionIndex++;
-				if (Gs == null) return null;
-			}
-			Ts = Gs;
-			while (equal(Tr,Gs)) {
-				System.out.println("Tr = Gs");
-				Ts = Gs; //this doesn't really reset it yet...
-				S.reset(sPartitionIndex);
-				if (equal(Tr,Ts)) {
-					Tuple t = Tuple.merge(Tr, Ts);
-					Ts = S.getNextTuple();
-					sPartitionIndex++;
-					EvaluateExpressionVisitor visitor = new EvaluateExpressionVisitor(t);
-					condition.accept(visitor);
-					if(visitor.getResult()) {
-						return t;
-					}
-					else {
-						System.out.println("Something horribly horrible has happened.");
-						return null;
-					}
-				}
+			if (lastWasInPartition && !equal(Tr,Ts)) {
 				Tr = R.getNextTuple();
+				S.reset(sPartitionIndex);
+				Ts = S.getNextTuple();
 			}
-			Gs = Ts;
+			while (lesser(Tr,Ts)) {
+				lastWasInPartition = false;
+				Tr = R.getNextTuple();
+				if (Tr == null) {
+					System.out.println("Tr is null");
+					return null;
+				}
+			}
+			while (greater(Tr,Ts)) {
+				lastWasInPartition = false;
+				Ts = S.getNextTuple();
+				sPartitionIndex++;
+				if (Ts == null){
+					System.out.println("Ts is null");
+					return null;
+				}
+			}
+			if (equal(Tr,Ts)) {
+				lastWasInPartition = true;
+				Tuple t = Tuple.merge(Tr, Ts);
+				Ts = S.getNextTuple();
+				return t;
+			}
 		}
+		System.out.println("t is null");
 		return null;
 	}
 	
