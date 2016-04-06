@@ -103,8 +103,6 @@ public class PhysicalPlanBuilder {
 			newOp = new BNLJOperator(left, right, e, bufferSize);
 			break;
 		case 2:
-			// determine what left and right children need to be sorted on (use condition)
-			//ArrayList<String> leftBaseTables = logicalJoin.getLeftBaseTables();
 			String rightBaseTable = logicalJoin.getRightBaseTable();
 			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor(rightBaseTable);
 			e.accept(visitor);
@@ -125,7 +123,7 @@ public class PhysicalPlanBuilder {
 				break;
 			}
 			// create SMJOperator with sorts as its children
-			newOp = new SMJOperator(leftOp, rightOp, e, visitor.getLeftSortCols(), visitor.getRightSortCols());
+			newOp = new SMJOperator(leftOp, rightOp, visitor.getLeftSortCols(), visitor.getRightSortCols());
 			break;
 		default:
 			System.out.println("ERR: Join Type selection.");

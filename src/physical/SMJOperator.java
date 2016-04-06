@@ -10,7 +10,6 @@ public class SMJOperator extends Operator {
 
 	private Operator R; // relation R
 	private Operator S; // relation S
-	private Expression condition;
 	private Tuple Tr;
 	private Tuple Ts;
 	private ArrayList<String> rSortCols;
@@ -18,10 +17,9 @@ public class SMJOperator extends Operator {
 	private int sPartitionIndex;
 	private boolean lastWasInPartition;
 	
-	public SMJOperator(Operator left, Operator right, Expression condition, ArrayList<String> leftSortCols, ArrayList<String> rightSortCols) {
+	public SMJOperator(Operator left, Operator right, ArrayList<String> leftSortCols, ArrayList<String> rightSortCols) {
 		R = left;
 		S = right;
-		this.condition = condition;
 		Tr = R.getNextTuple();
 		Ts = S.getNextTuple();
 		rSortCols = new ArrayList<String>();
@@ -34,6 +32,7 @@ public class SMJOperator extends Operator {
 	
 	@Override
 	public Tuple getNextTuple() {
+		//looping through while() but never returning
 		while (Tr != null) {
 			if (Ts == null) {
 				Tr = R.getNextTuple();
@@ -109,7 +108,12 @@ public class SMJOperator extends Operator {
 
 	@Override
 	public void reset() {
-		
+		R.reset();
+		S.reset();
+		Tr = R.getNextTuple();
+		Ts = S.getNextTuple();
+		sPartitionIndex = 0;
+		lastWasInPartition = false;
 	}
 
 }
