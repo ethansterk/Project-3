@@ -19,8 +19,12 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
 /**
+ * LogicalPlanBuilder constructs an abstract plan for the evaluation of
+ * a query. It does not include specific implementation strategies
+ * (i.e. which type of join to perform) but it does push selections.
+ * The final plan it constructs is made up of LogicalOperators.
  * 
- * @author Ryu
+ * @author Ethan Sterk (ejs334) and Laura Ng (ln233)
  *
  */
 public class LogicalPlanBuilder {

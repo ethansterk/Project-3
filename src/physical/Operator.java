@@ -36,6 +36,11 @@ public abstract class Operator {
 	 */
 	public abstract void reset();
 	
+	/**
+	 * Used only in the sort operators to reset to a particular index in 
+	 * the relation.
+	 * @param i Index in relation to reset to.
+	 */
 	public void reset(int i) {
 		System.out.println("Should not be called from Operator class.");
 	}
