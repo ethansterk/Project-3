@@ -65,11 +65,14 @@ public class SMJOperator extends Operator {
 				S.reset(sPartitionIndex);
 				Ts = S.getNextTuple();
 				if (Tr == null) return null;
+				if (Ts == null) return null;
 			}
 			if (wasInPartition && !equal(Tr,Ts)) {
 				Tr = R.getNextTuple();
 				S.reset(sPartitionIndex);
 				Ts = S.getNextTuple();
+				if (Tr == null) return null;
+				if (Ts == null) return null;
 			}
 			while (lesser(Tr,Ts)) {
 				wasInPartition = false;
