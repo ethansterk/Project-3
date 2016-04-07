@@ -120,7 +120,6 @@ public class PhysicalPlanBuilder {
 			case 1:
 				int numSortBuffers = Integer.valueOf(sortMethod[1]);
 				leftOp = new ExternalSortOperator(left, numSortBuffers, visitor.getLeftSortCols());
-				System.out.println(visitor.getLeftSortCols().toString());
 				rightOp = new ExternalSortOperator(right, numSortBuffers, visitor.getRightSortCols());
 				break;
 			}

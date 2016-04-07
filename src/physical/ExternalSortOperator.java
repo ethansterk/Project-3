@@ -101,7 +101,8 @@ public class ExternalSortOperator extends Operator {
 			if (binaryIO) {
 				tw = new TupleWriter(filename);
 				for (Tuple t : buffer) 
-					if (t != null) tw.writeTuple(t);
+					if (t != null) 
+						tw.writeTuple(t);
 			}
 			else {
 				try {
@@ -145,7 +146,7 @@ public class ExternalSortOperator extends Operator {
 			if (binaryIO) {
 				//create the buffer pool
 				ArrayList<TupleReader> bufferPool = new ArrayList<TupleReader>();
-				Tuple[] bufferTuples = new Tuple[B - 1];
+				ArrayList<Tuple> bufferTuples = new ArrayList<Tuple>();
 				for (int i = 0; i < B - 1; i++) {
 					if (readingFileNum < runs) {
 						String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
@@ -153,7 +154,7 @@ public class ExternalSortOperator extends Operator {
 						if (bufferPool.get(i).reachedEnd() != 1) {
 							Tuple temp = bufferPool.get(i).readNextTuple();
 							if (temp != null) 
-								bufferTuples[i] = temp;
+								bufferTuples.add(temp);
 							else {
 								bufferPool.remove(i);
 								i--;
@@ -170,40 +171,32 @@ public class ExternalSortOperator extends Operator {
 				tw = new TupleWriter(filename);
 				
 				int t = 0;
-				while (bufferPool.size() > 0 && bufferTuples.length > 0) {
+				while (bufferPool.size() > 0 && bufferTuples.size() > 0) {
 					//compare the tuples at the top of each buffer
-					for (int i = 0; i < bufferTuples.length; i++) {
-						if (bufferTuples[i] == null)
+					for (int i = 0; i < bufferTuples.size(); i++) {
+						if (bufferTuples.get(i) == null)
 							continue;
-						int comp = oc.compare(bufferTuples[t], bufferTuples[i]);
+						int comp = oc.compare(bufferTuples.get(t), bufferTuples.get(i));
 						if (comp > 0) {
 							t = i;
 						}
 					}
 					
 					//terminate if can't pull anymore tuples
-					if (bufferTuples[t] == null)
+					if (bufferTuples.get(t) == null)
 						break;
 
 					//write the next tuple to the output buffer
-					tw.writeTuple(bufferTuples[t]);
+					tw.writeTuple(bufferTuples.get(t));
 					
 					//refresh the buffer pool
 					if (bufferPool.get(t).reachedEnd() != 1) {
-						bufferTuples[t] = bufferPool.get(t).readNextTuple();
+						bufferTuples.remove(t);
+						bufferTuples.add(t, bufferPool.get(t).readNextTuple());
 					}
 					else {
 						bufferPool.remove(t);
-						Tuple[] tempTuples = new Tuple[bufferTuples.length - 1];
-						int j = 0;
-						for (int i = 0; i < bufferTuples.length; i++) {
-							if (i != t) {
-								tempTuples[j] = bufferTuples[i];
-								j++;
-							}
-						}
-						bufferTuples = new Tuple[tempTuples.length];
-						bufferTuples = tempTuples;
+						bufferTuples.remove(t);
 					}
 
 					t = 0;
@@ -215,7 +208,7 @@ public class ExternalSortOperator extends Operator {
 			else {
 				//create the buffer pool
 				ArrayList<Scanner> bufferPool = new ArrayList<Scanner>();
-				Tuple[] bufferTuples = new Tuple[B - 1];
+				ArrayList<Tuple> bufferTuples = new ArrayList<Tuple>();
 				for (int i = 0; i < B - 1; i++) {
 					if (readingFileNum < runs) {
 						String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
@@ -227,7 +220,7 @@ public class ExternalSortOperator extends Operator {
 						if (bufferPool.get(i).hasNextLine()) {
 							String s = bufferPool.get(i).nextLine();
 							if (s != null)
-								bufferTuples[i] = new Tuple(s, fields);
+								bufferTuples.add(new Tuple(s, fields));
 							else {
 								bufferPool.remove(i);
 								i--;
@@ -248,40 +241,32 @@ public class ExternalSortOperator extends Operator {
 				}
 				
 				int t = 0;
-				while (bufferPool.size() > 0 && bufferTuples.length > 0) {
+				while (bufferPool.size() > 0 && bufferTuples.size() > 0) {
 					//compare the tuples at the top of each buffer
-					for (int i = 0; i < bufferTuples.length; i++) {
-						if (bufferTuples[i] == null)
+					for (int i = 0; i < bufferTuples.size(); i++) {
+						if (bufferTuples.get(i) == null)
 							continue;
-						int comp = oc.compare(bufferTuples[t], bufferTuples[i]);
+						int comp = oc.compare(bufferTuples.get(t), bufferTuples.get(i));
 						if (comp > 0) {
 							t = i;
 						}
 					}
 					
 					//terminate if can't pull anymore tuples
-					if (bufferTuples[t] == null)
+					if (bufferTuples.get(t) == null)
 						break;
 
 					//write the next tuple to the output buffer
-					p.println(bufferTuples[t].tupleString());
+					p.println(bufferTuples.get(t).tupleString());
 					
 					//refresh the buffer pool
 					if (bufferPool.get(t).hasNextLine()) {
-						bufferTuples[t] = new Tuple(bufferPool.get(t).nextLine(), fields);
+						bufferTuples.remove(t);
+						bufferTuples.add(t, new Tuple(bufferPool.get(t).nextLine(), fields));
 					}
 					else {
 						bufferPool.remove(t);
-						Tuple[] tempTuples = new Tuple[bufferTuples.length - 1];
-						int j = 0;
-						for (int i = 0; i < bufferTuples.length; i++) {
-							if (i != t) {
-								tempTuples[j] = bufferTuples[i];
-								j++;
-							}
-						}
-						bufferTuples = new Tuple[tempTuples.length];
-						bufferTuples = tempTuples;
+						bufferTuples.remove(t);
 					}
 
 					t = 0;
@@ -320,14 +305,6 @@ public class ExternalSortOperator extends Operator {
 
 	@Override
 	public Tuple getNextTuple() {
-//		if (binaryIO)
-//			return tr.readNextTuple();
-//		else {
-//			if (sc.hasNextLine())
-//				return new Tuple(sc.nextLine(), fields);
-//			else
-//				return null;
-//		}
 		return tr.readNextTuple();
 	}
 	
@@ -338,7 +315,7 @@ public class ExternalSortOperator extends Operator {
 	 */
 	private void convertToBinary() {
 		String finalLoc = tempDir + File.separator + id + "-p" + passes + "-0binary";
-		File f = new File(finalLoc);
+		File f = new File(finalLoc);		//don't delete!
 
 		TupleWriter convert = new TupleWriter(finalLoc);
 		while (sc.hasNextLine()) {
