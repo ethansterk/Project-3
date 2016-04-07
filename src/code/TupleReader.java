@@ -20,7 +20,6 @@ import java.util.ArrayList;
 public class TupleReader {
 
 	private FileChannel fc;
-	private String filePath;
 	private ByteBuffer buffer;
 	private long numPagesLeft;
 	private int numAtt; //number of attributes
@@ -34,7 +33,6 @@ public class TupleReader {
 	 * @param fileName Name of the file containing the table's tuples.
 	 */
 	public TupleReader(String fileName, String alias, boolean extsort, String filePath, ArrayList<String> fields) {
-		this.filePath = filePath;
 		if (extsort) {
 			this.fields = fields;
 			numAtt = this.fields.size();
@@ -158,16 +156,7 @@ public class TupleReader {
 	 * the sort operator to reset to a certain partition (index of desired tuple).
 	 * @param i
 	 */
-	public void reset(int i) {
-		//reset FileChannel
-		FileInputStream fin = null;
-		try {
-			fin = new FileInputStream(filePath);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		fc = fin.getChannel();
-		
+	public void reset(int i) {		
 		//calculate number of pages for file
 		long numBytes = -1;
 		try {
