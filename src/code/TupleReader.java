@@ -25,8 +25,6 @@ public class TupleReader {
 	private int numAtt; //number of attributes
 	private int numTuplesLeft; //number of tuples on page
 	private ArrayList<String> fields = new ArrayList<String>();
-	private boolean extsortFlag = false;
-	private String filePath = "";
 	
 	/**
 	 * Initialize the TupleReader. Retrieves the file channel. Allocates
@@ -36,8 +34,6 @@ public class TupleReader {
 	 */
 	public TupleReader(String fileName, String alias, boolean extsort, String filePath, ArrayList<String> fields) {
 		if (extsort) {
-			extsortFlag = true;
-			this.filePath = filePath;
 			this.fields = fields;
 			
 			FileInputStream fin = null;
@@ -104,14 +100,8 @@ public class TupleReader {
 			e.printStackTrace();
 		}
 
-		if (extsortFlag) {
-			numAtt = fields.size();
-			numTuplesLeft = 4088 / (4 * numAtt);
-		}
-		else {
-			numAtt = buffer.getInt(0);
-			numTuplesLeft = buffer.getInt(4);
-		}
+		numAtt = buffer.getInt(0);
+		numTuplesLeft = buffer.getInt(4);
 		buffer.position(8);
 		numPagesLeft--;
 	}

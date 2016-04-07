@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Scanner;
 
 import code.OrderComparator;
@@ -13,7 +12,6 @@ import code.OutputWriter;
 import code.Tuple;
 import code.TupleReader;
 import code.TupleWriter;
-import net.sf.jsqlparser.statement.select.OrderByElement;
 
 /**
  * ExternalSortOperator is an alternative to the naive sort method.
@@ -77,8 +75,8 @@ public class ExternalSortOperator extends Operator {
 		else {
 			try {
 				sc = new Scanner(new File(finalFileLocation));
-//				convertToBinary();
-//				tr = new TupleReader(null, null, true, finalFileLocation, fields);
+				convertToBinary();
+				tr = new TupleReader(null, null, true, finalFileLocation, fields);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -322,18 +320,21 @@ public class ExternalSortOperator extends Operator {
 
 	@Override
 	public Tuple getNextTuple() {
-		if (binaryIO)
-			return tr.readNextTuple();
-		else {
-			if (sc.hasNextLine())
-				return new Tuple(sc.nextLine(), fields);
-			else
-				return null;
-		}
+//		if (binaryIO)
+//			return tr.readNextTuple();
+//		else {
+//			if (sc.hasNextLine())
+//				return new Tuple(sc.nextLine(), fields);
+//			else
+//				return null;
+//		}
+		return tr.readNextTuple();
 	}
 	
 	/**
 	 * When using human-readable mode, it guarantees that the final run is at least in binary.
+	 * This is so that we can access the final file using a TupleReader in all cases, especially
+	 * for the SMJOperator's partitioning algorithm.
 	 */
 	private void convertToBinary() {
 		String finalLoc = tempDir + File.separator + id + "-p" + passes + "-0binary";

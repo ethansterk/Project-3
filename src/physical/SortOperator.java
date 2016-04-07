@@ -93,12 +93,12 @@ public class SortOperator extends Operator {
 	@Override
 	public void reset() {
 		pointer = 0;
-		collection.clear();
+		collection = new ArrayList<Tuple>();
 		child.reset();
 	}
 	
 	@Override
 	public void reset(int i) {
-		pointer = i; // TODO check for 0-index
+		pointer = i;
 	}
 }

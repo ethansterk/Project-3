@@ -51,8 +51,8 @@ public class TupleWriter {
 		buffer.putInt(4, numTuples);
 	
 		//flip buffer, buffer.flip() doesn't work for this
-		buffer.position(0);
 		buffer.limit(buffer.capacity());
+		buffer.position(0);
 		
 		//output buffer to channel
 		try {
