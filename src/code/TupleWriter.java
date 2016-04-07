@@ -18,6 +18,7 @@ public class TupleWriter {
 
 	private FileChannel fc;
 	private ByteBuffer buffer;
+	private String filename;
 	private int numAtt;
 	private int numTuples;
 	
@@ -28,8 +29,9 @@ public class TupleWriter {
 	 */
 	public TupleWriter(String fileName) {
 		FileOutputStream fout = null;
+		filename = fileName;
 		try {
-			fout = new FileOutputStream(fileName);
+			fout = new FileOutputStream(filename);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -44,13 +46,14 @@ public class TupleWriter {
 	 * Also, overwrites the metadata for the number of tuples now stored
 	 * in the current page being written out.
 	 */
-	public void writeNewPage() {
+	public void writeNewPage() {		
 		//overwrite metadata
 		buffer.putInt(4, numTuples);
 	
 		//flip buffer, buffer.flip() doesn't work for this
 		buffer.position(0);
 		buffer.limit(buffer.capacity());
+		
 		//output buffer to channel
 		try {
 			fc.write(buffer);

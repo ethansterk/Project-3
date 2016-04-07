@@ -1,6 +1,8 @@
 package code;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The OrderComparator class defines a custom Comparator<Tuple> that will
@@ -20,6 +22,12 @@ public class OrderComparator implements Comparator<Tuple> {
 		else {
 			ArrayList<String> tempFields = new ArrayList<String>();
 			tempFields.addAll(allColumns);
+			
+			//remove duplicate columns in sortColumns
+			Set<String> hs = new HashSet<>();
+			hs.addAll(sortColumns);
+			sortColumns.clear();
+			sortColumns.addAll(hs);
 			
 			//temporarily remove the columns mentioned in the ORDER BY clause from the list of all columns
 			for (String sortCol : sortColumns) {

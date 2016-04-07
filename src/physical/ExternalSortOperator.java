@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Scanner;
 
 import code.OrderComparator;
@@ -13,7 +12,6 @@ import code.OutputWriter;
 import code.Tuple;
 import code.TupleReader;
 import code.TupleWriter;
-import net.sf.jsqlparser.statement.select.OrderByElement;
 
 /**
  * ExternalSortOperator is an alternative to the naive sort method.
@@ -46,16 +44,14 @@ public class ExternalSortOperator extends Operator {
 	private Scanner sc;
 	private PrintStream p;
 	
-	public ExternalSortOperator(Operator child, int numBufferPages, List<OrderByElement> list) {
+	public ExternalSortOperator(Operator child, int numBufferPages, ArrayList<String> list) {
 		this.child = child;
 		this.B = numBufferPages;
 		if (list == null)
 			list = null;
-		else {
-			for (OrderByElement x : list) {
-				columns.add(x.getExpression().toString());
-			}
-		}
+		else
+			columns = list;
+		
 		//standardize the temp directory we're writing to
 		id = child.toString();
 		tempDir = OutputWriter.getInstance().getTempDir();
@@ -70,15 +66,20 @@ public class ExternalSortOperator extends Operator {
 		
 		doPassZero();
 		
+		buffer = new ArrayList<Tuple>();
 		doMergePass();
-		while (runs > 1)
+		while (runs > 1) {
+			buffer = new ArrayList<Tuple>();
 			doMergePass();
+		}
 		
 		if (binaryIO)
 			tr = new TupleReader(null, null, true, finalFileLocation, fields);
 		else {
 			try {
 				sc = new Scanner(new File(finalFileLocation));
+				convertToBinary();
+				tr = new TupleReader(null, null, true, finalFileLocation, fields);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -129,7 +130,6 @@ public class ExternalSortOperator extends Operator {
 	 * for input and 1 page (via TupleWriter) for output, resulting in a (B - 1)-way merge each pass.
 	 */
 	private void doMergePass() {
-		buffer = new ArrayList<Tuple>();		//clear buffer for use as output buffer in merge passes
 		int readingFileNum = 0;
 		int writingFileNum = 0;
 		int thisPass = passes + 1;
@@ -220,7 +220,8 @@ public class ExternalSortOperator extends Operator {
 							e.printStackTrace();
 						}
 						if (bufferPool.get(i).hasNextLine()) {
-							bufferTuples[i] = new Tuple(bufferPool.get(i).nextLine(), fields);
+							String s = bufferPool.get(i).nextLine();
+							if (s != null) bufferTuples[i] = new Tuple(s, fields);
 						}
 						else {
 							bufferPool.remove(i);
@@ -306,17 +307,26 @@ public class ExternalSortOperator extends Operator {
 		}
 		return;
 	}
+	
+	/**
+	 * When using human-readable mode, it guarantees that the final run is at least in binary.
+	 */
+	private void convertToBinary() {
+		String finalLoc = tempDir + File.separator + id + "-p" + passes + "-0binary";
+		File f = new File(finalLoc);
+
+		TupleWriter convert = new TupleWriter(finalLoc);
+		while (sc.hasNextLine()) {
+			convert.writeTuple(new Tuple(sc.nextLine(), fields));
+		}
+		convert.writeNewPage();
+		
+		finalFileLocation = finalLoc;
+	}
 
 	@Override
 	public Tuple getNextTuple() {
-		if (binaryIO)
-			return tr.readNextTuple();
-		else {
-			if (sc.hasNextLine())
-				return new Tuple(sc.nextLine(), fields);
-			else
-				return null;
-		}
+		return tr.readNextTuple();
 	}
 
 	@Override
@@ -327,5 +337,10 @@ public class ExternalSortOperator extends Operator {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	@Override
+	public void reset(int i) {
+		tr.reset(i);
 	}
 }

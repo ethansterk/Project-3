@@ -18,12 +18,12 @@ public class JoinOperator extends Operator {
 	private Operator right;
 	private Expression condition;						//if null, it's a cross-product
 	private Tuple tLeftCurrent;		//current Tuple in left child, starts at first tuple
+	private Tuple tRight;
 	
 	public JoinOperator(Operator left, Operator right, Expression condition) {
 		this.left = left;
 		this.right = right;
 		this.condition = condition;
-		tLeftCurrent = left.getNextTuple();
 	}
 	
 	/**
@@ -36,12 +36,12 @@ public class JoinOperator extends Operator {
 	 */
 	@Override
 	public Tuple getNextTuple() {
-		Tuple tRight = null;
-		Tuple t = null;
-		
+		if (tLeftCurrent == null)
+			tLeftCurrent = left.getNextTuple();
 		while(tLeftCurrent != null) {
 			tRight = right.getNextTuple();
 			if(tRight != null) {
+				Tuple t = null;
 				if (condition != null) {
 					t = Tuple.merge(tLeftCurrent, tRight);
 					EvaluateExpressionVisitor visitor = new EvaluateExpressionVisitor(t);

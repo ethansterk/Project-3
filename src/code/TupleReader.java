@@ -80,11 +80,10 @@ public class TupleReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if(numBytes % 4096 == 0) {
+		if(numBytes % 4096 == 0)
 			numPagesLeft = numBytes / 4096;
-		} else {
+		else
 			numPagesLeft = numBytes / 4096 + 1;
-		}
 		
 		buffer = ByteBuffer.allocate(4096);
 	}
@@ -161,17 +160,40 @@ public class TupleReader {
 	}
 	
 	/**
-	 * 
+	 * Used by ExternalSortOperator when SMJOperator is the parent requesting
+	 * the sort operator to reset to a certain partition (index of desired tuple).
+	 * @param i
 	 */
-	public void close() {
+	public void reset(int i) {
+		//compute number of page that tuple will be on, first page = 0
+		//and index of tuple on that page, starting with 0
+		int pageNum = -1;
+		int tupleIndexOnPage = -1;
+		try {
+			if (i >= fc.size())
+				System.err.println("SMJ partition index is out of bounds");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		
-	}
-	
-	/**
-	 * 
-	 */
-	public void reset() {
+		int tuplesPerPage = 4088 / (4 * numAtt);
+		if(i % tuplesPerPage == 0)
+			pageNum = i / tuplesPerPage;
+		else
+			pageNum = i / tuplesPerPage + 1;
+		tupleIndexOnPage = i % tuplesPerPage;
 		
+		//fetch that page - can reset position of FileChannel to start of desired page within file using position(long newPosition)
+		try {
+			fc.position(pageNum * 4096);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		//go to specific tuple
+		while (tupleIndexOnPage > 0) {
+			readNextTuple();
+			tupleIndexOnPage--;
+		}
 	}
 	
 }

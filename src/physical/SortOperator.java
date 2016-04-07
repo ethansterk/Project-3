@@ -42,11 +42,8 @@ public class SortOperator extends Operator {
 		this.child = child;
 		if (sortCols == null)
 			sortCols = null;
-		else {
-			for (String x : sortCols) {
-				columns.add(x);
-			}
-		}
+		else
+			columns = sortCols;
 		createCollection();
 	}
 

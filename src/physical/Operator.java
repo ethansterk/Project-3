@@ -76,9 +76,8 @@ public abstract class Operator {
 			try {
 				PrintStream output = new PrintStream(f);
 				Tuple t = getNextTuple();
-				while (t != null) {
+				while (t != null && t.getFields() != null) {
 					//write Tuple t to a PrintStream
-					//System.out.println(t.tupleString());
 					output.println(t.tupleString());
 					t = getNextTuple();
 				}

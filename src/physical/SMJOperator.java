@@ -110,8 +110,14 @@ public class SMJOperator extends Operator {
 			int sAttrIndex = ts.getFields().indexOf(sSortCols.get(i));
 			int tri = Integer.valueOf(tr.getValues().get(rAttrIndex));
 			int tsj = Integer.valueOf(ts.getValues().get(sAttrIndex));
-			if (tri >= tsj)
+			if (i == rSortCols.size() - 1) {
+				if (tri >= tsj) return false;
+				else return true;
+			}
+			if (tri > tsj) 
 				return false;
+			if (tri < tsj)
+				return true;
 		}
 		return true;
 	}
@@ -130,8 +136,14 @@ public class SMJOperator extends Operator {
 			int sAttrIndex = ts.getFields().indexOf(sSortCols.get(i));
 			int tri = Integer.valueOf(tr.getValues().get(rAttrIndex));
 			int tsj = Integer.valueOf(ts.getValues().get(sAttrIndex));
-			if (tri <= tsj)
+			if (i == rSortCols.size() - 1) {
+				if (tri <= tsj) return false;
+				else return true;
+			}
+			if (tri < tsj)
 				return false;
+			if (tri > tsj)
+				return true;
 		}
 		return true;
 	}

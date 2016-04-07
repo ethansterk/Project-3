@@ -25,10 +25,10 @@ public class CheckOutputs {
 	//have to change these three values depending on what we're running and where we've put the results
 	private int numFiles = 15;	
 	// TODO switch directories after pulling code
-	//private String expectedDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator + "expected";
-	private String expectedDir = "C:"+File.separator+"Users"+File.separator+"Ethan"+File.separator+"Desktop"+File.separator+"samples"+File.separator+"expected";
-	//private String testDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator+ "output";
-	private String testDir = "C:"+File.separator+"Users"+File.separator+"Ethan"+File.separator+"Desktop"+File.separator+"samples"+File.separator+"output";
+	private String expectedDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator + "Samples" + File.separator + "samples" + File.separator + "expected";
+	//private String expectedDir = "C:"+File.separator+"Users"+File.separator+"Ethan"+File.separator+"Desktop"+File.separator+"samples"+File.separator+"expected";
+	private String testDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator+ "Samples" + File.separator + "samples" + File.separator + "output";
+	//private String testDir = "C:"+File.separator+"Users"+File.separator+"Ethan"+File.separator+"Desktop"+File.separator+"samples"+File.separator+"output";
 	
 	private File expected;
 	private File testfile;
@@ -41,8 +41,15 @@ public class CheckOutputs {
 			if (i == 12) {
 				continue;
 			}
-			expected = new File(expectedDir + File.separator + "query" + i);
-			testfile = new File(testDir + File.separator + "query" + i);
+			
+			if (project_three_io) {
+				expected = new File(expectedDir + File.separator + "query" + i);
+				testfile = new File(testDir + File.separator + "query" + i);
+			}
+			else {
+				expected = new File(expectedDir + File.separator + "query" + i + "_humanreadable");
+				testfile = new File(testDir + File.separator + "query" + i);
+			}
 			System.out.println("query " + i);
 			
 			boolean compare;
@@ -50,8 +57,9 @@ public class CheckOutputs {
 				if (project_three_io) 
 					compare = CompareTwoFilesbyByte(expected, testfile);
 				else {
-					expected = new File(expectedDir + File.separator + "query" + i + "_humanreadable");
-					compare = compareTwoFilesHR(expected, testfile);		
+					if (project_three_io) expected = new File(expectedDir + File.separator + "query" + i);
+					else expected = new File(expectedDir + File.separator + "query" + i + "_humanreadable");
+					compare = compareTwoFilesHR(expected, testfile);
 				}
 				assertEquals(true, compare);
 			} catch (Exception e) {
@@ -72,11 +80,22 @@ public class CheckOutputs {
 	    List<String> list1 = new ArrayList<String>();
 	    List<String> list2 = new ArrayList<String>();
 	
+//	    while ((thisLine = br1.readLine()) != null) {
+//	        list1.add(thisLine);
+//	    }
+//	    while ((thatLine = br2.readLine()) != null) {
+//	        list2.add(thatLine);
+//	    }
 	    while ((thisLine = br1.readLine()) != null) {
-	        list1.add(thisLine);
-	    }
-	    while ((thatLine = br2.readLine()) != null) {
-	        list2.add(thatLine);
+	    	thatLine = br2.readLine();
+	    	if (!thisLine.equals(thatLine)) {
+	    		br1.close();
+	    	    br2.close();
+	    	    System.out.println("Error in tuples:");
+	    	    System.out.println("Expected = " + thisLine);
+	    	    System.out.println("Actual = " + thatLine);
+	    		return false;
+	    	}
 	    }
 	    
 	    br1.close();

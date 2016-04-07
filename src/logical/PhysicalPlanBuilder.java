@@ -2,10 +2,12 @@ package logical;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.statement.select.OrderByElement;
 import physical.*;
 
 /**
@@ -117,9 +119,8 @@ public class PhysicalPlanBuilder {
 				break;
 			case 1:
 				int numSortBuffers = Integer.valueOf(sortMethod[1]);
-				// TODO Edit as needed for external sort's constructor
-				//leftOp = new ExternalSortOperator(left, numSortBuffers,);
-				//rightOp = new ExternalSortOperator(right, numSortBuffers,);
+				leftOp = new ExternalSortOperator(left, numSortBuffers, visitor.getLeftSortCols());
+				rightOp = new ExternalSortOperator(right, numSortBuffers, visitor.getRightSortCols());
 				break;
 			}
 			// create SMJOperator with sorts as its children
@@ -154,7 +155,11 @@ public class PhysicalPlanBuilder {
 			break;
 		case 1:
 			int numSortBuffers = Integer.valueOf(sortMethod[1]);
-			newOp = new ExternalSortOperator(child, numSortBuffers, logicalSort.getList());
+			List<OrderByElement> list = logicalSort.getList();
+			ArrayList<String> sortList = new ArrayList<String>();
+			for (OrderByElement o : list)
+				sortList.add(o.getExpression().toString());
+			newOp = new ExternalSortOperator(child, numSortBuffers, sortList);
 			break;
 		}
 		ops.push(newOp);
