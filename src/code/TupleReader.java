@@ -20,6 +20,7 @@ import java.util.ArrayList;
 public class TupleReader {
 
 	private FileChannel fc;
+	private String filePath;
 	private ByteBuffer buffer;
 	private long numPagesLeft;
 	private int numAtt; //number of attributes
@@ -33,6 +34,7 @@ public class TupleReader {
 	 * @param fileName Name of the file containing the table's tuples.
 	 */
 	public TupleReader(String fileName, String alias, boolean extsort, String filePath, ArrayList<String> fields) {
+		this.filePath = filePath;
 		if (extsort) {
 			this.fields = fields;
 			
@@ -155,35 +157,65 @@ public class TupleReader {
 	 * @param i
 	 */
 	public void reset(int i) {
+		//reset FileChannel
+		FileInputStream fin = null;
+		try {
+			fin = new FileInputStream(filePath);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		fc = fin.getChannel();
+		
+		//calculate number of pages for file
+		long numBytes = -1;
+		try {
+			numBytes = fc.size();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if(numBytes % 4096 == 0)
+			numPagesLeft = numBytes / 4096;
+		else
+			numPagesLeft = numBytes / 4096 + 1;
+		
 		//compute number of page that tuple will be on, first page = 0
 		//and index of tuple on that page, starting with 0
 		int pageNum = -1;
 		int tupleIndexOnPage = -1;
-		try {
-			if (i >= fc.size())
-				System.err.println("SMJ partition index is out of bounds");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		int tuplesPerPage = 4088 / (4 * numAtt);
+		int tuplesPerPage = 4088 / (4 * numAtt);		//4088 to account 8 bytes metadata
 		if(i % tuplesPerPage == 0)
 			pageNum = i / tuplesPerPage;
 		else
 			pageNum = i / tuplesPerPage + 1;
 		tupleIndexOnPage = i % tuplesPerPage;
 		
+		//update numPagesLeft and numTuplesLeft
+		numPagesLeft = numPagesLeft - pageNum;
+		numTuplesLeft = 0;
+		
 		//fetch that page - can reset position of FileChannel to start of desired page within file using position(long newPosition)
+		//and update numPagesLeft
 		try {
 			fc.position(pageNum * 4096);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		//go to specific tuple
-		while (tupleIndexOnPage > 0) {
-			readNextTuple();
-			tupleIndexOnPage--;
+		readNewPage();
+		
+		if (tupleIndexOnPage != 0) {
+			try {
+				fc.position(fc.position() + 8 + (tupleIndexOnPage * 4 * numAtt));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			numTuplesLeft -= tupleIndexOnPage;
+			System.out.println(numPagesLeft + " " + numTuplesLeft);
 		}
+		
+//		//go to specific tuple
+//		while (tupleIndexOnPage > 0) {
+//			readNextTuple();
+//			tupleIndexOnPage--;
+//		}
 	}
-	
 }
