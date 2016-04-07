@@ -46,6 +46,10 @@ public class SMJOperator extends Operator {
 		sSortCols.addAll(rightSortCols);
 		sPartitionIndex = 0;
 		wasInPartition = false;
+		if (rSortCols.size() != sSortCols.size()) {
+			System.out.println("rSortCols: " + rSortCols);
+			System.out.println("sSortCols: " + sSortCols);
+		}
 	}
 	
 	/**

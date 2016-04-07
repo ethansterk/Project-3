@@ -43,7 +43,7 @@ public class SortOperator extends Operator {
 		if (sortCols == null)
 			sortCols = null;
 		else
-			columns = sortCols;
+			columns.addAll(sortCols); // must use addAll() because passes by reference
 		createCollection();
 	}
 

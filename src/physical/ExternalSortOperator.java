@@ -50,7 +50,7 @@ public class ExternalSortOperator extends Operator {
 		if (list == null)
 			list = null;
 		else
-			columns = list;
+			columns.addAll(list); // must use addAll() because passes by reference
 		
 		//standardize the temp directory we're writing to
 		id = child.toString();
