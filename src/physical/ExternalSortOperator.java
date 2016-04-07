@@ -26,7 +26,7 @@ import code.TupleWriter;
  */
 public class ExternalSortOperator extends Operator {
 
-	private boolean binaryIO = false;
+	private boolean binaryIO = true;
 	private Operator child;
 	private ArrayList<String> columns = new ArrayList<String>();
 	private ArrayList<String> fields = new ArrayList<String>();
@@ -103,6 +103,7 @@ public class ExternalSortOperator extends Operator {
 				for (Tuple t : buffer) 
 					if (t != null) 
 						tw.writeTuple(t);
+				tw.writeNewPage();
 			}
 			else {
 				try {

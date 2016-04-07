@@ -114,11 +114,13 @@ public class TupleReader {
 	 */
 	public Tuple readNextTuple() {
 		if (numTuplesLeft == 0 && numPagesLeft > 0) {
+			System.out.println("reading new page automatically");
 			readNewPage();
 		}
 		else if (numTuplesLeft == 0 && numPagesLeft == 0) {
 			return null;
 		}
+		System.out.println(numPagesLeft + " " + numTuplesLeft + " " + numAtt);
 		
 		String data = "";
 		for (int i = 0; i < numAtt; i++) {
@@ -176,7 +178,7 @@ public class TupleReader {
 		int tuplesPerPage = 4088 / (4 * numAtt);		//4088 to account 8 bytes metadata
 		pageNum = i / tuplesPerPage;
 		tupleIndexOnPage = i % tuplesPerPage;
-		System.out.println("index: " + i + " tuplesPage: " + tuplesPerPage + " pageNum: " + pageNum + " tupleIndex: " + tupleIndexOnPage);
+		System.out.println("index: " + i + " tupleIndex: " + tupleIndexOnPage + " pageNum: " + pageNum);
 		
 		//update numPagesLeft and numTuplesLeft
 		numPagesLeft = numPagesLeft - pageNum;
@@ -199,6 +201,8 @@ public class TupleReader {
 			}
 			numTuplesLeft -= tupleIndexOnPage;
 		}
+		System.out.println("tupleIndex after readNewPage: " + tupleIndexOnPage + " numTuplesLeft: " + numTuplesLeft); 
+		//System.out.println("after readnewpage in reset, numPagesLeft: " + numPagesLeft + " numTuplesLeft: " + numTuplesLeft);
 		
 //		//go to specific tuple
 //		while (tupleIndexOnPage > 0) {

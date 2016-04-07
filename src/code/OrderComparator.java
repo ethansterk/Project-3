@@ -18,7 +18,7 @@ public class OrderComparator implements Comparator<Tuple> {
 	public OrderComparator(ArrayList<String> sortColumns, ArrayList<String> allColumns) {
 		//if there was no ORDER BY clause
 		if (sortColumns == null)
-			columnPriority = allColumns;
+			columnPriority.addAll(allColumns);
 		else {
 			ArrayList<String> tempFields = new ArrayList<String>();
 			tempFields.addAll(allColumns);
