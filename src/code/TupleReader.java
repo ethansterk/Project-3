@@ -37,6 +37,7 @@ public class TupleReader {
 		this.filePath = filePath;
 		if (extsort) {
 			this.fields = fields;
+			numAtt = this.fields.size();
 			
 			FileInputStream fin = null;
 			try {
@@ -60,6 +61,7 @@ public class TupleReader {
 				for (String c : tempFields)
 					this.fields.add(fileName + "." + c);
 			}
+			numAtt = this.fields.size();
 		
 			//retrieve the file channel
 			FileInputStream fin = null;
@@ -102,7 +104,7 @@ public class TupleReader {
 			e.printStackTrace();
 		}
 
-		numAtt = buffer.getInt(0);
+		/*numAtt = */buffer.getInt(0);
 		numTuplesLeft = buffer.getInt(4);
 		buffer.position(8);
 		numPagesLeft--;
@@ -183,11 +185,9 @@ public class TupleReader {
 		int pageNum = -1;
 		int tupleIndexOnPage = -1;
 		int tuplesPerPage = 4088 / (4 * numAtt);		//4088 to account 8 bytes metadata
-		if(i % tuplesPerPage == 0)
-			pageNum = i / tuplesPerPage;
-		else
-			pageNum = i / tuplesPerPage + 1;
+		pageNum = i / tuplesPerPage;
 		tupleIndexOnPage = i % tuplesPerPage;
+		System.out.println("index: " + i + " tuplesPage: " + tuplesPerPage + " pageNum: " + pageNum + " tupleIndex: " + tupleIndexOnPage);
 		
 		//update numPagesLeft and numTuplesLeft
 		numPagesLeft = numPagesLeft - pageNum;
@@ -209,7 +209,6 @@ public class TupleReader {
 				e.printStackTrace();
 			}
 			numTuplesLeft -= tupleIndexOnPage;
-			System.out.println(numPagesLeft + " " + numTuplesLeft);
 		}
 		
 //		//go to specific tuple
