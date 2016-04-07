@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 
 import code.OrderComparator;
@@ -12,6 +13,7 @@ import code.OutputWriter;
 import code.Tuple;
 import code.TupleReader;
 import code.TupleWriter;
+import net.sf.jsqlparser.statement.select.OrderByElement;
 
 /**
  * ExternalSortOperator is an alternative to the naive sort method.
@@ -66,20 +68,17 @@ public class ExternalSortOperator extends Operator {
 		
 		doPassZero();
 		
-		buffer = new ArrayList<Tuple>();
 		doMergePass();
-		while (runs > 1) {
-			buffer = new ArrayList<Tuple>();
+		while (runs > 1)
 			doMergePass();
-		}
 		
 		if (binaryIO)
 			tr = new TupleReader(null, null, true, finalFileLocation, fields);
 		else {
 			try {
 				sc = new Scanner(new File(finalFileLocation));
-				convertToBinary();
-				tr = new TupleReader(null, null, true, finalFileLocation, fields);
+//				convertToBinary();
+//				tr = new TupleReader(null, null, true, finalFileLocation, fields);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -96,7 +95,7 @@ public class ExternalSortOperator extends Operator {
 
 		readBPages();
 		
-		while (buffer.get(0) != null) {
+		while (buffer.size() > 0) {
 			Collections.sort(buffer, oc);
 			
 			String filename = tempDir + File.separator + id + "-p0-" + fileNum;
@@ -130,6 +129,7 @@ public class ExternalSortOperator extends Operator {
 	 * for input and 1 page (via TupleWriter) for output, resulting in a (B - 1)-way merge each pass.
 	 */
 	private void doMergePass() {
+		buffer = new ArrayList<Tuple>();		//clear buffer for use as output buffer in merge passes
 		int readingFileNum = 0;
 		int writingFileNum = 0;
 		int thisPass = passes + 1;
@@ -152,8 +152,15 @@ public class ExternalSortOperator extends Operator {
 					if (readingFileNum < runs) {
 						String filePath = tempDir + File.separator + id + "-p" + passes + "-" + readingFileNum;
 						bufferPool.add(new TupleReader(null, null, true, filePath, fields));
-						if (bufferPool.get(i).reachedEnd() != 1)
-							bufferTuples[i] = bufferPool.get(i).readNextTuple();
+						if (bufferPool.get(i).reachedEnd() != 1) {
+							Tuple temp = bufferPool.get(i).readNextTuple();
+							if (temp != null) 
+								bufferTuples[i] = temp;
+							else {
+								bufferPool.remove(i);
+								i--;
+							}
+						}
 						else {
 							bufferPool.remove(i);
 							i--;
@@ -221,7 +228,12 @@ public class ExternalSortOperator extends Operator {
 						}
 						if (bufferPool.get(i).hasNextLine()) {
 							String s = bufferPool.get(i).nextLine();
-							if (s != null) bufferTuples[i] = new Tuple(s, fields);
+							if (s != null)
+								bufferTuples[i] = new Tuple(s, fields);
+							else {
+								bufferPool.remove(i);
+								i--;
+							}
 						}
 						else {
 							bufferPool.remove(i);
@@ -300,12 +312,24 @@ public class ExternalSortOperator extends Operator {
 	private void readBPages() {
 		buffer = new ArrayList<Tuple>();
 		for(int i = 0; i < numTuples; i++) {
-			buffer.add(child.getNextTuple());
-			if(buffer.get(i) == null) {
+			Tuple temp = child.getNextTuple();
+			if (temp == null)
 				return;
-			}
+			buffer.add(temp);
 		}
 		return;
+	}
+
+	@Override
+	public Tuple getNextTuple() {
+		if (binaryIO)
+			return tr.readNextTuple();
+		else {
+			if (sc.hasNextLine())
+				return new Tuple(sc.nextLine(), fields);
+			else
+				return null;
+		}
 	}
 	
 	/**
@@ -317,16 +341,12 @@ public class ExternalSortOperator extends Operator {
 
 		TupleWriter convert = new TupleWriter(finalLoc);
 		while (sc.hasNextLine()) {
-			convert.writeTuple(new Tuple(sc.nextLine(), fields));
+			String s = sc.nextLine();
+			if (s != null) convert.writeTuple(new Tuple(s, fields));
 		}
 		convert.writeNewPage();
 		
 		finalFileLocation = finalLoc;
-	}
-
-	@Override
-	public Tuple getNextTuple() {
-		return tr.readNextTuple();
 	}
 
 	@Override

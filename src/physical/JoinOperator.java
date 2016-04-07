@@ -72,6 +72,8 @@ public class JoinOperator extends Operator {
 	public void reset() {
 		left.reset();
 		right.reset();
+		tLeftCurrent = null;
+		tRight = null;
 	}
 	
 }
