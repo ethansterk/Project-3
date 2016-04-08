@@ -25,6 +25,7 @@ public class TupleReader {
 	private int numAtt; //number of attributes
 	private int numTuplesLeft; //number of tuples on page
 	private ArrayList<String> fields = new ArrayList<String>();
+	private String name;
 	
 	/**
 	 * Initialize the TupleReader. Retrieves the file channel. Allocates
@@ -44,8 +45,10 @@ public class TupleReader {
 				e.printStackTrace();
 			}
 			fc = fin.getChannel();
+			name = filePath.substring(filePath.indexOf("@"));
 		}
 		else {
+			name = fileName;
 			Schema sch = DatabaseCatalog.getInstance().getSchema(fileName);
 			String tableDir = sch.getTableDir();
 			ArrayList<String> tempFields = sch.getCols();
@@ -114,13 +117,13 @@ public class TupleReader {
 	 */
 	public Tuple readNextTuple() {
 		if (numTuplesLeft == 0 && numPagesLeft > 0) {
-			System.out.println("reading new page automatically");
 			readNewPage();
 		}
 		else if (numTuplesLeft == 0 && numPagesLeft == 0) {
 			return null;
 		}
-		System.out.println(numPagesLeft + " " + numTuplesLeft + " " + numAtt);
+		
+		if (buffer.remaining() < (4 * numAtt)) return null;
 		
 		String data = "";
 		for (int i = 0; i < numAtt; i++) {
@@ -178,7 +181,6 @@ public class TupleReader {
 		int tuplesPerPage = 4088 / (4 * numAtt);		//4088 to account 8 bytes metadata
 		pageNum = i / tuplesPerPage;
 		tupleIndexOnPage = i % tuplesPerPage;
-		System.out.println("index: " + i + " tupleIndex: " + tupleIndexOnPage + " pageNum: " + pageNum);
 		
 		//update numPagesLeft and numTuplesLeft
 		numPagesLeft = numPagesLeft - pageNum;
@@ -201,13 +203,5 @@ public class TupleReader {
 			}
 			numTuplesLeft -= tupleIndexOnPage;
 		}
-		System.out.println("tupleIndex after readNewPage: " + tupleIndexOnPage + " numTuplesLeft: " + numTuplesLeft); 
-		//System.out.println("after readnewpage in reset, numPagesLeft: " + numPagesLeft + " numTuplesLeft: " + numTuplesLeft);
-		
-//		//go to specific tuple
-//		while (tupleIndexOnPage > 0) {
-//			readNextTuple();
-//			tupleIndexOnPage--;
-//		}
 	}
 }

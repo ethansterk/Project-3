@@ -113,7 +113,7 @@ public class PhysicalPlanBuilder {
 			Operator leftOp = null;
 			Operator rightOp = null;
 			//TODO: forcing it to use SortOperators only because SMJ+ExternalSort is buggy
-			//sortType = 0;
+			sortType = 0;
 			switch(sortType) {
 			case 0:
 				leftOp = new SortOperator(left, visitor.getLeftSortCols());
