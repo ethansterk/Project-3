@@ -46,8 +46,6 @@ public class SMJOperator extends Operator {
 		sSortCols.addAll(rightSortCols);
 		sPartitionIndex = 0;
 		wasInPartition = false;
-		System.out.println("rSortCols = " + rSortCols);
-		System.out.println("sSortCols = " + sSortCols);
 	}
 	
 	/**
@@ -70,7 +68,6 @@ public class SMJOperator extends Operator {
 				if (Ts == null) return null;
 			}
 			while (lesser(Tr,Ts)) {
-				//System.out.println("Lesser tuples: " + Tr.tupleString() + " and " + Ts.tupleString());
 				wasInPartition = false;
 				Tr = R.getNextTuple();
 				if (Tr == null) {
@@ -78,7 +75,6 @@ public class SMJOperator extends Operator {
 				}
 			}
 			while (greater(Tr,Ts)) {
-				//System.out.println("Greater tuples: " + Tr.tupleString() + " and " + Ts.tupleString());
 				wasInPartition = false;
 				Ts = S.getNextTuple();
 				sPartitionIndex++;
@@ -86,11 +82,9 @@ public class SMJOperator extends Operator {
 					return null;
 				}
 			}
-			System.out.println("checking equal");
 			if (equal(Tr,Ts)) {
 				wasInPartition = true;
 				Tuple t = Tuple.merge(Tr, Ts);
-				System.out.println(t.tupleString());
 				Ts = S.getNextTuple();
 				return t;
 			}

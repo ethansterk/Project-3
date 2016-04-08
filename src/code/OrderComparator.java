@@ -28,7 +28,6 @@ public class OrderComparator implements Comparator<Tuple> {
 			Set<String> set = new LinkedHashSet<>(sortColumns);
 			sortColumns.clear();
 			sortColumns.addAll(set);
-			System.out.println("sortCols = " + sortColumns);
 			//temporarily remove the columns mentioned in the ORDER BY clause from the list of all columns
 			for (String sortCol : sortColumns) {
 				int i = tempFields.indexOf(sortCol);

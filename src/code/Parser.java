@@ -46,7 +46,7 @@ public class Parser {
 		
 		try {
 			cleanTempDir(tempDir);
-			CCJSqlParser parser = new CCJSqlParser(new FileReader(inputDir + File.separator + "benchmark_queries.sql"));
+			CCJSqlParser parser = new CCJSqlParser(new FileReader(inputDir + File.separator + "queries.sql"));
 			Statement statement;
 			while ((statement = parser.Statement()) != null) {
 				OutputWriter.getInstance().increment();   //increments the query number
