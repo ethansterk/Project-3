@@ -42,8 +42,10 @@ public class SortOperator extends Operator {
 		this.child = child;
 		if (sortCols == null)
 			sortCols = null;
-		else
+		else {
 			columns.addAll(sortCols); // must use addAll() because passes by reference
+			System.out.println(columns);
+		}
 		createCollection();
 	}
 
