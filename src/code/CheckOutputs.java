@@ -43,7 +43,7 @@ public class CheckOutputs {
 			}
 			
 			if (project_three_io) {
-				expected = new File(expectedDir + File.separator + "query" + i);
+				expected = new File(expectedDir + File.separator + "query" + i + "_humanreadable");
 				testfile = new File(testDir + File.separator + "query" + i);
 			}
 			else {
