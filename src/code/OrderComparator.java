@@ -2,6 +2,7 @@ package code;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -24,11 +25,10 @@ public class OrderComparator implements Comparator<Tuple> {
 			tempFields.addAll(allColumns);
 			
 			//remove duplicate columns in sortColumns
-			Set<String> hs = new HashSet<>();
-			hs.addAll(sortColumns);
+			Set<String> set = new LinkedHashSet<>(sortColumns);
 			sortColumns.clear();
-			sortColumns.addAll(hs);
-			
+			sortColumns.addAll(set);
+			System.out.println("sortCols = " + sortColumns);
 			//temporarily remove the columns mentioned in the ORDER BY clause from the list of all columns
 			for (String sortCol : sortColumns) {
 				int i = tempFields.indexOf(sortCol);
