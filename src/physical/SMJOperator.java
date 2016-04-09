@@ -115,7 +115,7 @@ public class SMJOperator extends Operator {
 			if (tri < tsj)
 				return true;
 		}
-		return true;
+		return false; // no join condition
 	}
 	
 	/**
@@ -141,7 +141,7 @@ public class SMJOperator extends Operator {
 			if (tri > tsj)
 				return true;
 		}
-		return true;
+		return true; // no join condition
 	}
 	
 	/**

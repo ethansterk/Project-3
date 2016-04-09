@@ -107,13 +107,14 @@ public class PhysicalPlanBuilder {
 		case 2:
 			String rightBaseTable = logicalJoin.getRightBaseTable();
 			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor(rightBaseTable);
-			e.accept(visitor);
+			if (e != null)
+				e.accept(visitor);
 			// create two sorts as children (left and right)
 			int sortType = Integer.valueOf(sortMethod[0]);
 			Operator leftOp = null;
 			Operator rightOp = null;
 			//TODO: forcing it to use SortOperators only because SMJ+ExternalSort is buggy
-			sortType = 0;
+			//sortType = 0;
 			switch(sortType) {
 			case 0:
 				leftOp = new SortOperator(left, visitor.getLeftSortCols());

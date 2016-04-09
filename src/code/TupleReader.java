@@ -105,9 +105,12 @@ public class TupleReader {
 			e.printStackTrace();
 		}
 
+		
+
+		buffer.position(8);
 		/*numAtt = */buffer.getInt(0);
 		numTuplesLeft = buffer.getInt(4);
-		buffer.position(8);
+
 		numPagesLeft--;
 	}
 	
@@ -181,11 +184,12 @@ public class TupleReader {
 		int tuplesPerPage = 4088 / (4 * numAtt);		//4088 to account 8 bytes metadata
 		pageNum = i / tuplesPerPage;
 		tupleIndexOnPage = i % tuplesPerPage;
-		
+				
+				
 		//update numPagesLeft and numTuplesLeft
-		numPagesLeft = numPagesLeft - pageNum;
-		numTuplesLeft = 0;
-		
+		numPagesLeft -= pageNum;
+		numTuplesLeft = tuplesPerPage;
+
 		//fetch that page - can reset position of FileChannel to start of desired page within file using position(long newPosition)
 		//and update numPagesLeft
 		try {
@@ -193,15 +197,11 @@ public class TupleReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		readNewPage();
-		
-		if (tupleIndexOnPage != 0) {
-			try {
-				fc.position(fc.position() + 8 + (tupleIndexOnPage * 4 * numAtt));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			numTuplesLeft -= tupleIndexOnPage;
+		try {
+			fc.position(fc.position() + (tupleIndexOnPage * 4 * numAtt));
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+		readNewPage();
 	}
 }

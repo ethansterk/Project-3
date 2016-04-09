@@ -57,28 +57,34 @@ public class ExternalSortOperator extends Operator {
 		tempDir = OutputWriter.getInstance().getTempDir();
 		
 		//calculate size of buffer
-		fields = this.child.getNextTuple().getFields();
-		int numAttr = fields.size();
-		this.child.reset();	//clear the child again
-		numTuples = B * 4096 / (4 * numAttr);
-		
-		oc = new OrderComparator(columns, fields);
-		
-		doPassZero();
-		
-		doMergePass();
-		while (runs > 1)
-			doMergePass();
-		
-		if (binaryIO)
-			tr = new TupleReader(null, null, true, finalFileLocation, fields);
+		Tuple t = this.child.getNextTuple();
+		if (t==null) {
+			;
+		}
 		else {
-			try {
-				sc = new Scanner(new File(finalFileLocation));
-				convertToBinary();
+			fields = t.getFields();
+			int numAttr = fields.size();
+			this.child.reset();	//clear the child again
+			numTuples = B * 4096 / (4 * numAttr);
+			
+			oc = new OrderComparator(columns, fields);
+			
+			doPassZero();
+			
+			doMergePass();
+			while (runs > 1)
+				doMergePass();
+			
+			if (binaryIO)
 				tr = new TupleReader(null, null, true, finalFileLocation, fields);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+			else {
+				try {
+					sc = new Scanner(new File(finalFileLocation));
+					convertToBinary();
+					tr = new TupleReader(null, null, true, finalFileLocation, fields);
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -306,6 +312,9 @@ public class ExternalSortOperator extends Operator {
 
 	@Override
 	public Tuple getNextTuple() {
+		if (tr == null) {
+			return null;
+		}
 		return tr.readNextTuple();
 	}
 	
@@ -330,6 +339,9 @@ public class ExternalSortOperator extends Operator {
 
 	@Override
 	public void reset() {
+		if (tr == null) {
+			return;
+		}
 		tr = new TupleReader(null, null, true, finalFileLocation, fields);
 		try {
 			sc = new Scanner(new File(finalFileLocation));
