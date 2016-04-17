@@ -1,7 +1,9 @@
 package code;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.List;
+import java.util.Scanner;
 
 import logical.LogicalOperator;
 import logical.PhysicalPlanBuilder;
@@ -35,10 +37,39 @@ public class Parser {
 	 * @param args Contains the directory of /input/ as the 0th arg.
 	 */
 	public static void main(String[] args) {
-		String inputDir = args[0];	
-		String outputDir = args[1];
-		String tempDir = args[2];
-		String loggerDir = args[2];
+		String configDir = args[0];
+		File config = new File(configDir + File.separator + "plan_builder_config.txt");
+		String inputDir = null;	
+		String outputDir = null;
+		String tempDir = null;
+		String loggerDir = null;
+		boolean buildIndexes;
+		boolean evaluateQueries;
+		try {
+	        Scanner sc = new Scanner(config);   
+	        inputDir = sc.nextLine();
+	        outputDir = sc.nextLine();
+	        tempDir = sc.nextLine();
+	        String buildsIndexesS = sc.nextLine();
+	        if (buildsIndexesS.equals("0")) {
+	        	buildIndexes = false;
+	        }
+	        else {
+	        	buildIndexes = true;
+	        }
+	        String evaluateQueriesS = sc.nextLine();
+	        if (evaluateQueriesS.equals("0")) {
+	        	evaluateQueries = false;
+	        }
+	        else {
+	        	evaluateQueries = true;
+	        }
+	        sc.close();
+	    } 
+	    catch (FileNotFoundException e) {
+	        e.printStackTrace();
+	    }
+		
 		DatabaseCatalog.createCatalog(inputDir);
 		OutputWriter.createStream(outputDir);
 		OutputWriter.createTempStream(tempDir);

@@ -25,6 +25,7 @@ public class PhysicalPlanBuilder {
 	private Stack<Operator> ops;
 	private String[] joinMethod;
 	private String[] sortMethod;
+	private boolean indexSelect;
 	
 	/**
 	 * Initializes the PhysicalPlanBuilder by giving it the root of the logical plan
@@ -41,6 +42,13 @@ public class PhysicalPlanBuilder {
 	        String sortMethod = sc.nextLine();
 	        this.joinMethod = joinMethod.split(" ");
 	        this.sortMethod = sortMethod.split(" ");
+	        String indexSelectS = sc.nextLine();
+	        if (indexSelectS.equals("0")) {
+	        	indexSelect = false;
+	        }
+	        else {
+	        	indexSelect = true;
+	        }
 	        sc.close();
 	    } 
 	    catch (FileNotFoundException e) {
