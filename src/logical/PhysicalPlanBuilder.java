@@ -175,7 +175,19 @@ public class PhysicalPlanBuilder {
 	public void visit(LogicalDuplicateElimination logicalDuplicateElimination) {
 		logicalDuplicateElimination.getChild().accept(this);
 		Operator child = ops.pop();
-		DuplicateEliminationOperator newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList());
+
+		int sortType = Integer.valueOf(sortMethod[0]);
+		Operator newOp = null;
+		
+		switch(sortType) {
+		case 0:
+			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), 0);
+			break;
+		case 1:
+			int numSortBuffers = Integer.valueOf(sortMethod[1]);
+			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), numSortBuffers);
+			break;
+		}
 		ops.push(newOp);
 	}
 

@@ -17,6 +17,7 @@ import net.sf.jsqlparser.statement.select.OrderByElement;
 import net.sf.jsqlparser.statement.select.SelectItem;
 
 /**
+ * OBSOLETE CLASS AS OF PROJECT 3
  * The QueryPlan class implements the construction of a
  * query plan--a tree-like representation of the operators'
  * relation to each other. This class's purpose is to 
@@ -176,7 +177,7 @@ public class QueryPlan {
 	private Operator checkForDuplicateEliminating(Operator childOp) {
 		Operator temp = null;
 		if (distinct)
-			temp = new DuplicateEliminationOperator(childOp, orderByElements);
+			temp = new DuplicateEliminationOperator(childOp, orderByElements, 0);
 		else
 			temp = childOp;
 		

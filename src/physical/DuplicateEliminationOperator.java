@@ -1,4 +1,5 @@
 package physical;
+import java.util.ArrayList;
 import java.util.List;
 
 import code.Tuple;
@@ -19,11 +20,19 @@ public class DuplicateEliminationOperator extends Operator {
 	private Operator child;
 	private Tuple next;
 	
-	public DuplicateEliminationOperator(Operator child, List<OrderByElement> list) {
-		if (child instanceof SortOperator)
+	public DuplicateEliminationOperator(Operator child, List<OrderByElement> list, int extBufferPages) {
+		if (child instanceof SortOperator || child instanceof ExternalSortOperator)
 			this.child = child;
-		else
-			this.child = new SortOperator(child, list);
+		else {
+			if (extBufferPages >= 1) {
+				ArrayList<String> sortList = new ArrayList<String>();
+				for (OrderByElement o : list)
+					sortList.add(o.getExpression().toString());
+				this.child = new ExternalSortOperator(child, extBufferPages, sortList);
+			}
+			else
+				this.child = new SortOperator(child, list);
+		}
 		next = this.child.getNextTuple();
 	}
 
