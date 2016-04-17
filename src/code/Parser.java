@@ -43,8 +43,8 @@ public class Parser {
 		String outputDir = null;
 		String tempDir = null;
 		String loggerDir = null;
-		boolean buildIndexes;
-		boolean evaluateQueries;
+		boolean buildIndexes = false;
+		boolean evaluateQueries = false;
 		try {
 	        Scanner sc = new Scanner(config);   
 	        inputDir = sc.nextLine();
@@ -74,6 +74,8 @@ public class Parser {
 		OutputWriter.createStream(outputDir);
 		OutputWriter.createTempStream(tempDir);
 		Logger.createLogger(loggerDir);
+		String dbDir = inputDir + File.separator + "db";
+		Indexes.createIndexes(dbDir, buildIndexes);
 		
 		try {
 			cleanTempDir(tempDir);
@@ -83,7 +85,6 @@ public class Parser {
 				OutputWriter.getInstance().increment();   //increments the query number
 				
 				try {
-					
 					Select select = (Select) statement;
 					PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
 					FromItem fromItem = plainSelect.getFromItem();
