@@ -32,8 +32,8 @@ public class Indexes {
 			e.printStackTrace();
 		}
 		
-		while (sc.hasNext()) {
-			String i = sc.next();
+		while (sc.hasNextLine()) {
+			String i = sc.nextLine();
 			String[] tokens = i.split(" ");
 			
 			String key = tokens[0] + "." + tokens[1];
@@ -53,11 +53,11 @@ public class Indexes {
 		int order = Integer.parseInt(tokens[3]);
 		
 		//access the relation table we're creating the index from
-		Operator op = new ScanOperator(tableName);
-		if (isClustered) {
-			op = new SortOperator(op, sortCol);
-			//dump op into the source file using TupleWriter
-		}
+//		Operator op = new ScanOperator(tableName);
+//		if (isClustered) {
+//			op = new SortOperator(op, sortCol);
+//			//dump op into the source file using TupleWriter
+//		}
 		
 		//create the index using bulk-loading
 		

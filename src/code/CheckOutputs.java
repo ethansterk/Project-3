@@ -25,15 +25,15 @@ public class CheckOutputs {
 	//have to change these three values depending on what we're running and where we've put the results
 	private int numFiles = 15;	
 	// TODO switch directories after pulling code
-	private String expectedDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator + "Samples" + File.separator + "samples" + File.separator + "expected";
+	private String expectedDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator + "4samples" + File.separator + "expected";
 	//private String expectedDir = "C:"+File.separator+"Users"+File.separator+"Ethan"+File.separator+"Desktop"+File.separator+"samples"+File.separator+"expected";
-	private String testDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator+ "Samples" + File.separator + "samples" + File.separator + "output";
+	private String testDir = "C:" + File.separator + "Users" + File.separator + "Ryu" + File.separator + "Desktop" + File.separator + "P3" + File.separator+ "4samples" + File.separator + "output";
 	//private String testDir = "C:"+File.separator+"Users"+File.separator+"Ethan"+File.separator+"Desktop"+File.separator+"samples"+File.separator+"output";
 	
 	private File expected;
 	private File testfile;
 	
-	private boolean project_three_io = true;
+	private boolean project_three_io = false;
 
 	@Test
 	public void test() {		

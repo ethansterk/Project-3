@@ -38,7 +38,7 @@ public class Parser {
 	 */
 	public static void main(String[] args) {
 		String configDir = args[0];
-		File config = new File(configDir + File.separator + "plan_builder_config.txt");
+		File config = new File(configDir + File.separator + "interpreter_config_file.txt");
 		String inputDir = null;	
 		String outputDir = null;
 		String tempDir = null;
@@ -51,19 +51,9 @@ public class Parser {
 	        outputDir = sc.nextLine();
 	        tempDir = sc.nextLine();
 	        String buildsIndexesS = sc.nextLine();
-	        if (buildsIndexesS.equals("0")) {
-	        	buildIndexes = false;
-	        }
-	        else {
-	        	buildIndexes = true;
-	        }
+	        buildIndexes = buildsIndexesS.equals("1");
 	        String evaluateQueriesS = sc.nextLine();
-	        if (evaluateQueriesS.equals("0")) {
-	        	evaluateQueries = false;
-	        }
-	        else {
-	        	evaluateQueries = true;
-	        }
+	        evaluateQueries = evaluateQueriesS.equals("1");
 	        sc.close();
 	    } 
 	    catch (FileNotFoundException e) {

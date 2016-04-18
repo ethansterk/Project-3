@@ -21,6 +21,8 @@ public class TupleReader {
 
 	private FileChannel fc;
 	private ByteBuffer buffer;
+	private long currentPage = -1;
+	private int currentTuple = -1;
 	private long numPagesLeft;
 	private int numAtt; //number of attributes
 	private int numTuplesLeft; //number of tuples on page
@@ -112,6 +114,8 @@ public class TupleReader {
 		numTuplesLeft = buffer.getInt(4);
 
 		numPagesLeft--;
+		currentPage++;
+		currentTuple = -1;
 	}
 	
 	/**
@@ -137,6 +141,7 @@ public class TupleReader {
 		
 		Tuple t = new Tuple(data, fields);
 		numTuplesLeft--;
+		currentTuple++;
 		return t;
 	}
 	
@@ -164,7 +169,7 @@ public class TupleReader {
 	 * the sort operator to reset to a certain partition (index of desired tuple).
 	 * @param i
 	 */
-	public void reset(int i) {		
+	public void reset(int i) {	
 		//calculate number of pages for file
 		long numBytes = -1;
 		try {
@@ -184,12 +189,13 @@ public class TupleReader {
 		int tuplesPerPage = 4088 / (4 * numAtt);		//4088 to account 8 bytes metadata
 		pageNum = i / tuplesPerPage;
 		tupleIndexOnPage = i % tuplesPerPage;
-				
-				
-		//update numPagesLeft and numTuplesLeft
+
+		//update numPagesLeft, numTuplesLeft, and currentPage
 		numPagesLeft -= pageNum;
 		numTuplesLeft = tuplesPerPage;
-
+		currentPage = pageNum - 1;
+		currentTuple = -1;
+		
 		//fetch that page - can reset position of FileChannel to start of desired page within file using position(long newPosition)
 		//and update numPagesLeft
 		try {
@@ -197,11 +203,17 @@ public class TupleReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		try {
-			fc.position(fc.position() + (tupleIndexOnPage * 4 * numAtt));
-		} catch (IOException e) {
-			e.printStackTrace();
+//		try {
+//			fc.position(fc.position() + (tupleIndexOnPage * 4 * numAtt));
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		
+		//fast-forward to exact tuple
+		readNewPage();		//decrements numPagesLeft, increments currentPage
+		while (tupleIndexOnPage > 0) {
+			readNextTuple();		//decrements numTuplesLeft, increments currentTuple;
+			tupleIndexOnPage--;
 		}
-		readNewPage();
 	}
 }
