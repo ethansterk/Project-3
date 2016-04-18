@@ -64,7 +64,15 @@ public class Indexes {
 		
 		
 		
-		//serialize the index into the File f
+		//serialize the index into the pages that make up File f
+		//1 -- header page is first
+			//contains:
+			//a -- address of root
+			//b -- number leaves
+			//c -- order of tree (d)
+		//2 -- serialize leaf nodes left-to-right (each to its own page)
+		//3 -- layer immediately above... so on (root is last page in file)
+		
 	}
 	
 	public String getIndexDir(String indexname) {
