@@ -21,7 +21,7 @@ public class TupleReader {
 
 	private FileChannel fc;
 	private ByteBuffer buffer;
-	private long currentPage = -1;
+	private int currentPage = -1;
 	private int currentTuple = -1;
 	private long numPagesLeft;
 	private int numAtt; //number of attributes
@@ -162,6 +162,21 @@ public class TupleReader {
 	 */
 	public int getNumAtt() {
 		return numAtt;
+	}
+	
+	/**
+	 * Getter method for the current page this TupleReader is on.
+	 * @return currentPage
+	 */
+	public int getCurrentPage() {
+		return currentPage;
+	}
+	/**
+	 * Getter method for the current tuple this TupleReader is on.
+	 * @return currentTuple
+	 */
+	public int getCurrentTuple() {
+		return currentTuple;
 	}
 	
 	/**
