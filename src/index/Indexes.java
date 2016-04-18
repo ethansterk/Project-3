@@ -1,11 +1,17 @@
-package code;
+package index;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import code.DatabaseCatalog;
+import code.Schema;
+import code.Tuple;
+import code.TupleReader;
+import code.TupleWriter;
 import physical.Operator;
 import physical.ScanOperator;
 import physical.SortOperator;
@@ -46,21 +52,58 @@ public class Indexes {
 
 	private static void buildIndex(String dir, String[] tokens) {
 		String tableName = tokens[0];
+		String attrName = tokens[1];
 		ArrayList<String> sortCol = new ArrayList<String>();
-		sortCol.add(tokens[1]);
-		File f = new File(dir);
+		sortCol.add(attrName);
+		File indexFile = new File(dir);
 		boolean isClustered = tokens[2].equals("1");
 		int order = Integer.parseInt(tokens[3]);
+		DatabaseCatalog dc = DatabaseCatalog.getInstance();
+		Schema sch = dc.getSchema(tableName);
+		String tableDir = sch.getTableDir();
 		
 		//access the relation table we're creating the index from
-//		Operator op = new ScanOperator(tableName);
-//		if (isClustered) {
-//			op = new SortOperator(op, sortCol);
-//			//dump op into the source file using TupleWriter
-//		}
+		if (isClustered) {
+			Operator op = new SortOperator(new ScanOperator(tableName), sortCol);
+			
+			//dump op into the source file using TupleWriter			
+			File sourceFile = new File(tableDir);
+			TupleWriter tw = new TupleWriter(tableDir);
+			Tuple t = op.getNextTuple();
+			//in the special case that there are no matching tuples whatsoever
+			if (t == null) {
+				return;
+			}
+			
+			while (t != null) {
+				tw.writeTuple(t);
+				t = op.getNextTuple();
+			}
+			tw.writeNewPage();
+		}
 		
 		//create the index using bulk-loading
-		
+		//0. generate data entries, in sorted order
+		int sortAttIndex = sch.getCols().indexOf(attrName);
+		TupleReader tr = new TupleReader(tableName, null, false, null, null);
+		Tuple t = tr.readNextTuple();
+		if (t == null)
+			return;
+		while (t != null) {
+			HashMap<Integer, ArrayList<RecordID>> dataEntries = new HashMap<Integer, ArrayList<RecordID>>();
+			String sortKey = t.getAttribute(sortAttIndex);
+			if (dataEntries.containsKey(sortKey)) {
+				ArrayList<RecordID> recIDs = dataEntries.get(sortKey);
+				recIDs.add(new RecordID(tr.getCurrentPage(), tr.getCurrentTuple()));
+			}
+			else {
+				
+			}
+		}
+			
+		//1. create leaf layer
+		//2. create first index node layer
+		//3. repeat 2 until we've reached the root (just one index node)
 		
 		
 		

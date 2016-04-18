@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.util.List;
 import java.util.Scanner;
 
+import index.Indexes;
 import logical.LogicalOperator;
 import logical.PhysicalPlanBuilder;
 import physical.Operator;
