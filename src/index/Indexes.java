@@ -20,6 +20,7 @@ public class Indexes {
 
 	private static final Indexes instance = new Indexes();
 	private static final HashMap<String,String> indexDir = new HashMap<String,String>();
+	private static final HashMap<String,String> relToIndex = new HashMap<String,String>();
 	
 	public static Indexes getInstance() {
 		return instance;
@@ -46,6 +47,8 @@ public class Indexes {
 			String value = dbDir + File.separator + "indexes" + File.separator + key;
 			
 			indexDir.put(key, value);
+			// TODO change for Project 5 when supports more than one column per relation
+			relToIndex.put(key, tokens[1]);
 			buildIndex(value, tokens);
 		}
 	}
@@ -121,6 +124,13 @@ public class Indexes {
 	public String getIndexDir(String indexname) {
 		if (indexDir.containsKey(indexname))
 			return indexDir.get(indexname);
+		else
+			return null;
+	}
+	
+	public String getIndexCols(String relation) {
+		if (relToIndex.containsKey(relation))
+			return relToIndex.get(relation);
 		else
 			return null;
 	}

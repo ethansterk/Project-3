@@ -20,27 +20,27 @@ public class IndexScan extends Operator{
 	private Table t;
 	private String alias = null;
 	private boolean project_three_io = true;
-	private TupleReader tr;
+	private IndexReader ir;
+	private String indexDir;
 	
 	/**
 	 * This constructs an IndexScan and initializes the first data entry
 	 * for retrieving tuples in the future.
 	 * @param s Relation/alias name
-	 * @param index Index file name TODO ??
+	 * @param index Index file name of file
 	 * @param clustered True is the index is clustered
 	 * @param lowKey Lower bound (inclusive) on the condition
 	 * @param highKey Upper bound (inclusive) on the condition
 	 */
-	public IndexScan(String s, String index, boolean clustered, int lowKey, int highKey) {
+	public IndexScan(String indexDir, String s, String index, boolean clustered, int lowKey, int highKey) {
+		this.indexDir = indexDir;
 		this.clustered = clustered;
 		tablename = s.split(" ")[0];		//trims off the alias, if there's one
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
 		
-		// TODO do we need a TupleReader? What does it read in -- the Index File?
-		if (project_three_io == false)
-			t = new Table(tablename, alias);
-		tr = new TupleReader(tablename, alias, false, null, null);
+		// create an IndexReader (similar to the TupleReader)
+		ir = new IndexReader(indexDir);
 		
 		//access index file, navigate root-to-leaf to find lowkey, grab next data entry from leaf
 		firstDecent();
