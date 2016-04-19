@@ -41,21 +41,9 @@ public class IndexScan extends Operator{
 		
 		// create an IndexReader (similar to the TupleReader)
 		ir = new IndexReader(indexDir, lowKey, highKey, clustered);
-		
-		//access index file, navigate root-to-leaf to find lowkey, grab next data entry from leaf
-		firstDecent();
 	}
 	
-	/**
-	 * Performs the first root-to-leaf traversal of the B+-tree, 
-	 * initializing the first data entry so that the next call
-	 * to getNextTuple() can get the appropriate tuple without
-	 * another root-to-leaf traversal.
-	 */
-	private void firstDecent() {
-		// TODO start at the root and... ?
-		
-	}
+	
 
 	/**
 	 * Retrieves the next tuple from the index file. The process
@@ -63,16 +51,7 @@ public class IndexScan extends Operator{
 	 */
 	@Override
 	public Tuple getNextTuple() {
-		// if unclustered...
-		if (!clustered) {
-			// examine current data entry, find next rid, find rid's tuple, return tuple
-			
-		}
-		// if clustered...
-		else {
-			// scan (sorted) data file (no need to go through index more than once)
-		}
-		return null;
+		return ir.readNextTuple();
 	}
 
 	/**
@@ -82,8 +61,8 @@ public class IndexScan extends Operator{
 	 */
 	@Override
 	public void reset() {
-		// TODO Auto-generated method stub
-		
+		// TODO more?
+		ir.reset();
 	}
 
 }

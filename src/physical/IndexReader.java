@@ -10,6 +10,17 @@ import java.util.ArrayList;
 import code.Tuple;
 import code.TupleReader;
 
+/**
+ * 
+ * The IndexReader class is the index-equivalent of the Tuple-
+ * Reader. Initially, it traverses the index root-to-leaf and
+ * this initializes the IndexReader to return tuples using a
+ * TupleReader. It knows which tuple to look for in the Tuple-
+ * Reader by using the the rid in the Leaf nodes.
+ * 
+ * @author Ethan (ejs334) and Laura (ln233)
+ *
+ */
 public class IndexReader {
 
 	private FileChannel fc;
@@ -25,6 +36,13 @@ public class IndexReader {
 	private int dataEntriesLeft;
 	private int ridsLeft;
 	
+	/**
+	 * Constructs an IndexReader.
+	 * @param indexDir The directory of the index file.
+	 * @param lowKey The low key (inclusive).
+	 * @param highKey The high key (inclusive).
+	 * @param clustered True if the index is clustered.
+	 */
 	public IndexReader(String indexDir, int lowKey, int highKey, boolean clustered) {
 		this.lowKey = lowKey;
 		this.highKey = highKey;
@@ -45,6 +63,12 @@ public class IndexReader {
 		
 	}
 	
+	/**
+	 * Performs the first root-to-leaf traversal of the B+-tree, 
+	 * initializing the first data entry so that the next call
+	 * to getNextTuple() can get the appropriate tuple without
+	 * another root-to-leaf traversal.
+	 */
 	private void handleFirstDecent() {
 		//go into header
 		try {
@@ -66,18 +90,24 @@ public class IndexReader {
 		// loop until you reach leaf node (different serialization)
 		int isIndexNode = 0;
 		while((isIndexNode = buffer.getInt()) == 1) {
-			int nextPageAddr = -1; // TODO set to the next page address
+			int nextPageAddr = -1;
 			int numTuples = buffer.getInt();
 			for(int i = 0; i < numTuples; i++) {
 				int key = buffer.getInt();
 				if(lowKey < key) {
 					int oldPos = buffer.position();
+					if(oldPos + (numTuples - 1) * 4 > 4095) {
+						System.out.println("Not enough room in buffer.");
+					}
 					buffer.position(oldPos + (numTuples - 1) * 4);
 					nextPageAddr = buffer.getInt();
 				}
 			}
 			if(nextPageAddr == -1) { // lowKey greater than all keys (addr never assigned)
 				int oldPos = buffer.position();
+				if(oldPos + (numTuples) * 4 > 4095) {
+					System.out.println("Not enough room in buffer.");
+				}
 				buffer.position(oldPos + (numTuples) * 4);
 				nextPageAddr = buffer.getInt();
 			}
@@ -92,26 +122,30 @@ public class IndexReader {
 			// set position for next key
 			int numRids = buffer.getInt();
 			int oldPos = buffer.position();
-			buffer.position(oldPos + (numRids * 2) * 4); // TODO might go out-of-bounds if key does not exist/ no tuples to be returned
+			if(oldPos + (numRids * 2) * 4 > 4095) {
+				System.out.println("Not enough room in buffer.");
+			}
+			buffer.position(oldPos + (numRids * 2) * 4);
 			dataEntriesLeft--;
 		}
 		// at key that is greater than or equal to lowKey
 		ridsLeft = buffer.getInt();
 		// the buffer is now positioned to return the first rid
-		// TODO set up tuple reader here?
-		// TODO handle case where lowKey is null (returns first leafnode)
 	}
 
+	/**
+	 * Reads the next tuple from the relation (according to the index).
+	 * If the index is clustered, this is simply reading the next tuple
+	 * from the sorted relation file. If it is unclustered, this involves
+	 * reading in the next rid, reseting the TupleReader to this position,
+	 * and returning next tuple at this position.
+	 * @return
+	 */
 	public Tuple readNextTuple() {
 		if (clustered) {
 			return tr.readNextTuple();
 		}
-		
-		
-		// read next rid (check if any left)
-		// use rid to retrieve tuple from TupleReader
-		// if clustered, just call getNextTuple of TupleReader
-		// if unclustered, use reset to reset tuple reader
+		//else.. 
 		if (ridsLeft == 0) {
 			if(!readNewDataEntry()) {
 				return null;
@@ -129,6 +163,10 @@ public class IndexReader {
 		return tr.readNextTuple();
 	}
 	
+	/**
+	 * Adjusts the position of the buffer to the next data entry.
+	 * @return True if there are more data entries left.
+	 */
 	private boolean readNewDataEntry() {
 		if (dataEntriesLeft == 0) {
 			if(!readNewLeafPage()) {
@@ -141,6 +179,10 @@ public class IndexReader {
 		return true;
 	}
 
+	/**
+	 * Reads in the next page and fills the buffer.
+	 * @return True if this is a leaf page.
+	 */
 	private boolean readNewLeafPage() {
 		currentPage++;
 		try {
@@ -163,6 +205,10 @@ public class IndexReader {
 		return false;
 	}
 
+	/**
+	 * Fills the buffer with the page with the given index.
+	 * @param addr Index of the page we want.
+	 */
 	private void setBufferToAddress(int addr) {
 		try {
 			fc.position(addr * 4096);
@@ -176,5 +222,20 @@ public class IndexReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Resets the IndexReader so the next call to readNextTuple()
+	 * returns as it would if it were just instantiated.
+	 */
+	public void reset() {
+		try {
+			fc.position(0);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		buffer = ByteBuffer.allocate(4096);
+		
+		handleFirstDecent();
 	}
 }
