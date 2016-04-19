@@ -1,7 +1,6 @@
 package index;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Class specifically for Project 4, for implementing sorted data entries.
