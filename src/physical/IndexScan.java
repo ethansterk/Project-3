@@ -40,7 +40,7 @@ public class IndexScan extends Operator{
 			alias = s.split(" ")[2];
 		
 		// create an IndexReader (similar to the TupleReader)
-		ir = new IndexReader(indexDir);
+		ir = new IndexReader(indexDir, lowKey, highKey, clustered);
 		
 		//access index file, navigate root-to-leaf to find lowkey, grab next data entry from leaf
 		firstDecent();
