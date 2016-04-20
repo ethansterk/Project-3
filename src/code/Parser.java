@@ -64,7 +64,7 @@ public class Parser {
 		OutputWriter.createTempStream(tempDir);
 		Logger.createLogger(loggerDir);
 		String dbDir = inputDir + File.separator + "db";
-		if (buildIndexes)
+		if (buildIndexes) 
 			Indexes.createIndexes(dbDir);
 		
 		if (evaluateQueries) {
