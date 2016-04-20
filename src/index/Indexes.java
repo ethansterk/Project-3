@@ -30,6 +30,7 @@ public class Indexes {
 	private static final Indexes instance = new Indexes();
 	private static final HashMap<String,String> indexDir = new HashMap<String,String>();
 	private static final HashMap<String,String> relToIndex = new HashMap<String,String>();
+	private static final HashMap<String,Boolean> relToClustered = new HashMap<String,Boolean>();
 	
 	private static int entryIndex = 0;
 	private static int k = 0;
@@ -66,13 +67,19 @@ public class Indexes {
 		while (sc.hasNextLine()) {
 			String i = sc.nextLine();
 			String[] tokens = i.split(" ");
+			String tableName = tokens[0];
+			String colName = tokens[1];
+			String isClustered = tokens[2];
+			String order = tokens[3];
 			
-			String key = tokens[0] + "." + tokens[1];
+			String key = tableName + "." + colName;
 			String value = dbDir + File.separator + "indexes" + File.separator + key;
 			
 			indexDir.put(key, value);
 			// TODO change for Project 5 when supports more than one column per relation
-			relToIndex.put(key, tokens[1]);
+			relToIndex.put(tableName, colName);
+			Boolean isClusteredBool = isClustered.equals("1");
+			relToClustered.put(tableName, isClusteredBool);
 			buildIndex(value, tokens);
 		}
 	}
@@ -489,5 +496,17 @@ public class Indexes {
 			return relToIndex.get(relation);
 		else
 			return null;
+	}
+	
+	/**
+	 * Getter method for the whether a given index is clustered.
+	 * @param relation Name of the relation on which we have an index.
+	 * @return True if this index exists and is clustered.
+	 */
+	public boolean getClustered(String relation) {
+		if (relToClustered.containsKey(relation))
+			return relToClustered.get(relation);
+		else
+			return false;
 	}
 }
