@@ -25,8 +25,10 @@ public class Indexes {
 	
 	private static int entryIndex = 0;
 	private static int k = 0;
+	private static int m = 0;
 	private static ArrayList<Integer> keys = new ArrayList<Integer>();
 	private static ArrayList<ArrayList<RecordID>> entries = new ArrayList<ArrayList<RecordID>>();
+	private static ArrayList<DataEntry> allDataEntries = new ArrayList<DataEntry>();
 	private static ArrayList<LeafNode<Integer, ArrayList<RecordID>>> leaves = new ArrayList<LeafNode<Integer, ArrayList<RecordID>>>();
 	
 	public static Indexes getInstance() {
@@ -105,7 +107,7 @@ public class Indexes {
 			t = tr.readNextTuple();
 		}
 		//sort the data entries, if unclustered (data entries are already in order if clustered)
-		ArrayList<DataEntry> allDataEntries = new ArrayList<DataEntry>(dataEntryMap.values());
+		allDataEntries = new ArrayList<DataEntry>(dataEntryMap.values());
 		if (!isClustered) {
 			DataEntryComparator dec = new DataEntryComparator();
 			Collections.sort(allDataEntries, dec);
@@ -133,27 +135,45 @@ public class Indexes {
 			if (k % (2 * D) != 0)
 				numLeafNodes++;
 			
-			//fill all LeafNodes as normal except last 2
+			//fill all LeafNodes normally except last 2
 			while (numLeafNodes > 2) {
-				addKeysAndEntries(allDataEntries, 0, 2*D);
+				addKeysAndEntries(0, 2*D);
 				numLeafNodes--;
 			}
-			if (k > (3 * D)) {		//fill last 2 LeafNodes as normal
+			if (k >= (3 * D)) {		//fill last 2 LeafNodes as normal
 				//second-to-last LeafNode, holding 2D entries
-				addKeysAndEntries(allDataEntries, 0, 2*D);
+				addKeysAndEntries(0, 2*D);
 				//last LeafNode, holding remainder entries (at least D entries)
-				addKeysAndEntries(allDataEntries, entryIndex, allDataEntries.size());
+				addKeysAndEntries(entryIndex, allDataEntries.size());
 			}
-			else {					//construct last 2 LeafNodes so that first get k/2 entries and second gets remainder
+			else {					//construct last 2 LeafNodes so that first gets k/2 entries and second gets remainder
 				int divide = k/2;
 				//second-to-last LeafNode, holding k/2 entries
-				addKeysAndEntries(allDataEntries, 0, divide);
+				addKeysAndEntries(0, divide);
 				//last LeafNode, holding remainder entries
-				addKeysAndEntries(allDataEntries, entryIndex, allDataEntries.size());
+				addKeysAndEntries(entryIndex, allDataEntries.size());
 			}
 			
 			//2. create index node layers, using ArrayList<LeafNode<...>> leaves
 			System.out.println(tableName + " leaves created: " + leaves.size());
+			m = leaves.size();
+			int numIndexNodes = m / (2 * D + 1);
+			//fill all IndexNodes normally except last 2
+			while (numIndexNodes > 2) {
+				addLeafChildrenAndKeys(0, 2*D+1);
+				numIndexNodes--;
+			}
+			if (m >= (3 * D + 2)) {		//fill last 2 IndexNodes as normal
+				//second-to-last IndexNode, holding 2D + 1 children
+				
+				//last IndexNode, holding remainder children (at least D + 1 children)
+			}
+			else {						//construct last 2 IndexNodes so that first get
+				int divide = m/2;
+				//second-to-last IndexNode, holding m/2 children
+						
+				//last IndexNode, holding remainder children
+			}
 		}
 		
 		
@@ -170,12 +190,21 @@ public class Indexes {
 	}
 	
 	/**
+	 * Helper function to create a new IndexNode after adding the right LeafNode children and keys.
+	 * @param i
+	 * @param j
+	 */
+	private static void addLeafChildrenAndKeys(int i, int j) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
 	 * Helper function to create a new LeafNode after adding the right keys and entries; add to leaves (leaf layer).
-	 * @param allDataEntries
 	 * @param start
 	 * @param end
 	 */
-	private static void addKeysAndEntries(ArrayList<DataEntry> allDataEntries, int start, int end) {
+	private static void addKeysAndEntries(int start, int end) {
 		keys = new ArrayList<Integer>();
 		entries = new ArrayList<ArrayList<RecordID>>();
 		for (int i = start; i < end; i++) {
