@@ -25,6 +25,7 @@ import code.TupleReader;
 public class IndexReader {
 
 	private String tableName;
+	private String sortAttr;
 	private FileChannel fc;
 	private ByteBuffer buffer;
 	private TupleReader tr;
@@ -46,12 +47,13 @@ public class IndexReader {
 	 * @param highKey The high key (inclusive).
 	 * @param clustered True if the index is clustered.
 	 */
-	public IndexReader(String indexDir, int lowKey, int highKey, boolean clustered, String tableName, String alias) {
+	public IndexReader(String indexDir, int lowKey, int highKey, boolean clustered, String tableName, String alias, String sortAttr) {
 		this.lowKey = lowKey;
 		this.highKey = highKey;
 		this.clustered = clustered;
-		tr = new TupleReader(tableName, alias, false, null, null); // TODO Laura is this right?
+		tr = new TupleReader(tableName, alias, false, null, null);
 		this.tableName = tableName;
+		this.sortAttr = sortAttr;
 		
 		//retrieve the file channel
 		FileInputStream fin = null;
@@ -157,7 +159,11 @@ public class IndexReader {
 			return null;
 		
 		if (clustered) {
-			return tr.readNextTuple();
+			Tuple t = tr.readNextTuple();
+			int x = Integer.parseInt(t.getValues().get(t.getFields().indexOf(sortAttr)));
+			if (x > highKey)
+				return null;
+			return t;
 		}
 		//else.. 
 		if (ridsLeft == 0) {
@@ -172,9 +178,14 @@ public class IndexReader {
 		int resetIndex = 0;
 		int numAttr = DatabaseCatalog.getInstance().getSchema(tableName).getNumCols();
 		int tuplesPerPage = 4088 / (4 * numAttr);		//4088 to account 8 bytes metadata
-		resetIndex = pageID * tuplesPerPage + tupleID * 4;
+		resetIndex = pageID * tuplesPerPage + pageID * 8 + tupleID * (4 * numAttr);
 		tr.reset(resetIndex);
-		return tr.readNextTuple();
+		
+		Tuple t = tr.readNextTuple();
+		int x = Integer.parseInt(t.getValues().get(t.getFields().indexOf(sortAttr)));
+		if (x > highKey)
+			return null;
+		return t;
 	}
 	
 	/**
@@ -198,6 +209,7 @@ public class IndexReader {
 	 * @return True if this is a leaf page.
 	 */
 	private boolean readNewLeafPage() {
+		buffer = ByteBuffer.allocate(4096);
 		currentPage++;
 		try {
 			fc.position(currentPage * 4096);

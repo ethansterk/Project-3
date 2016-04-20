@@ -3,6 +3,7 @@ package physical;
 import code.Table;
 import code.Tuple;
 import code.TupleReader;
+import index.Indexes;
 
 /**
  * 
@@ -33,8 +34,10 @@ public class IndexScan extends Operator{
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
 		
+		String sortAttr = Indexes.getInstance().getIndexCols(tablename);
+		
 		// create an IndexReader (similar to the TupleReader)
-		ir = new IndexReader(indexDir, lowKey, highKey, clustered, tablename, alias);
+		ir = new IndexReader(indexDir, lowKey, highKey, clustered, tablename, alias, sortAttr);
 	}
 	
 	
@@ -55,7 +58,6 @@ public class IndexScan extends Operator{
 	 */
 	@Override
 	public void reset() {
-		// TODO more?
 		ir.reset();
 	}
 
