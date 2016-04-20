@@ -201,13 +201,43 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 			// add expr to indexCond
 			indexCond = new AndExpression(indexCond, arg0);
 			// set lowkey/highkey if better than existing ones
-			if(!nums.isEmpty()) { // TODO is this always true??
-				int tempKey = nums.pop();
-				if(tempKey > lowKey) {
-					lowKey = tempKey;
-				}
+			int tempKey = nums.pop();
+			if(tempKey > lowKey) {
+				lowKey = tempKey;
+			}
+			if(tempKey < highKey) {
+				highKey = tempKey;
+			}
+		}
+		else {
+			// add expr to nonindexCond
+			regCond = new AndExpression(regCond, arg0);
+		}
+		// reset statistics
+		isIndexSubExp = false;
+		nums.clear();
+	}
+
+	@Override
+	public void visit(GreaterThan arg0) {
+		boolean intOnLeft = false;
+		arg0.getLeftExpression().accept(this);
+		if(!nums.isEmpty())
+			intOnLeft = true;
+		arg0.getRightExpression().accept(this);
+		if(isIndexSubExp) {
+			// add expr to indexCond
+			indexCond = new AndExpression(indexCond, arg0);
+			// set lowkey/highkey if better than existing ones
+			int tempKey = nums.pop();
+			if(intOnLeft) { // 3 > R.A
 				if(tempKey < highKey) {
 					highKey = tempKey;
+				}
+			}
+			else { // R.A > 3
+				if(tempKey > lowKey) {
+					lowKey = tempKey;
 				}
 			}
 		}
@@ -215,21 +245,41 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 			// add expr to nonindexCond
 			regCond = new AndExpression(regCond, arg0);
 		}
-		valid.push(operands.pop().equals(operands.pop()));
 		// reset statistics
 		isIndexSubExp = false;
-	}
-
-	@Override
-	public void visit(GreaterThan arg0) {
-		// TODO Auto-generated method stub
-		
+		nums.clear();
 	}
 
 	@Override
 	public void visit(GreaterThanEquals arg0) {
-		// TODO Auto-generated method stub
-		
+		boolean intOnLeft = false;
+		arg0.getLeftExpression().accept(this);
+		if(!nums.isEmpty())
+			intOnLeft = true;
+		arg0.getRightExpression().accept(this);
+		if(isIndexSubExp) {
+			// add expr to indexCond
+			indexCond = new AndExpression(indexCond, arg0);
+			// set lowkey/highkey if better than existing ones
+			int tempKey = nums.pop();
+			if(intOnLeft) { // 3 > R.A
+				if(tempKey < highKey) {
+					highKey = tempKey;
+				}
+			}
+			else { // R.A > 3
+				if(tempKey > lowKey) {
+					lowKey = tempKey;
+				}
+			}
+		}
+		else {
+			// add expr to nonindexCond
+			regCond = new AndExpression(regCond, arg0);
+		}
+		// reset statistics
+		isIndexSubExp = false;
+		nums.clear();
 	}
 
 	@Override
@@ -252,26 +302,79 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(MinorThan arg0) {
-		// TODO Auto-generated method stub
-		
+		boolean intOnLeft = false;
+		arg0.getLeftExpression().accept(this);
+		if(!nums.isEmpty())
+			intOnLeft = true;
+		arg0.getRightExpression().accept(this);
+		if(isIndexSubExp) {
+			// add expr to indexCond
+			indexCond = new AndExpression(indexCond, arg0);
+			// set lowkey/highkey if better than existing ones
+			int tempKey = nums.pop();
+			if(intOnLeft) { // 3 < R.A
+				if(tempKey > lowKey) {
+					lowKey = tempKey;
+				}
+			}
+			else { // R.A < 3
+				if(tempKey < highKey) {
+					highKey = tempKey;
+				}
+			}
+		}
+		else {
+			// add expr to nonindexCond
+			regCond = new AndExpression(regCond, arg0);
+		}
+		// reset statistics
+		isIndexSubExp = false;
+		nums.clear();
 	}
 
 	@Override
 	public void visit(MinorThanEquals arg0) {
-		// TODO Auto-generated method stub
-		
+		boolean intOnLeft = false;
+		arg0.getLeftExpression().accept(this);
+		if(!nums.isEmpty())
+			intOnLeft = true;
+		arg0.getRightExpression().accept(this);
+		if(isIndexSubExp) {
+			// add expr to indexCond
+			indexCond = new AndExpression(indexCond, arg0);
+			// set lowkey/highkey if better than existing ones
+			int tempKey = nums.pop();
+			if(intOnLeft) { // 3 < R.A
+				if(tempKey > lowKey) {
+					lowKey = tempKey;
+				}
+			}
+			else { // R.A < 3
+				if(tempKey < highKey) {
+					highKey = tempKey;
+				}
+			}
+		}
+		else {
+			// add expr to nonindexCond
+			regCond = new AndExpression(regCond, arg0);
+		}
+		// reset statistics
+		isIndexSubExp = false;
+		nums.clear();
 	}
 
 	@Override
 	public void visit(NotEqualsTo arg0) {
-		// TODO Auto-generated method stub
-		
+		regCond = new AndExpression(regCond, arg0);
 	}
 
 	@Override
 	public void visit(Column arg0) {
-		// TODO Auto-generated method stub
-		
+		String col = arg0.getColumnName();
+		if(col.equals(indexCol)) {
+			isIndexSubExp = true;
+		}
 	}
 
 	@Override
