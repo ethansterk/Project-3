@@ -77,13 +77,19 @@ public class PhysicalPlanBuilder {
 	public void visit(LogicalSelect logicalSelect) {
 		if (indexSelect) {
 			// see if there is an index on the relation
-			ArrayList<String> relations = logicalSelect.getChild().getBaseTables();
-			if (relations.size() != 1) {
+			ArrayList<String> tableNames = logicalSelect.getChild().getBaseTables();
+			if (tableNames.size() != 1) {
 				System.out.println("ERR: getBaseTables wrong for selection");
 			}
-			String relation = relations.get(0);
+			String s = tableNames.get(0);
+			String[] tokens = s.split(" ");
+			String tableName = tokens[0];
+			/*String alias = null;
+			if (tokens.length > 2) {
+				alias = tokens[2];
+			}*/
 			// TODO for project 5, there may be multiple indexCols
-			String indexCol = Indexes.getInstance().getIndexCols(relation);
+			String indexCol = Indexes.getInstance().getIndexCols(tableName);
 			if (indexCol == null) { // index does not exist on underlying relation
 				logicalSelect.getChild().accept(this);
 				Operator child = ops.pop();
@@ -93,19 +99,20 @@ public class PhysicalPlanBuilder {
 			}
 			Expression e = logicalSelect.getCondition();
 			// use visitor on condition e
-			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e);
+			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
 			Expression indexE = visitor.getIndexCond();
-			Expression regE = visitor.getRegCond();
 			// part that is index-able is put into an IndexScan
 			if (indexE != null) {
 				int highKey = visitor.getHighKey();
 				int lowKey = visitor.getLowKey();
-				IndexScan scanOp = new IndexScan(null, null, null, false, 0, 0);
+				String indexDir = Indexes.getInstance().getIndexDir(tableName + "." + indexCol);
+				boolean isClustered = Indexes.getInstance().getClustered(tableName);
+				IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey);
 				// part that is not is put into a regular SelectOp with a Scan Op
-				logicalSelect.getChild().accept(this);
-				Operator child = ops.pop();
-				SelectOperator newOp = new SelectOperator(child, null/* TODO non-indexable expr */);
-				// TODO somehow join these??
+				Expression regE = visitor.getRegCond();
+				SelectOperator newOp = new SelectOperator(scanOp, regE);
+				ops.push(newOp);
+				return;
 			}
 			else {
 				logicalSelect.getChild().accept(this);
