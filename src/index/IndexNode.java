@@ -11,22 +11,24 @@ import java.util.List;
  */
 public class IndexNode<K extends Comparable<K>, T> extends Node<K,T> {
 
-	// m nodes
-	protected ArrayList<T> leafChildren; // m+1 children
+	protected ArrayList<T> leafChildren;
 	protected ArrayList<Node<K,T>> indexChildren;
+	protected ArrayList<Integer> childrenAddresses;
 
 	public IndexNode() {
 		isLeafNode = false;
 		keys = new ArrayList<K>();
 		leafChildren = new ArrayList<T>();
 		indexChildren = new ArrayList<Node<K,T>>();
+		childrenAddresses = new ArrayList<Integer>();
 	}
 
-	public IndexNode(List<K> newKeys, List<T> newChildren, List<Node<K,T>> newIndexChildren) {
+	public IndexNode(List<K> newKeys, List<T> newChildren, List<Node<K,T>> newIndexChildren, ArrayList<Integer> addresses) {
 		isLeafNode = false;
 		keys = new ArrayList<K>(newKeys);
 		leafChildren = new ArrayList<T>(newChildren);
 		indexChildren = new ArrayList<Node<K,T>>(newIndexChildren);
+		childrenAddresses = new ArrayList<Integer>(addresses);
 	}
 	
 	/**
@@ -34,7 +36,7 @@ public class IndexNode<K extends Comparable<K>, T> extends Node<K,T> {
 	 * @param keys
 	 */
 	public void setKeys(ArrayList<K> keys) {
-		this.keys = keys;
+		this.keys.addAll(keys);
 	}
 	
 	/**
@@ -42,7 +44,7 @@ public class IndexNode<K extends Comparable<K>, T> extends Node<K,T> {
 	 * @param leafChildren
 	 */
 	public void setLeafChildren(ArrayList<T> children) {
-		this.leafChildren = children;
+		this.leafChildren.addAll(children);
 	}
 	
 	/**
@@ -50,7 +52,15 @@ public class IndexNode<K extends Comparable<K>, T> extends Node<K,T> {
 	 * @param indexChildren
 	 */
 	public void setIndexChildren(ArrayList<Node<K,T>> children) {
-		this.indexChildren = children;
+		this.indexChildren.addAll(children);
+	}
+	
+	/**
+	 * Setter method for childrenAddresses.
+	 * @param addresses
+	 */
+	public void setChildrenAddresses(ArrayList<Integer> addresses) {
+		childrenAddresses.addAll(addresses);
 	}
 	
 	/**
@@ -67,6 +77,14 @@ public class IndexNode<K extends Comparable<K>, T> extends Node<K,T> {
 	 */
 	public ArrayList<Node<K,T>> getIndexChildren() {
 		return indexChildren;
+	}
+	
+	/**
+	 * Getter method for childrenAddresses.
+	 * @return childrenAddresses
+	 */
+	public ArrayList<Integer> getAddresses() {
+		return childrenAddresses;
 	}
 	
 	/**

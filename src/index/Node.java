@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class Node<K extends Comparable<K>, T> {
 	protected boolean isLeafNode;
 	protected ArrayList<K> keys;
+	protected int address;
 
 	public boolean isOverflowed() {
 		return keys.size() > 2 * BPlusTree.D;
@@ -25,12 +26,20 @@ public class Node<K extends Comparable<K>, T> {
 	public ArrayList<K> getKeys() {
 		return keys;
 	}
+	
 	/**
-	 * Getter method for the smallest key in the left-most LeafNode of this node's subtree, 
-	 * for use in its parent IndexNode's keys.
-	 * @return firstKey
+	 * Getter method for address.
+	 * @return address
 	 */
-	public int getFirstKey() {
-		return (int)(keys.get(0));
+	public int getAddress() {
+		return address;
+	}
+	
+	/**
+	 * Setter method for address.
+	 * @param address
+	 */
+	public void setAddress(int address) {
+		this.address = address;
 	}
 }

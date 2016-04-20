@@ -25,26 +25,19 @@ public class Indexes {
 	private static int entryIndex = 0;
 	private static int k = 0;
 	private static int m = 0;
-	private static ArrayList<Integer> keys;
-	private static ArrayList<ArrayList<RecordID>> entries;
-	private static ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> children;
+	private static int currentAddr = 1;
 	private static ArrayList<DataEntry> allDataEntries;
 	private static ArrayList<Node<Integer, ArrayList<RecordID>>> leaves;
 	private static ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> anIndexLayer;
-	private static ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>> allIndexLayers;
 	
 	public static Indexes getInstance() {
 		return instance;
 	}
 	
 	private Indexes() {
-		keys = new ArrayList<Integer>();
-		entries = new ArrayList<ArrayList<RecordID>>();
-		children = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
 		allDataEntries = new ArrayList<DataEntry>();
 		leaves = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
 		anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
-		allIndexLayers = new ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>>();
 	}
 	
 	public static void createIndexes(String dbDir, boolean build) {
@@ -74,6 +67,7 @@ public class Indexes {
 	private static <K extends Comparable<K>,T> void buildIndex(String dir, String[] tokens) {
 		entryIndex = 0;
 		k = 0;
+		currentAddr = 1;
 		
 		String tableName = tokens[0];
 		String attrName = tokens[1];
@@ -84,6 +78,7 @@ public class Indexes {
 		ArrayList<String> sortCol = new ArrayList<String>();
 		sortCol.add(tableName + "." + attrName);
 		File indexFile = new File(dir);		//don't delete!
+		TupleWriter tw = new TupleWriter(dir);
 		DatabaseCatalog dc = DatabaseCatalog.getInstance();
 		Schema sch = dc.getSchema(tableName);
 		String tableDir = sch.getTableDir();
@@ -109,8 +104,19 @@ public class Indexes {
 		//special case where there's only one LeafNode, create 2-node tree (1 leaf, 1 index)
 		if (allDataEntries.size() <= 2 * D) {
 			createTwoNodeTree();
+			ArrayList<Integer> address = new ArrayList<Integer>();
+			address.add(1);
 			root = new IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>();
 			root.setLeafChildren(leaves);
+			root.setChildrenAddresses(address);
+			root.setAddress(2);
+			ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> rootI = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
+			rootI.add(root);
+			
+			//serialize this puny tree
+			serializeHeader(tw, D);
+			serializeLeaves(tw);
+			serializeOneLayer(tw, rootI);
 		}
 		//else, create leaf layer then index layers following steps in instructions
 		else {
@@ -121,7 +127,6 @@ public class Indexes {
 			int numLeafNodes = k / (2 * D);
 			if (k % (2 * D) != 0)
 				numLeafNodes++;
-			
 			//fill all LeafNodes normally except last 2
 			while (numLeafNodes > 2) {
 				addKeysAndEntries(0, 2*D);
@@ -138,13 +143,20 @@ public class Indexes {
 				addKeysAndEntries(0, divide);							//second-to-last LeafNode, holding k/2 entries
 				addKeysAndEntries(entryIndex, allDataEntries.size());	//last LeafNode, holding remainder entries
 			}
+			//create leaf addresses, 1...leaves.size()
+			ArrayList<Integer> leafAddresses = new ArrayList<Integer>();
+			for (int i = 1; i <= leaves.size(); i++)
+				leafAddresses.add(i);
+			
+			//serialize the header page, then the leaves
+			serializeHeader(tw, D);
+			serializeLeaves(tw);
 			
 			//2. create index node layers until have root (1 IndexNode), using ArrayList<LeafNode<...>> leaves
 			anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
-			allIndexLayers = new ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>>();
 			m = leaves.size();
 			//create first IndexNode layer and return the number in that layer to set up for the next
-			m = createFirstIndexLayer(D);
+			m = createFirstIndexLayer(D, leafAddresses, tw);
 			while (m > 1) {
 				entryIndex = 0;
 				ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> lastLayer = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
@@ -171,71 +183,11 @@ public class Indexes {
 					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());	//last IndexNode, holding remainder children
 				}
 				
-				allIndexLayers.add(anIndexLayer);
+				serializeOneLayer(tw, anIndexLayer);
 				//update size of latest layer (for checking if we're at the root (size=1))
 				m = anIndexLayer.size();
 			}
-			//the top anIndexLayer holds just one IndexNode, which is the root
-			root = anIndexLayer.get(0);
 		}		
-		
-		//serialize the index into the pages that make up the index File @ dir
-		TupleWriter tw = new TupleWriter(dir);
-		//1 -- header page is first
-			//contains:
-			//a -- address of root
-			//b -- number leaves
-			//c -- order of tree (d)
-		int totalIndexes = 0;
-		for (ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> a : allIndexLayers)
-			totalIndexes += a.size();
-		int totalLeaves = leaves.size();
-		int rootAddr = totalLeaves + totalIndexes;
-		tw.writeOneInt(rootAddr);		//address of root
-		tw.writeOneInt(totalLeaves);	//number of leaves
-		tw.writeOneInt(D);				//order of tree
-		tw.writeNewPageIndex();
-		//2 -- serialize leaf nodes left-to-right (each to its own page)
-		for (Node<Integer, ArrayList<RecordID>> ln : leaves) {
-			ArrayList<Integer> keys = ((LeafNode<Integer, ArrayList<RecordID>>)ln).getKeys();
-			ArrayList<ArrayList<RecordID>> data = ((LeafNode<Integer, ArrayList<RecordID>>)ln).getValues();
-			tw.writeOneInt(0);					//flag for LeafNode
-			tw.writeOneInt(keys.size());		//number of data entries in node
-			//write serialized rep of each data entry in the node ln
-			for (int i = 0; i < data.size(); i++) {
-				tw.writeOneInt(keys.get(i));		//value of k
-				ArrayList<RecordID> rec = data.get(i);
-				tw.writeOneInt(rec.size());			//number of rids in entry
-				tw.writeRecordIDs(rec);				//(p,t) for each rid
-			}
-			tw.writeNewPageIndex();
-		}
-		//3 -- go through allIndexLayers, each IndexNode in each layer (root is last page in file)
-		int prevLayersCount = 0;
-		for (ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> layer : allIndexLayers) {
-			for (int i = 0; i < layer.size(); i++) {
-				IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> index = layer.get(i);
-				tw.writeOneInt(1);				//flag for IndexNode
-				ArrayList<Integer> keys = index.getKeys();
-				tw.writeOneInt(keys.size());	//number of keys in node
-				tw.writeManyInts(keys);			//actual keys in node, in order
-				ArrayList<Node<Integer, ArrayList<RecordID>>> children = index.getLeafChildren();
-				if (i == 0) {		//if we're on the first IndexNode layer
-					for (Node<Integer, ArrayList<RecordID>> child : children) {
-						int addr = leaves.indexOf(child);
-						tw.writeOneInt(addr);	//addresses of all children of node, in order
-					}
-				}
-				else {				//if we're on any higher IndexNode layer
-					for (Node<Integer, ArrayList<RecordID>> child : children) {
-						int addr = leaves.size() + prevLayersCount + children.indexOf(child);
-						tw.writeOneInt(addr);	//addresses of all children of node, in order
-					}
-				}	
-				prevLayersCount += children.size();
-				tw.writeNewPageIndex();
-			}
-		}
 	}
 
 	/**
@@ -298,14 +250,16 @@ public class Indexes {
 	 * such that only one LeafNode has entries, with one parent IndexNode.
 	 */
 	private static void createTwoNodeTree() {
-		keys = new ArrayList<Integer>();
-		entries = new ArrayList<ArrayList<RecordID>>();
+		ArrayList<Integer> keys = new ArrayList<Integer>();
+		ArrayList<ArrayList<RecordID>> entries = new ArrayList<ArrayList<RecordID>>();
 		leaves = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
 		for (DataEntry de : allDataEntries) {
 			keys.add(de.getSortKey());
 			entries.add(de.getRecIDs());
 		}
-		leaves.add(new LeafNode<Integer, ArrayList<RecordID>>(keys, entries));
+		LeafNode<Integer, ArrayList<RecordID>> l = new LeafNode<Integer, ArrayList<RecordID>>(keys, entries);
+		l.setAddress(1);
+		leaves.add(l);
 	}
 
 	/**
@@ -314,15 +268,18 @@ public class Indexes {
 	 * @param end
 	 */
 	private static void addKeysAndEntries(int start, int end) {
-		keys = new ArrayList<Integer>();
-		entries = new ArrayList<ArrayList<RecordID>>();
+		ArrayList<Integer> keys = new ArrayList<Integer>();
+		ArrayList<ArrayList<RecordID>> entries = new ArrayList<ArrayList<RecordID>>();
 		for (int i = start; i < end; i++) {
 			keys.add(allDataEntries.get(entryIndex).getSortKey());
 			entries.add(allDataEntries.get(entryIndex).getRecIDs());
 			entryIndex++;
 			k--;
 		}
-		leaves.add(new LeafNode<Integer, ArrayList<RecordID>>(keys, entries));
+		LeafNode<Integer, ArrayList<RecordID>> l = new LeafNode<Integer, ArrayList<RecordID>>(keys, entries);
+		l.setAddress(currentAddr);
+		currentAddr++;
+		leaves.add(l);
 	}
 
 	/**
@@ -330,7 +287,7 @@ public class Indexes {
 	 * @param D
 	 * @return new m (number of IndexNodes in this first layer)
 	 */
-	private static int createFirstIndexLayer(int D) {
+	private static int createFirstIndexLayer(int D, ArrayList<Integer> lAddrs, TupleWriter tw) {
 		entryIndex = 0;
 		anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
 		
@@ -339,22 +296,22 @@ public class Indexes {
 			numIndexNodes++;
 		//fill all IndexNodes normally except last 2
 		while (numIndexNodes > 2) {
-			addLeafChildrenAndKeys(0, 2*D+1);
+			addLeafChildrenAndKeys(0, 2*D+1, lAddrs);
 			numIndexNodes--;
 		}
 		if (m <= (2 * D + 1))				//aka, if numIndexNode = 1; just fill one IndexNode
-			addLeafChildrenAndKeys(entryIndex, leaves.size());
+			addLeafChildrenAndKeys(entryIndex, leaves.size(), lAddrs);
 		else if (m >= (3 * D + 2)) {		//fill last 2 IndexNodes as normal
-			addLeafChildrenAndKeys(0, 2*D+1);						//second-to-last IndexNode, holding 2D + 1 children
-			addLeafChildrenAndKeys(entryIndex, leaves.size());		//last IndexNode, holding remainder children (at least D + 1 children)
+			addLeafChildrenAndKeys(0, 2*D+1, lAddrs);						//second-to-last IndexNode, holding 2D + 1 children
+			addLeafChildrenAndKeys(entryIndex, leaves.size(), lAddrs);		//last IndexNode, holding remainder children (at least D + 1 children)
 		}
 		else {						//construct last 2 IndexNodes so that first get
 			int divide = m/2;
-			addLeafChildrenAndKeys(0, divide);						//second-to-last IndexNode, holding m/2 children
-			addLeafChildrenAndKeys(entryIndex, leaves.size());		//last IndexNode, holding remainder children
+			addLeafChildrenAndKeys(0, divide, lAddrs);						//second-to-last IndexNode, holding m/2 children
+			addLeafChildrenAndKeys(entryIndex, leaves.size(), lAddrs);		//last IndexNode, holding remainder children
 		}
 		
-		allIndexLayers.add(anIndexLayer);
+		serializeOneLayer(tw, anIndexLayer);
 		//update size of latest layer (for checking if we're at the root (size=1))
 		return anIndexLayer.size();
 	}
@@ -365,22 +322,29 @@ public class Indexes {
 	 * @param i
 	 * @param j
 	 */
-	private static void addLeafChildrenAndKeys(int start, int end) {
-		keys = new ArrayList<Integer>();
+	private static void addLeafChildrenAndKeys(int start, int end, ArrayList<Integer> lAddrs) {
+		ArrayList<Integer> keys = new ArrayList<Integer>();
 		ArrayList<Node<Integer, ArrayList<RecordID>>> leafchildren = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
+		ArrayList<Integer> addrs = new ArrayList<Integer>();
+		
 		//add first child, so that #children = m + 1 and #keys = m
 		leafchildren.add(leaves.get(entryIndex));
+		addrs.add(leaves.get(entryIndex).getAddress());
 		entryIndex++;
 		m--;
 		for (int i = start + 1; i < end; i++) {
-			keys.add(leaves.get(entryIndex).getFirstKey());
+			keys.add(((LeafNode<Integer, ArrayList<RecordID>>)leaves.get(entryIndex)).getFirstKey());
 			leafchildren.add(leaves.get(entryIndex));
+			addrs.add(lAddrs.get(entryIndex));
 			entryIndex++;
 			m--;
 		}
 		IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> in = new IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>();
 		in.setKeys(keys);
 		in.setLeafChildren(leafchildren);
+		in.setChildrenAddresses(addrs);
+		in.setAddress(currentAddr);
+		currentAddr++;
 		anIndexLayer.add(in);
 	}
 	
@@ -390,24 +354,94 @@ public class Indexes {
 	 * @param j
 	 */
 	private static void addChildrenAndKeys(ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> lastLayer, int start, int end) {
-		keys = new ArrayList<Integer>();
-		children = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
+		ArrayList<Integer> keys = new ArrayList<Integer>();
+		ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> children = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
+		ArrayList<Integer> addrs = new ArrayList<Integer>();
 		//add first child, so that #children = m + 1 and #keys = m
 		children.add(lastLayer.get(entryIndex));
+		addrs.add(lastLayer.get(entryIndex).getAddress());
 		entryIndex++;
 		m--;
 		for (int i = start + 1; i < end; i++) {
-			keys.add(lastLayer.get(entryIndex).getFirstKey());
+			keys.add(((IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>)lastLayer.get(entryIndex)).getFirstKey());
 			children.add(lastLayer.get(entryIndex));
+			addrs.add(lastLayer.get(entryIndex).getAddress());
 			entryIndex++;
 			m--;
 		}
 		IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> in = new IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>();
 		in.setKeys(keys);
 		in.setIndexChildren(children);
+		in.setChildrenAddresses(addrs);
+		in.setAddress(currentAddr);
+		currentAddr++;
 		anIndexLayer.add(in);
 	}
 	
+	/**
+	 * Helper method that does the work of serializing the Header page.
+	 * @param tw
+	 * @param D
+	 */
+	private static void serializeHeader(TupleWriter tw, int D) {
+		int totalLeaves = leaves.size();
+		//calculate number of IndexNodes
+		int totalIndexes = 0;
+		int m = totalLeaves;
+		while (m > 1) {
+			int temp = m;
+			temp = m / (2 * D + 1);
+			if (m % (2 * D + 1) != 0)
+				temp++;
+			totalIndexes += temp;
+			m = temp;
+		}
+		
+		int rootAddr = totalLeaves + totalIndexes;
+		tw.writeOneInt(rootAddr);		//address of root
+		tw.writeOneInt(totalLeaves);	//number of leaves
+		tw.writeOneInt(D);				//order of tree
+		tw.writeNewPageIndex();
+	}
+	
+	/**
+	 * Helper function that does the work of serializing all of the leaves.
+	 * @param tw
+	 */
+	private static void serializeLeaves(TupleWriter tw) {
+		for (Node<Integer, ArrayList<RecordID>> ln : leaves) {
+			ArrayList<Integer> keys = ((LeafNode<Integer, ArrayList<RecordID>>)ln).getKeys();
+			ArrayList<ArrayList<RecordID>> data = ((LeafNode<Integer, ArrayList<RecordID>>)ln).getValues();
+			tw.writeOneInt(0);					//flag for LeafNode
+			tw.writeOneInt(keys.size());		//number of data entries in node
+			//write serialized rep of each data entry in the node ln
+			for (int i = 0; i < data.size(); i++) {
+				tw.writeOneInt(keys.get(i));		//value of k
+				ArrayList<RecordID> rec = data.get(i);
+				tw.writeOneInt(rec.size());			//number of rids in entry
+				tw.writeRecordIDs(rec);				//(p,t) for each rid
+			}
+			tw.writeNewPageIndex();
+		}
+	}
+	
+	/**
+	 * Helper function that does the work of serializing ONE LAYER OF INDEX NODES.
+	 * @param tw
+	 * @param layer
+	 */
+	private static void serializeOneLayer(TupleWriter tw, ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> layer) {
+		for (int i = 0; i < layer.size(); i++) {
+			IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> index = layer.get(i);
+			tw.writeOneInt(1);							//flag for IndexNode
+			ArrayList<Integer> keys = index.getKeys();
+			tw.writeOneInt(keys.size());				//number of keys in node
+			tw.writeManyInts(keys);						//actual keys in node, in order
+			tw.writeManyInts(index.getAddresses());		//addresses of all children of node, in order
+			tw.writeNewPageIndex();
+		}
+	}
+
 	/**
 	 * Getter method for index directory corresponding with the given indexname.
 	 * @param indexname

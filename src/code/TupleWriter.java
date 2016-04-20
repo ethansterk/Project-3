@@ -141,7 +141,6 @@ public class TupleWriter {
 			buffer.putInt(i);
 	}
 	
-	private int i = 0;
 	/**
 	 * Specifically used with building our indexes.
 	 * To write a whole list of RecordIDs.
@@ -150,7 +149,6 @@ public class TupleWriter {
 		for (RecordID r : list) {
 			buffer.putInt(r.getPageID());
 			buffer.putInt(r.getTupleID());
-			i++;
 		}
 	}
 }
