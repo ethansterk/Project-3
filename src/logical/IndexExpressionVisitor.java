@@ -1,5 +1,7 @@
 package logical;
 
+import java.util.Stack;
+
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
 import net.sf.jsqlparser.expression.CaseExpression;
@@ -53,6 +55,8 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 	
 	// fields for keeping visiting statistics
 	private String indexCol;
+	private Stack<Integer> nums;
+	private boolean isIndexSubExp;
 	
 	public IndexExpressionVisitor(Expression e, String indexCol) {
 		// we should know what indexes we have (use Indexes getIndexCols())
@@ -62,6 +66,8 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		regCond = null;
 		
 		this.indexCol = indexCol;
+		nums = new Stack<Integer>();
+		isIndexSubExp = false;
 	}
 
 	public int getLowKey() {
@@ -112,8 +118,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(LongValue arg0) {
-		// TODO Auto-generated method stub
-		
+		nums.push((int)arg0.getValue());
 	}
 
 	@Override
@@ -172,8 +177,8 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(AndExpression arg0) {
-		// TODO Auto-generated method stub
-		
+		arg0.getLeftExpression().accept(this);
+		arg0.getRightExpression().accept(this);
 	}
 
 	@Override
@@ -190,8 +195,29 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(EqualsTo arg0) {
-		// TODO Auto-generated method stub
-		
+		arg0.getLeftExpression().accept(this);
+		arg0.getRightExpression().accept(this);
+		if(isIndexSubExp) {
+			// add expr to indexCond
+			indexCond = new AndExpression(indexCond, arg0);
+			// set lowkey/highkey if better than existing ones
+			if(!nums.isEmpty()) { // TODO is this always true??
+				int tempKey = nums.pop();
+				if(tempKey > lowKey) {
+					lowKey = tempKey;
+				}
+				if(tempKey < highKey) {
+					highKey = tempKey;
+				}
+			}
+		}
+		else {
+			// add expr to nonindexCond
+			regCond = new AndExpression(regCond, arg0);
+		}
+		valid.push(operands.pop().equals(operands.pop()));
+		// reset statistics
+		isIndexSubExp = false;
 	}
 
 	@Override
