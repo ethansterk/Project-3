@@ -17,5 +17,20 @@ public class Node<K extends Comparable<K>, T> {
 	public boolean isUnderflowed() {
 		return keys.size() < BPlusTree.D;
 	}
-
+	
+	/**
+	 * Getter method for keys
+	 * @return keys
+	 */
+	public ArrayList<K> getKeys() {
+		return keys;
+	}
+	/**
+	 * Getter method for the smallest key in the left-most LeafNode of this node's subtree, 
+	 * for use in its parent IndexNode's keys.
+	 * @return firstKey
+	 */
+	public int getFirstKey() {
+		return (int)(keys.get(0));
+	}
 }

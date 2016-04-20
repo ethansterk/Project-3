@@ -1,47 +1,85 @@
 package index;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
+/**
+ * This class is from CS4320 HW2's skeleton code, with editing.
+ * 
+ * @author Ethan Sterk (ejs334) and Laura Ng (ln233)
+ *
+ */
 public class IndexNode<K extends Comparable<K>, T> extends Node<K,T> {
 
 	// m nodes
-	protected ArrayList<Node<K,T>> children; // m+1 children
+	protected ArrayList<T> leafChildren; // m+1 children
+	protected ArrayList<Node<K,T>> indexChildren;
 
-	public IndexNode(K key, Node<K,T> child0, Node<K,T> child1) {
+	public IndexNode() {
 		isLeafNode = false;
 		keys = new ArrayList<K>();
-		keys.add(key);
-		children = new ArrayList<Node<K,T>>();
-		children.add(child0);
-		children.add(child1);
+		leafChildren = new ArrayList<T>();
+		indexChildren = new ArrayList<Node<K,T>>();
 	}
 
-	public IndexNode(List<K> newKeys, List<Node<K,T>> newChildren) {
+	public IndexNode(List<K> newKeys, List<T> newChildren, List<Node<K,T>> newIndexChildren) {
 		isLeafNode = false;
-
 		keys = new ArrayList<K>(newKeys);
-		children = new ArrayList<Node<K,T>>(newChildren);
-
+		leafChildren = new ArrayList<T>(newChildren);
+		indexChildren = new ArrayList<Node<K,T>>(newIndexChildren);
 	}
-
+	
 	/**
-	 * insert the entry into this node at the specified index so that it still
-	 * remains sorted
-	 * 
-	 * @param e
-	 * @param index
+	 * Setter method for keys.
+	 * @param keys
 	 */
-	public void insertSorted(Entry<K, Node<K,T>> e, int index) {
-		K key = e.getKey();
-		Node<K,T> child = e.getValue();
-		if (index >= keys.size()) {
-			keys.add(key);
-			children.add(child);
-		} else {
-			keys.add(index, key);
-			children.add(index+1, child);
-		}
+	public void setKeys(ArrayList<K> keys) {
+		this.keys = keys;
 	}
-
+	
+	/**
+	 * Setter method for children, if children are LeafNodes.
+	 * @param leafChildren
+	 */
+	public void setLeafChildren(ArrayList<T> children) {
+		this.leafChildren = children;
+	}
+	
+	/**
+	 * Setter method for children, if children are IndexNodes.
+	 * @param indexChildren
+	 */
+	public void setIndexChildren(ArrayList<Node<K,T>> children) {
+		this.indexChildren = children;
+	}
+	
+	/**
+	 * Getter method for children, if children are LeafNodes.
+	 * @return leafChildren
+	 */
+	public ArrayList<T> getLeafChildren() {
+		return leafChildren;
+	}
+	
+	/**
+	 * Getter method for children, if children are IndexNodes.
+	 * @return indexChildren
+	 */
+	public ArrayList<Node<K,T>> getIndexChildren() {
+		return indexChildren;
+	}
+	
+	/**
+	 * Getter method for the smallest key in the left-most LeafNode of this node's subtree, 
+	 * for use in its parent IndexNode's keys.
+	 * @return firstKey
+	 */
+	public int getFirstKey() {
+		if (leafChildren.size() != 0)
+			return ((LeafNode<K,T>)leafChildren.get(0)).getFirstKey();
+		else if (indexChildren.size() != 0)
+			return ((IndexNode<K,T>)indexChildren.get(0)).getFirstKey();
+		else
+			return -1;
+	}
 }

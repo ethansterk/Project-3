@@ -3,7 +3,6 @@ package index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -26,10 +25,13 @@ public class Indexes {
 	private static int entryIndex = 0;
 	private static int k = 0;
 	private static int m = 0;
-	private static ArrayList<Integer> keys = new ArrayList<Integer>();
-	private static ArrayList<ArrayList<RecordID>> entries = new ArrayList<ArrayList<RecordID>>();
-	private static ArrayList<DataEntry> allDataEntries = new ArrayList<DataEntry>();
-	private static ArrayList<LeafNode<Integer, ArrayList<RecordID>>> leaves = new ArrayList<LeafNode<Integer, ArrayList<RecordID>>>();
+	private static ArrayList<Integer> keys = null;
+	private static ArrayList<ArrayList<RecordID>> entries = null;
+	private static ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> children = null;
+	private static ArrayList<DataEntry> allDataEntries = null;
+	private static ArrayList<Node<Integer, ArrayList<RecordID>>> leaves = null;
+	private static ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> anIndexLayer = null;
+	private static ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>> allIndexLayers = null;
 	
 	public static Indexes getInstance() {
 		return instance;
@@ -71,7 +73,7 @@ public class Indexes {
 		String attrName = tokens[1];
 		boolean isClustered = tokens[2].equals("1");
 		int D = Integer.parseInt(tokens[3]);
-		IndexNode<K,T> root = null;
+		IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> root = null;
 		
 		ArrayList<String> sortCol = new ArrayList<String>();
 		sortCol.add(tableName + "." + attrName);
@@ -115,32 +117,36 @@ public class Indexes {
 		
 		//1&2. special case where there's only one LeafNode, create 2-node tree (1 leaf, 1 index)
 		if (allDataEntries.size() <= 2 * D) {
-			leaves = new ArrayList<LeafNode<Integer, ArrayList<RecordID>>>();
+			keys = new ArrayList<Integer>();
+			entries = new ArrayList<ArrayList<RecordID>>();
+			leaves = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
 			for (DataEntry de : allDataEntries) {
 				keys.add(de.getSortKey());
 				entries.add(de.getRecIDs());
 			}
 			leaves.add(new LeafNode<Integer, ArrayList<RecordID>>(keys, entries));
-			root = new IndexNode(null, leaves);
+			root = new IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>();
+			root.setLeafChildren(leaves);
 		}
+		
 		//else, create leaf layer then index layers following steps in instructions
 		else {
 			//1. create leaf layer
-			leaves = new ArrayList<LeafNode<Integer, ArrayList<RecordID>>>();
 			entryIndex = 0;
 			k = allDataEntries.size();		//number of entries left
-			leaves = new ArrayList<LeafNode<Integer, ArrayList<RecordID>>>();
-			
+			leaves = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
 			int numLeafNodes = k / (2 * D);
 			if (k % (2 * D) != 0)
 				numLeafNodes++;
-			
 			//fill all LeafNodes normally except last 2
 			while (numLeafNodes > 2) {
 				addKeysAndEntries(0, 2*D);
 				numLeafNodes--;
 			}
-			if (k >= (3 * D)) {		//fill last 2 LeafNodes as normal
+			if (k <= (2 *D)) {				//aka, numLeafNode = 1; just fill one LeafNode
+				addKeysAndEntries(entryIndex, allDataEntries.size());
+			}
+			else if (k >= (3 * D)) {		//fill last 2 LeafNodes as normal
 				//second-to-last LeafNode, holding 2D entries
 				addKeysAndEntries(0, 2*D);
 				//last LeafNode, holding remainder entries (at least D entries)
@@ -154,26 +160,55 @@ public class Indexes {
 				addKeysAndEntries(entryIndex, allDataEntries.size());
 			}
 			
-			//2. create index node layers, using ArrayList<LeafNode<...>> leaves
-			System.out.println(tableName + " leaves created: " + leaves.size());
+			//2. create index node layers until have root (1 IndexNode), using ArrayList<LeafNode<...>> leaves
+			anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
+			allIndexLayers = new ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>>();
 			m = leaves.size();
-			int numIndexNodes = m / (2 * D + 1);
-			//fill all IndexNodes normally except last 2
-			while (numIndexNodes > 2) {
-				addLeafChildrenAndKeys(0, 2*D+1);
-				numIndexNodes--;
-			}
-			if (m >= (3 * D + 2)) {		//fill last 2 IndexNodes as normal
-				//second-to-last IndexNode, holding 2D + 1 children
+			m = createFirstIndexLayer(D);
+			System.out.println("indexlayer " + allIndexLayers.size());
+			for (IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> ind : anIndexLayer)
+				System.out.println(ind.getKeys().toString());
+			while (m > 1) {
+				entryIndex = 0;
+				ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> lastLayer = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
+				lastLayer.addAll(anIndexLayer);
+				anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
 				
-				//last IndexNode, holding remainder children (at least D + 1 children)
+				int numIndexNodes = m / (2 * D + 1);
+				if (m % (2 * D + 1) != 0)
+					numIndexNodes++;
+				//fill all IndexNodes normally except last 2
+				while (numIndexNodes > 2) {
+					addChildrenAndKeys(lastLayer, 0, 2*D+1);
+					numIndexNodes--;
+				}
+				//System.out.println(entryIndex);
+				if (m <= (2 * D + 1)) {				//aka, numIndexNode = 1; just fill one IndexNode
+					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());
+				}
+				else if (m >= (3 * D + 2)) {		//fill last 2 IndexNodes as normal
+					//second-to-last IndexNode, holding 2D + 1 children
+					addChildrenAndKeys(lastLayer, 0, 2*D+1);
+					//last IndexNode, holding remainder children (at least D + 1 children)
+					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());
+				}
+				else {						//construct last 2 IndexNodes so that first get
+					int divide = m/2;
+					//second-to-last IndexNode, holding m/2 children
+					addChildrenAndKeys(lastLayer, 0, divide);
+					//last IndexNode, holding remainder children
+					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());
+				}
+				
+				allIndexLayers.add(anIndexLayer);
+				//update size of latest layer (for checking if we're at the root (size=1))
+				m = anIndexLayer.size();
+				System.out.println(m);
+				System.out.println("indexlayer " + allIndexLayers.size() + ": " + anIndexLayer.get(0).getKeys().toString());
 			}
-			else {						//construct last 2 IndexNodes so that first get
-				int divide = m/2;
-				//second-to-last IndexNode, holding m/2 children
-						
-				//last IndexNode, holding remainder children
-			}
+			//the top anIndexLayer holds just one IndexNode, which is the root
+			root = anIndexLayer.get(0);
+			System.out.println("root's first key: " + root.getKeys().toString());
 		}
 		
 		
@@ -190,13 +225,91 @@ public class Indexes {
 	}
 	
 	/**
-	 * Helper function to create a new IndexNode after adding the right LeafNode children and keys.
+	 * Helper function to create the first layer of IndexNodes from the layer of LeafNodes.
+	 * @param D
+	 * @return new m (number of IndexNodes in this first layer)
+	 */
+	private static int createFirstIndexLayer(int D) {
+		entryIndex = 0;
+		anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
+		
+		int numIndexNodes = m / (2 * D + 1);
+		if (m % (2 * D + 1) != 0)
+			numIndexNodes++;
+		//fill all IndexNodes normally except last 2
+		while (numIndexNodes > 2) {
+			addLeafChildrenAndKeys(0, 2*D+1);
+			numIndexNodes--;
+		}
+		//System.out.println(entryIndex);
+		if (m <= (2 * D + 1)) {				//aka, numIndexNode = 1; just fill one IndexNode
+			addLeafChildrenAndKeys(entryIndex, leaves.size());
+		}
+		else if (m >= (3 * D + 2)) {		//fill last 2 IndexNodes as normal
+			//second-to-last IndexNode, holding 2D + 1 children
+			addLeafChildrenAndKeys(0, 2*D+1);
+			//last IndexNode, holding remainder children (at least D + 1 children)
+			addLeafChildrenAndKeys(entryIndex, leaves.size());
+		}
+		else {						//construct last 2 IndexNodes so that first get
+			int divide = m/2;
+			//second-to-last IndexNode, holding m/2 children
+			addLeafChildrenAndKeys(0, divide);
+			//last IndexNode, holding remainder children
+			addLeafChildrenAndKeys(entryIndex, leaves.size());
+		}
+		
+		allIndexLayers.add(anIndexLayer);
+		//update size of latest layer (for checking if we're at the root (size=1))
+		return anIndexLayer.size();
+	}
+
+	/**
+	 * Helper function to create a new IndexNode after adding the right children and keys.
 	 * @param i
 	 * @param j
 	 */
-	private static void addLeafChildrenAndKeys(int i, int j) {
-		// TODO Auto-generated method stub
-		
+	private static void addLeafChildrenAndKeys(int start, int end) {
+		keys = new ArrayList<Integer>();
+		ArrayList<Node<Integer, ArrayList<RecordID>>> leafchildren = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
+		//add first child, so that #children = m + 1 and #keys = m
+		leafchildren.add(leaves.get(entryIndex));
+		entryIndex++;
+		m--;
+		for (int i = start + 1; i < end; i++) {
+			keys.add(leaves.get(entryIndex).getFirstKey());
+			leafchildren.add(leaves.get(entryIndex));
+			entryIndex++;
+			m--;
+		}
+		IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> in = new IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>();
+		in.setKeys(keys);
+		in.setLeafChildren(leafchildren);
+		anIndexLayer.add(in);
+	}
+	
+	/**
+	 * Helper function to create a new IndexNode after adding the right children and keys.
+	 * @param i
+	 * @param j
+	 */
+	private static void addChildrenAndKeys(ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> lastLayer, int start, int end) {
+		keys = new ArrayList<Integer>();
+		children = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
+		//add first child, so that #children = m + 1 and #keys = m
+		children.add(lastLayer.get(entryIndex));
+		entryIndex++;
+		m--;
+		for (int i = start + 1; i < end; i++) {
+			keys.add(lastLayer.get(entryIndex).getFirstKey());
+			children.add(lastLayer.get(entryIndex));
+			entryIndex++;
+			m--;
+		}
+		IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> in = new IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>();
+		in.setKeys(keys);
+		in.setIndexChildren(children);
+		anIndexLayer.add(in);
 	}
 
 	/**

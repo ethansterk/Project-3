@@ -1,4 +1,5 @@
 package index;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,8 +11,6 @@ import java.util.List;
  */
 public class LeafNode<K extends Comparable<K>, T> extends Node<K, T> {
 	protected ArrayList<T> values;
-	protected LeafNode<K,T> nextLeaf;
-	protected LeafNode<K,T> previousLeaf;
 	
 	/**
 	 * Added this general constructor
@@ -41,5 +40,22 @@ public class LeafNode<K extends Comparable<K>, T> extends Node<K, T> {
 	 */
 	public void setValues(ArrayList<T> values) {
 		this.values = values;
+	}
+	
+	/**
+	 * Getter method for values
+	 * @return values
+	 */
+	public ArrayList<T> getValues() {
+		return values;
+	}
+	
+	/**
+	 * Getter method for the smallest key in this LeafNode's keys, 
+	 * for use in its parent IndexNode's keys.
+	 * @return firstKey
+	 */
+	public int getFirstKey() {
+		return (int)(keys.get(0));
 	}
 }
