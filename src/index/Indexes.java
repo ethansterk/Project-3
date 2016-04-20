@@ -49,6 +49,11 @@ public class Indexes {
 		anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
 	}
 	
+	/**
+	 * This function can be accessed publicly to initiate the construction
+	 * of all the necessary indexes.
+	 * @param dbDir
+	 */
 	public static void createIndexes(String dbDir) {
 		File index_info = new File(dbDir + File.separator + "index_info.txt");
 		Scanner sc = null;
@@ -72,6 +77,17 @@ public class Indexes {
 		}
 	}
 
+	/**
+	 * This is where all of the logic behind building an index is.
+	 * The general steps are:
+	 * 	0. generate data entries
+	 *  1. create leafnode layer from data entries
+	 *  2. create first indexnode layer from the leafnodes
+	 *  3. continue creating indexnode layers until we reach the root
+	 * When each layer is created, we serialize this to the index file as appropriate.
+	 * @param dir
+	 * @param tokens
+	 */
 	@SuppressWarnings("unchecked")
 	private static <K extends Comparable<K>,T> void buildIndex(String dir, String[] tokens) {
 		entryIndex = 0;
