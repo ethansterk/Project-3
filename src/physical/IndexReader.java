@@ -37,6 +37,7 @@ public class IndexReader {
 	private int currentPage;
 	private int dataEntriesLeft;
 	private int ridsLeft;
+	private boolean notInIndex = false;
 	
 	/**
 	 * Constructs an IndexReader.
@@ -63,7 +64,7 @@ public class IndexReader {
 		
 		buffer = ByteBuffer.allocate(4096);
 		
-		handleFirstDecent();
+		handleFirstDescent();
 		
 	}
 	
@@ -73,7 +74,7 @@ public class IndexReader {
 	 * to getNextTuple() can get the appropriate tuple without
 	 * another root-to-leaf traversal.
 	 */
-	private void handleFirstDecent() {
+	private void handleFirstDescent() {
 		//go into header
 		try {
 			if (fc.read(buffer) < 1) {
@@ -91,28 +92,29 @@ public class IndexReader {
 		
 		//go into root
 		setBufferToAddress(ROOT_ADDR);
+		
 		// loop until you reach leaf node (different serialization)
-		int isIndexNode = 0;
-		while((isIndexNode = buffer.getInt()) == 1) {
+		while(buffer.getInt() == 1) {
 			int nextPageAddr = -1;
-			int numTuples = buffer.getInt();
-			for(int i = 0; i < numTuples; i++) {
+			int numKeys = buffer.getInt();
+			for(int i = 0; i < numKeys; i++) {
 				int key = buffer.getInt();
-				if(lowKey < key) {
+				if(lowKey <= key) {
 					int oldPos = buffer.position();
-					if(oldPos + (numTuples - 1) * 4 > 4095) {
+					if(oldPos + (numKeys - 1) * 4 > 4095) {
 						System.out.println("Not enough room in buffer.");
 					}
-					buffer.position(oldPos + (numTuples - 1) * 4);
+					buffer.position(oldPos + (numKeys - 1) * 4);
 					nextPageAddr = buffer.getInt();
+					break;
 				}
 			}
 			if(nextPageAddr == -1) { // lowKey greater than all keys (addr never assigned)
 				int oldPos = buffer.position();
-				if(oldPos + (numTuples) * 4 > 4095) {
+				if(oldPos + (numKeys) * 4 > 4095) {
 					System.out.println("Not enough room in buffer.");
 				}
-				buffer.position(oldPos + (numTuples) * 4);
+				buffer.position(oldPos + (numKeys) * 4);
 				nextPageAddr = buffer.getInt();
 			}
 			// go to new page
@@ -121,9 +123,10 @@ public class IndexReader {
 		}
 		// at leaf node, find the key that is greater than or equal to lowKey
 		dataEntriesLeft = buffer.getInt();
-		int key;
-		while(lowKey < (key = buffer.getInt())) {
+		int key = -1;
+		while(lowKey > key && dataEntriesLeft > 0) {
 			// set position for next key
+			key = buffer.getInt();
 			int numRids = buffer.getInt();
 			int oldPos = buffer.position();
 			if(oldPos + (numRids * 2) * 4 > 4095) {
@@ -132,9 +135,13 @@ public class IndexReader {
 			buffer.position(oldPos + (numRids * 2) * 4);
 			dataEntriesLeft--;
 		}
-		// at key that is greater than or equal to lowKey
-		ridsLeft = buffer.getInt();
-		// the buffer is now positioned to return the first rid
+		if (dataEntriesLeft == 0)
+			notInIndex = true;
+		else {
+			// at key that is greater than or equal to lowKey
+			ridsLeft = buffer.getInt();
+			// the buffer is now positioned to return the first rid
+		}
 	}
 
 	/**
@@ -146,6 +153,9 @@ public class IndexReader {
 	 * @return
 	 */
 	public Tuple readNextTuple() {
+		if (notInIndex)
+			return null;
+		
 		if (clustered) {
 			return tr.readNextTuple();
 		}
@@ -214,6 +224,7 @@ public class IndexReader {
 	 * @param addr Index of the page we want.
 	 */
 	private void setBufferToAddress(int addr) {
+		buffer = ByteBuffer.allocate(4096);
 		try {
 			fc.position(addr * 4096);
 		} catch (IOException e) {
@@ -240,6 +251,6 @@ public class IndexReader {
 		}
 		buffer = ByteBuffer.allocate(4096);
 		
-		handleFirstDecent();
+		handleFirstDescent();
 	}
 }
