@@ -38,7 +38,6 @@ public class Indexes {
 	}
 	
 	private Indexes() {
-		
 	}
 	
 	public static void createIndexes(String dbDir, boolean build) {
@@ -89,25 +88,10 @@ public class Indexes {
 		//create the index using bulk-loading
 		//0. generate data entries, in sorted order
 		int sortAttIndex = sch.getCols().indexOf(attrName);
-		HashMap<Integer, DataEntry> dataEntryMap = new HashMap<Integer, DataEntry>();
-		TupleReader tr = new TupleReader(tableName, null, false, null, null);
-		Tuple t = tr.readNextTuple();
-		if (t == null)
+		HashMap<Integer, DataEntry> dataEntryMap = generateDataEntries(tableName, sortAttIndex);
+		if (dataEntryMap == null)
 			return;
-		//read in all of the tuples
-		while (t != null) {
-			int sortKey = Integer.parseInt(t.getAttribute(sortAttIndex));
-			if (dataEntryMap.containsKey(sortKey)) {
-				DataEntry d = dataEntryMap.get(sortKey);
-				d.insertRecordID(tr.getCurrentPage(), tr.getCurrentTuple());
-			}
-			else {
-				ArrayList<RecordID> newRecIDs = new ArrayList<RecordID>();
-				newRecIDs.add(new RecordID(tr.getCurrentPage(), tr.getCurrentTuple()));
-				dataEntryMap.put(sortKey, new DataEntry(sortKey, newRecIDs));
-			}
-			t = tr.readNextTuple();
-		}
+		
 		//sort the data entries, if unclustered (data entries are already in order if clustered)
 		allDataEntries = new ArrayList<DataEntry>(dataEntryMap.values());
 		if (!isClustered) {
@@ -115,20 +99,12 @@ public class Indexes {
 			Collections.sort(allDataEntries, dec);
 		}
 		
-		//1&2. special case where there's only one LeafNode, create 2-node tree (1 leaf, 1 index)
+		//special case where there's only one LeafNode, create 2-node tree (1 leaf, 1 index)
 		if (allDataEntries.size() <= 2 * D) {
-			keys = new ArrayList<Integer>();
-			entries = new ArrayList<ArrayList<RecordID>>();
-			leaves = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
-			for (DataEntry de : allDataEntries) {
-				keys.add(de.getSortKey());
-				entries.add(de.getRecIDs());
-			}
-			leaves.add(new LeafNode<Integer, ArrayList<RecordID>>(keys, entries));
+			createTwoNodeTree();
 			root = new IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>();
 			root.setLeafChildren(leaves);
 		}
-		
 		//else, create leaf layer then index layers following steps in instructions
 		else {
 			//1. create leaf layer
@@ -138,36 +114,30 @@ public class Indexes {
 			int numLeafNodes = k / (2 * D);
 			if (k % (2 * D) != 0)
 				numLeafNodes++;
+			
 			//fill all LeafNodes normally except last 2
 			while (numLeafNodes > 2) {
 				addKeysAndEntries(0, 2*D);
 				numLeafNodes--;
 			}
-			if (k <= (2 *D)) {				//aka, numLeafNode = 1; just fill one LeafNode
+			if (k <= (2 *D))				//aka, if numLeafNode = 1; just fill one LeafNode
 				addKeysAndEntries(entryIndex, allDataEntries.size());
-			}
 			else if (k >= (3 * D)) {		//fill last 2 LeafNodes as normal
-				//second-to-last LeafNode, holding 2D entries
-				addKeysAndEntries(0, 2*D);
-				//last LeafNode, holding remainder entries (at least D entries)
-				addKeysAndEntries(entryIndex, allDataEntries.size());
+				addKeysAndEntries(0, 2*D);								//second-to-last LeafNode, holding 2D entries
+				addKeysAndEntries(entryIndex, allDataEntries.size());	//last LeafNode, holding remainder entries (at least D entries)
 			}
-			else {					//construct last 2 LeafNodes so that first gets k/2 entries and second gets remainder
+			else {							//construct last 2 LeafNodes so that first gets k/2 entries and second gets remainder
 				int divide = k/2;
-				//second-to-last LeafNode, holding k/2 entries
-				addKeysAndEntries(0, divide);
-				//last LeafNode, holding remainder entries
-				addKeysAndEntries(entryIndex, allDataEntries.size());
+				addKeysAndEntries(0, divide);							//second-to-last LeafNode, holding k/2 entries
+				addKeysAndEntries(entryIndex, allDataEntries.size());	//last LeafNode, holding remainder entries
 			}
 			
 			//2. create index node layers until have root (1 IndexNode), using ArrayList<LeafNode<...>> leaves
 			anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
 			allIndexLayers = new ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>>();
 			m = leaves.size();
+			//create first IndexNode layer and return the number in that layer to set up for the next
 			m = createFirstIndexLayer(D);
-			System.out.println("indexlayer " + allIndexLayers.size());
-			for (IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> ind : anIndexLayer)
-				System.out.println(ind.getKeys().toString());
 			while (m > 1) {
 				entryIndex = 0;
 				ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> lastLayer = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
@@ -182,33 +152,24 @@ public class Indexes {
 					addChildrenAndKeys(lastLayer, 0, 2*D+1);
 					numIndexNodes--;
 				}
-				//System.out.println(entryIndex);
-				if (m <= (2 * D + 1)) {				//aka, numIndexNode = 1; just fill one IndexNode
+				if (m <= (2 * D + 1))				//aka, if numIndexNode = 1; just fill one IndexNode
 					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());
-				}
 				else if (m >= (3 * D + 2)) {		//fill last 2 IndexNodes as normal
-					//second-to-last IndexNode, holding 2D + 1 children
-					addChildrenAndKeys(lastLayer, 0, 2*D+1);
-					//last IndexNode, holding remainder children (at least D + 1 children)
-					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());
+					addChildrenAndKeys(lastLayer, 0, 2*D+1);						//second-to-last IndexNode, holding 2D + 1 children
+					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());	//last IndexNode, holding remainder children (at least D + 1 children)
 				}
 				else {						//construct last 2 IndexNodes so that first get
 					int divide = m/2;
-					//second-to-last IndexNode, holding m/2 children
-					addChildrenAndKeys(lastLayer, 0, divide);
-					//last IndexNode, holding remainder children
-					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());
+					addChildrenAndKeys(lastLayer, 0, divide);						//second-to-last IndexNode, holding m/2 children
+					addChildrenAndKeys(lastLayer, entryIndex, lastLayer.size());	//last IndexNode, holding remainder children
 				}
 				
 				allIndexLayers.add(anIndexLayer);
 				//update size of latest layer (for checking if we're at the root (size=1))
 				m = anIndexLayer.size();
-				System.out.println(m);
-				System.out.println("indexlayer " + allIndexLayers.size() + ": " + anIndexLayer.get(0).getKeys().toString());
 			}
 			//the top anIndexLayer holds just one IndexNode, which is the root
 			root = anIndexLayer.get(0);
-			System.out.println("root's first key: " + root.getKeys().toString());
 		}
 		
 		
@@ -223,7 +184,94 @@ public class Indexes {
 		//3 -- layer immediately above... so on (root is last page in file)
 		
 	}
+
+	/**
+	 * Helper function for building a clustered index.
+	 * This function sorts the relation file and rewrites it to disk.
+	 * @param tableName
+	 * @param sortCol
+	 * @param tableDir
+	 */
+	private static void sortClustered(String tableName, ArrayList<String> sortCol, String tableDir){
+		Operator op = new SortOperator(new ScanOperator(tableName), sortCol);
+		
+		//dump op into the source file using TupleWriter			
+		File sourceFile = new File(tableDir);
+		TupleWriter tw = new TupleWriter(tableDir);
+		Tuple t = op.getNextTuple();
+		//in the special case that there are no matching tuples whatsoever
+		if (t == null) {
+			return;
+		}
+		
+		while (t != null) {
+			tw.writeTuple(t);
+			t = op.getNextTuple();
+		}
+		tw.writeNewPage();
+	}
+
+	/**
+	 * Helper function that does the work of generating the data entries.
+	 * @param tableName
+	 * @param sortAttIndex
+	 * @return dataEntryMap
+	 */
+	private static HashMap<Integer, DataEntry> generateDataEntries(String tableName, int sortAttIndex) {
+		HashMap<Integer, DataEntry> dataEntryMap = new HashMap<Integer, DataEntry>();
+		TupleReader tr = new TupleReader(tableName, null, false, null, null);
+		Tuple t = tr.readNextTuple();
+		if (t == null)
+			return null;
+		//read in all of the tuples
+		while (t != null) {
+			int sortKey = Integer.parseInt(t.getAttribute(sortAttIndex));
+			if (dataEntryMap.containsKey(sortKey)) {
+				DataEntry d = dataEntryMap.get(sortKey);
+				d.insertRecordID(tr.getCurrentPage(), tr.getCurrentTuple());
+			}
+			else {
+				ArrayList<RecordID> newRecIDs = new ArrayList<RecordID>();
+				newRecIDs.add(new RecordID(tr.getCurrentPage(), tr.getCurrentTuple()));
+				dataEntryMap.put(sortKey, new DataEntry(sortKey, newRecIDs));
+			}
+			t = tr.readNextTuple();
+		}
+		return dataEntryMap;
+	}
 	
+	/**
+	 * Helper function that does the work of generating a two-node index tree,
+	 * such that only one LeafNode has entries, with one parent IndexNode.
+	 */
+	private static void createTwoNodeTree() {
+		keys = new ArrayList<Integer>();
+		entries = new ArrayList<ArrayList<RecordID>>();
+		leaves = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
+		for (DataEntry de : allDataEntries) {
+			keys.add(de.getSortKey());
+			entries.add(de.getRecIDs());
+		}
+		leaves.add(new LeafNode<Integer, ArrayList<RecordID>>(keys, entries));
+	}
+
+	/**
+	 * Helper function to create a new LeafNode after adding the right keys and entries; add to leaves (leaf layer).
+	 * @param start
+	 * @param end
+	 */
+	private static void addKeysAndEntries(int start, int end) {
+		keys = new ArrayList<Integer>();
+		entries = new ArrayList<ArrayList<RecordID>>();
+		for (int i = start; i < end; i++) {
+			keys.add(allDataEntries.get(entryIndex).getSortKey());
+			entries.add(allDataEntries.get(entryIndex).getRecIDs());
+			entryIndex++;
+			k--;
+		}
+		leaves.add(new LeafNode<Integer, ArrayList<RecordID>>(keys, entries));
+	}
+
 	/**
 	 * Helper function to create the first layer of IndexNodes from the layer of LeafNodes.
 	 * @param D
@@ -241,22 +289,16 @@ public class Indexes {
 			addLeafChildrenAndKeys(0, 2*D+1);
 			numIndexNodes--;
 		}
-		//System.out.println(entryIndex);
-		if (m <= (2 * D + 1)) {				//aka, numIndexNode = 1; just fill one IndexNode
+		if (m <= (2 * D + 1))				//aka, if numIndexNode = 1; just fill one IndexNode
 			addLeafChildrenAndKeys(entryIndex, leaves.size());
-		}
 		else if (m >= (3 * D + 2)) {		//fill last 2 IndexNodes as normal
-			//second-to-last IndexNode, holding 2D + 1 children
-			addLeafChildrenAndKeys(0, 2*D+1);
-			//last IndexNode, holding remainder children (at least D + 1 children)
-			addLeafChildrenAndKeys(entryIndex, leaves.size());
+			addLeafChildrenAndKeys(0, 2*D+1);						//second-to-last IndexNode, holding 2D + 1 children
+			addLeafChildrenAndKeys(entryIndex, leaves.size());		//last IndexNode, holding remainder children (at least D + 1 children)
 		}
 		else {						//construct last 2 IndexNodes so that first get
 			int divide = m/2;
-			//second-to-last IndexNode, holding m/2 children
-			addLeafChildrenAndKeys(0, divide);
-			//last IndexNode, holding remainder children
-			addLeafChildrenAndKeys(entryIndex, leaves.size());
+			addLeafChildrenAndKeys(0, divide);						//second-to-last IndexNode, holding m/2 children
+			addLeafChildrenAndKeys(entryIndex, leaves.size());		//last IndexNode, holding remainder children
 		}
 		
 		allIndexLayers.add(anIndexLayer);
@@ -265,7 +307,8 @@ public class Indexes {
 	}
 
 	/**
-	 * Helper function to create a new IndexNode after adding the right children and keys.
+	 * Helper function to create a new IndexNode after adding the right children and keys,
+	 * SPECIFICALLY for the first layer of IndexNodes above the LeafNode layer.
 	 * @param i
 	 * @param j
 	 */
@@ -310,49 +353,6 @@ public class Indexes {
 		in.setKeys(keys);
 		in.setIndexChildren(children);
 		anIndexLayer.add(in);
-	}
-
-	/**
-	 * Helper function to create a new LeafNode after adding the right keys and entries; add to leaves (leaf layer).
-	 * @param start
-	 * @param end
-	 */
-	private static void addKeysAndEntries(int start, int end) {
-		keys = new ArrayList<Integer>();
-		entries = new ArrayList<ArrayList<RecordID>>();
-		for (int i = start; i < end; i++) {
-			keys.add(allDataEntries.get(entryIndex).getSortKey());
-			entries.add(allDataEntries.get(entryIndex).getRecIDs());
-			entryIndex++;
-			k--;
-		}
-		leaves.add(new LeafNode<Integer, ArrayList<RecordID>>(keys, entries));
-	}
-
-	/**
-	 * Helper function for building a clustered index.
-	 * This function sorts the relation file and rewrites it to disk.
-	 * @param tableName
-	 * @param sortCol
-	 * @param tableDir
-	 */
-	private static void sortClustered(String tableName, ArrayList<String> sortCol, String tableDir){
-		Operator op = new SortOperator(new ScanOperator(tableName), sortCol);
-		
-		//dump op into the source file using TupleWriter			
-		File sourceFile = new File(tableDir);
-		TupleWriter tw = new TupleWriter(tableDir);
-		Tuple t = op.getNextTuple();
-		//in the special case that there are no matching tuples whatsoever
-		if (t == null) {
-			return;
-		}
-		
-		while (t != null) {
-			tw.writeTuple(t);
-			t = op.getNextTuple();
-		}
-		tw.writeNewPage();
 	}
 	
 	/**
