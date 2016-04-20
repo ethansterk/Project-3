@@ -67,4 +67,14 @@ public class LogicalJoin extends LogicalOperator{
 	public String getRightBaseTable() {
 		return rightBaseTable;
 	}
+	
+	@Override
+	public ArrayList<String> getBaseTables() {
+		ArrayList<String> leftTables = left.getBaseTables();
+		ArrayList<String> rightTables = right.getBaseTables();
+		ArrayList<String> tables = new ArrayList<String>();
+		tables.addAll(leftTables);
+		tables.addAll(rightTables);
+		return tables;
+	}
 }

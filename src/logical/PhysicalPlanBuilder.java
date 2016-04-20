@@ -1,4 +1,6 @@
 package logical;
+import index.Indexes;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -6,6 +8,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 
+import code.DatabaseCatalog;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import physical.*;
@@ -73,17 +76,44 @@ public class PhysicalPlanBuilder {
 	 */
 	public void visit(LogicalSelect logicalSelect) {
 		if (indexSelect) {
+			// see if there is an index on the relation
+			ArrayList<String> relations = logicalSelect.getChild().getBaseTables();
+			if (relations.size() != 1) {
+				System.out.println("ERR: getBaseTables wrong for selection");
+			}
+			String relation = relations.get(0);
+			// TODO for project 5, there may be multiple indexCols
+			String indexCol = Indexes.getInstance().getIndexCols(relation);
+			if (indexCol == null) { // index does not exist on underlying relation
+				logicalSelect.getChild().accept(this);
+				Operator child = ops.pop();
+				SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
+				ops.push(newOp);
+				return;
+			}
 			Expression e = logicalSelect.getCondition();
 			// use visitor on condition e
-				// will need : use Indexes to get columns a relation has index(es) for
 			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e);
+			Expression indexE = visitor.getIndexCond();
+			Expression regE = visitor.getRegCond();
 			// part that is index-able is put into an IndexScan
-			IndexScan scanOp = new IndexScan(null, null, null, false, 0, 0);
-			// part that is not is put into a regular SelectOp with a Scan Op
-			logicalSelect.getChild().accept(this);
-			Operator child = ops.pop();
-			SelectOperator newOp = new SelectOperator(child, null/* TODO non-indexable expr */);
-			// TODO somehow join these??
+			if (indexE != null) {
+				int highKey = visitor.getHighKey();
+				int lowKey = visitor.getLowKey();
+				IndexScan scanOp = new IndexScan(null, null, null, false, 0, 0);
+				// part that is not is put into a regular SelectOp with a Scan Op
+				logicalSelect.getChild().accept(this);
+				Operator child = ops.pop();
+				SelectOperator newOp = new SelectOperator(child, null/* TODO non-indexable expr */);
+				// TODO somehow join these??
+			}
+			else {
+				logicalSelect.getChild().accept(this);
+				Operator child = ops.pop();
+				SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
+				ops.push(newOp);
+				return;
+			}
 		}
 		else {
 			logicalSelect.getChild().accept(this);

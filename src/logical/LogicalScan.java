@@ -1,5 +1,7 @@
 package logical;
 
+import java.util.ArrayList;
+
 /**
  * LogicalScan is the logical equivalent of 
  * ScanOperator. It is part of the visitor pattern
@@ -32,4 +34,12 @@ public class LogicalScan extends LogicalOperator{
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
 	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		ArrayList<String> tables = new ArrayList<String>();
+		tables.add(s);
+		return tables;
+	}
+
 }

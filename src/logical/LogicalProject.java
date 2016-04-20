@@ -1,5 +1,6 @@
 package logical;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.sf.jsqlparser.statement.select.SelectItem;
@@ -44,5 +45,10 @@ public class LogicalProject extends LogicalOperator{
 	 */
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
+	}
+	
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return child.getBaseTables();
 	}
 }

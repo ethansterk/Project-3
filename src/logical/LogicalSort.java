@@ -74,4 +74,9 @@ public class LogicalSort extends LogicalOperator{
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
 	}
+	
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return child.getBaseTables();
+	}
 }

@@ -45,15 +45,39 @@ import net.sf.jsqlparser.statement.select.SubSelect;
 public class IndexExpressionVisitor implements ExpressionVisitor {
 
 	// fields for the IndexScan
-	// (may be using multiple indexes S.A > 5 AND B.D = 10)
 	private int lowKey;
 	private int highKey;
+	private Expression indexCond;
 	// fields for the normal Scan
-	// 
+	private Expression regCond;
 	
-	public IndexExpressionVisitor(Expression e) {
+	// fields for keeping visiting statistics
+	private String indexCol;
+	
+	public IndexExpressionVisitor(Expression e, String indexCol) {
 		// we should know what indexes we have (use Indexes getIndexCols())
-		// TODO Auto-generated constructor stub
+		lowKey = Integer.MIN_VALUE;
+		highKey = Integer.MAX_VALUE;
+		indexCond = null;
+		regCond = null;
+		
+		this.indexCol = indexCol;
+	}
+
+	public int getLowKey() {
+		return lowKey;
+	}
+
+	public int getHighKey() {
+		return highKey;
+	}
+
+	public Expression getIndexCond() {
+		return indexCond;
+	}
+
+	public Expression getRegCond() {
+		return regCond;
 	}
 
 	@Override
