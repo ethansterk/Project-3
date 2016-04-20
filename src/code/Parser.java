@@ -51,10 +51,8 @@ public class Parser {
 	        inputDir = sc.nextLine();
 	        outputDir = sc.nextLine();
 	        tempDir = sc.nextLine();
-	        String buildsIndexesS = sc.nextLine();
-	        buildIndexes = buildsIndexesS.equals("1");
-	        String evaluateQueriesS = sc.nextLine();
-	        evaluateQueries = evaluateQueriesS.equals("1");
+	        buildIndexes = sc.nextLine().equals("1");
+	        evaluateQueries = sc.nextLine().equals("1");
 	        sc.close();
 	    } 
 	    catch (FileNotFoundException e) {
@@ -66,56 +64,59 @@ public class Parser {
 		OutputWriter.createTempStream(tempDir);
 		Logger.createLogger(loggerDir);
 		String dbDir = inputDir + File.separator + "db";
-		Indexes.createIndexes(dbDir, buildIndexes);
+		if (buildIndexes)
+			Indexes.createIndexes(dbDir);
 		
-		try {
-			cleanTempDir(tempDir);
-			CCJSqlParser parser = new CCJSqlParser(new FileReader(inputDir + File.separator + "queries.sql"));
-			Statement statement;
-			while ((statement = parser.Statement()) != null) {
-				OutputWriter.getInstance().increment();   //increments the query number
-				
-				try {
-					Select select = (Select) statement;
-					PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-					FromItem fromItem = plainSelect.getFromItem();
-					Expression where = plainSelect.getWhere();
-					@SuppressWarnings("unchecked")
-					List<SelectItem> selectItems = plainSelect.getSelectItems();
-					@SuppressWarnings("unchecked")
-					List<Join> joins = plainSelect.getJoins();
-					@SuppressWarnings("unchecked")
-					List<OrderByElement> orderByElements = plainSelect.getOrderByElements();
-					boolean distinct = (plainSelect.getDistinct() != null);
-					
-					//Changes for P3 here:
-					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
-					//produces logical tree with root
-					LogicalOperator logRoot = builderL.getRoot();
-					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, inputDir);
-					//produces physical tree with root
-					Operator phiRoot = builderP.getRoot();
-					//get time before dump
-					long timeBefore = System.currentTimeMillis();
-					//dump physical root
-					phiRoot.dump();
-					long timeAfter = System.currentTimeMillis();
-					long elapsedTime = timeAfter - timeBefore;
-					int queryNum = OutputWriter.getInstance().getQueryNumber();
-					//Logger.log("Time to run query" + queryNum + " = " + elapsedTime + " ms");
-					System.out.println("Time to run query" + queryNum + " = " + elapsedTime + " ms");
-					
-				} catch (Exception e) {
-					System.err.println("Exception occurred while returning tuples");
-					e.printStackTrace();
-				}
-				
-				//clean tempDir after every statement/query
+		if (evaluateQueries) {
+			try {
 				cleanTempDir(tempDir);
+				CCJSqlParser parser = new CCJSqlParser(new FileReader(inputDir + File.separator + "queries.sql"));
+				Statement statement;
+				while ((statement = parser.Statement()) != null) {
+					OutputWriter.getInstance().increment();   //increments the query number
+					
+					try {
+						Select select = (Select) statement;
+						PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+						FromItem fromItem = plainSelect.getFromItem();
+						Expression where = plainSelect.getWhere();
+						@SuppressWarnings("unchecked")
+						List<SelectItem> selectItems = plainSelect.getSelectItems();
+						@SuppressWarnings("unchecked")
+						List<Join> joins = plainSelect.getJoins();
+						@SuppressWarnings("unchecked")
+						List<OrderByElement> orderByElements = plainSelect.getOrderByElements();
+						boolean distinct = (plainSelect.getDistinct() != null);
+						
+						//Changes for P3 here:
+						LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
+						//produces logical tree with root
+						LogicalOperator logRoot = builderL.getRoot();
+						PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot, inputDir);
+						//produces physical tree with root
+						Operator phiRoot = builderP.getRoot();
+						//get time before dump
+						long timeBefore = System.currentTimeMillis();
+						//dump physical root
+						phiRoot.dump();
+						long timeAfter = System.currentTimeMillis();
+						long elapsedTime = timeAfter - timeBefore;
+						int queryNum = OutputWriter.getInstance().getQueryNumber();
+						//Logger.log("Time to run query" + queryNum + " = " + elapsedTime + " ms");
+						System.out.println("Time to run query" + queryNum + " = " + elapsedTime + " ms");
+						
+					} catch (Exception e) {
+						System.err.println("Exception occurred while returning tuples");
+						e.printStackTrace();
+					}
+					
+					//clean tempDir after every statement/query
+					cleanTempDir(tempDir);
+				}
+			} catch (Exception e) {
+				System.err.println("Exception occurred during parsing");
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			System.err.println("Exception occurred during parsing");
-			e.printStackTrace();
 		}
 	}
 	

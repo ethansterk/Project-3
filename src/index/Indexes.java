@@ -40,7 +40,7 @@ public class Indexes {
 		anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
 	}
 	
-	public static void createIndexes(String dbDir, boolean build) {
+	public static void createIndexes(String dbDir) {
 		File index_info = new File(dbDir + File.separator + "index_info.txt");
 		Scanner sc = null;
 		try {
