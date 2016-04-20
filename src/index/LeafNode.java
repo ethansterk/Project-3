@@ -55,7 +55,7 @@ public class LeafNode<K extends Comparable<K>, T> extends Node<K, T> {
 	 * for use in its parent IndexNode's keys.
 	 * @return firstKey
 	 */
-	public int getFirstKey() {
-		return (int)(keys.get(0));
+	public K getFirstKey() {
+		return keys.get(0);
 	}
 }

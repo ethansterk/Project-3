@@ -92,12 +92,12 @@ public class IndexNode<K extends Comparable<K>, T> extends Node<K,T> {
 	 * for use in its parent IndexNode's keys.
 	 * @return firstKey
 	 */
-	public int getFirstKey() {
+	public K getFirstKey() {
 		if (leafChildren.size() != 0)
 			return ((LeafNode<K,T>)leafChildren.get(0)).getFirstKey();
 		else if (indexChildren.size() != 0)
 			return ((IndexNode<K,T>)indexChildren.get(0)).getFirstKey();
 		else
-			return -1;
+			return null;
 	}
 }
