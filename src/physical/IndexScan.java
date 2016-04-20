@@ -40,7 +40,7 @@ public class IndexScan extends Operator{
 			alias = s.split(" ")[2];
 		
 		// create an IndexReader (similar to the TupleReader)
-		ir = new IndexReader(indexDir, lowKey, highKey, clustered);
+		ir = new IndexReader(indexDir, lowKey, highKey, clustered, tablename, alias);
 	}
 	
 	

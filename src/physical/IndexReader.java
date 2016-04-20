@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
+import code.DatabaseCatalog;
 import code.Tuple;
 import code.TupleReader;
 
@@ -23,6 +24,7 @@ import code.TupleReader;
  */
 public class IndexReader {
 
+	private String tableName;
 	private FileChannel fc;
 	private ByteBuffer buffer;
 	private TupleReader tr;
@@ -43,11 +45,13 @@ public class IndexReader {
 	 * @param highKey The high key (inclusive).
 	 * @param clustered True if the index is clustered.
 	 */
-	public IndexReader(String indexDir, int lowKey, int highKey, boolean clustered) {
+	public IndexReader(String indexDir, int lowKey, int highKey, boolean clustered, String tableName, String alias) {
 		this.lowKey = lowKey;
 		this.highKey = highKey;
 		this.clustered = clustered;
-		tr = new TupleReader(String fileName, String alias, boolean extsort, String filePath, ArrayList<String> fields); // TODO get all this stuff
+		tr = new TupleReader(tableName, alias, false, null, null); // TODO Laura is this right?
+		this.tableName = tableName;
+		
 		//retrieve the file channel
 		FileInputStream fin = null;
 		try {
@@ -156,8 +160,8 @@ public class IndexReader {
 		int tupleID = buffer.getInt();
 		
 		int resetIndex = 0;
-		// TODO get numAtt from size of fields (passed into IndexReader)
-		int tuplesPerPage = 4088 / (4 * numAtt);		//4088 to account 8 bytes metadata
+		int numAttr = DatabaseCatalog.getInstance().getSchema(tableName).getNumCols();
+		int tuplesPerPage = 4088 / (4 * numAttr);		//4088 to account 8 bytes metadata
 		resetIndex = pageID * tuplesPerPage + tupleID * 4;
 		tr.reset(resetIndex);
 		return tr.readNextTuple();

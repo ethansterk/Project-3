@@ -72,10 +72,25 @@ public class PhysicalPlanBuilder {
 	 * @param logicalSelect
 	 */
 	public void visit(LogicalSelect logicalSelect) {
-		logicalSelect.getChild().accept(this);
-		Operator child = ops.pop();
-		SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
-		ops.push(newOp);
+		if (indexSelect) {
+			Expression e = logicalSelect.getCondition();
+			// use visitor on condition e
+				// will need : use Indexes to get columns a relation has index(es) for
+			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e);
+			// part that is index-able is put into an IndexScan
+			IndexScan scanOp = new IndexScan(null, null, null, false, 0, 0);
+			// part that is not is put into a regular SelectOp with a Scan Op
+			logicalSelect.getChild().accept(this);
+			Operator child = ops.pop();
+			SelectOperator newOp = new SelectOperator(child, null/* TODO non-indexable expr */);
+			// TODO somehow join these??
+		}
+		else {
+			logicalSelect.getChild().accept(this);
+			Operator child = ops.pop();
+			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
+			ops.push(newOp);
+		}
 	}
 
 	/**
@@ -121,8 +136,6 @@ public class PhysicalPlanBuilder {
 			int sortType = Integer.valueOf(sortMethod[0]);
 			Operator leftOp = null;
 			Operator rightOp = null;
-			//TODO: forcing it to use SortOperators only because SMJ+ExternalSort is buggy
-			//sortType = 0;
 			switch(sortType) {
 			case 0:
 				leftOp = new SortOperator(left, visitor.getLeftSortCols());
