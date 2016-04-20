@@ -16,6 +16,15 @@ import physical.Operator;
 import physical.ScanOperator;
 import physical.SortOperator;
 
+/**
+ * The Indexes class is used to build each Index that is listed
+ * in "index_info.txt". It uses a BPlusTree structure adapted from
+ * CS4320 HW2, but it's static (doesn't support inserting or deleting).
+ * This class relies on every other class in the index package.
+ * 
+ * @author Ethan Sterk (ejs334) and Laura Ng (ln233)
+ *
+ */
 public class Indexes {
 
 	private static final Indexes instance = new Indexes();
