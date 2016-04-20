@@ -25,19 +25,26 @@ public class Indexes {
 	private static int entryIndex = 0;
 	private static int k = 0;
 	private static int m = 0;
-	private static ArrayList<Integer> keys = null;
-	private static ArrayList<ArrayList<RecordID>> entries = null;
-	private static ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> children = null;
-	private static ArrayList<DataEntry> allDataEntries = null;
-	private static ArrayList<Node<Integer, ArrayList<RecordID>>> leaves = null;
-	private static ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> anIndexLayer = null;
-	private static ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>> allIndexLayers = null;
+	private static ArrayList<Integer> keys;
+	private static ArrayList<ArrayList<RecordID>> entries;
+	private static ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>> children;
+	private static ArrayList<DataEntry> allDataEntries;
+	private static ArrayList<Node<Integer, ArrayList<RecordID>>> leaves;
+	private static ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> anIndexLayer;
+	private static ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>> allIndexLayers;
 	
 	public static Indexes getInstance() {
 		return instance;
 	}
 	
 	private Indexes() {
+		keys = new ArrayList<Integer>();
+		entries = new ArrayList<ArrayList<RecordID>>();
+		children = new ArrayList<Node<Integer, Node<Integer, ArrayList<RecordID>>>>();
+		allDataEntries = new ArrayList<DataEntry>();
+		leaves = new ArrayList<Node<Integer, ArrayList<RecordID>>>();
+		anIndexLayer = new ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>();
+		allIndexLayers = new ArrayList<ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>>>();
 	}
 	
 	public static void createIndexes(String dbDir, boolean build) {
@@ -76,7 +83,7 @@ public class Indexes {
 		
 		ArrayList<String> sortCol = new ArrayList<String>();
 		sortCol.add(tableName + "." + attrName);
-		File indexFile = new File(dir);
+		File indexFile = new File(dir);		//don't delete!
 		DatabaseCatalog dc = DatabaseCatalog.getInstance();
 		Schema sch = dc.getSchema(tableName);
 		String tableDir = sch.getTableDir();
@@ -170,19 +177,65 @@ public class Indexes {
 			}
 			//the top anIndexLayer holds just one IndexNode, which is the root
 			root = anIndexLayer.get(0);
-		}
+		}		
 		
-		
-		
-		//serialize the index into the pages that make up File f
+		//serialize the index into the pages that make up the index File @ dir
+		TupleWriter tw = new TupleWriter(dir);
 		//1 -- header page is first
 			//contains:
 			//a -- address of root
 			//b -- number leaves
 			//c -- order of tree (d)
+		int totalIndexes = 0;
+		for (ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> a : allIndexLayers)
+			totalIndexes += a.size();
+		int totalLeaves = leaves.size();
+		int rootAddr = totalLeaves + totalIndexes;
+		tw.writeOneInt(rootAddr);		//address of root
+		tw.writeOneInt(totalLeaves);	//number of leaves
+		tw.writeOneInt(D);				//order of tree
+		tw.writeNewPageIndex();
 		//2 -- serialize leaf nodes left-to-right (each to its own page)
-		//3 -- layer immediately above... so on (root is last page in file)
-		
+		for (Node<Integer, ArrayList<RecordID>> ln : leaves) {
+			ArrayList<Integer> keys = ((LeafNode<Integer, ArrayList<RecordID>>)ln).getKeys();
+			ArrayList<ArrayList<RecordID>> data = ((LeafNode<Integer, ArrayList<RecordID>>)ln).getValues();
+			tw.writeOneInt(0);					//flag for LeafNode
+			tw.writeOneInt(keys.size());		//number of data entries in node
+			//write serialized rep of each data entry in the node ln
+			for (int i = 0; i < data.size(); i++) {
+				tw.writeOneInt(keys.get(i));		//value of k
+				ArrayList<RecordID> rec = data.get(i);
+				tw.writeOneInt(rec.size());			//number of rids in entry
+				tw.writeRecordIDs(rec);				//(p,t) for each rid
+			}
+			tw.writeNewPageIndex();
+		}
+		//3 -- go through allIndexLayers, each IndexNode in each layer (root is last page in file)
+		int prevLayersCount = 0;
+		for (ArrayList<IndexNode<Integer, Node<Integer, ArrayList<RecordID>>>> layer : allIndexLayers) {
+			for (int i = 0; i < layer.size(); i++) {
+				IndexNode<Integer, Node<Integer, ArrayList<RecordID>>> index = layer.get(i);
+				tw.writeOneInt(1);				//flag for IndexNode
+				ArrayList<Integer> keys = index.getKeys();
+				tw.writeOneInt(keys.size());	//number of keys in node
+				tw.writeManyInts(keys);			//actual keys in node, in order
+				ArrayList<Node<Integer, ArrayList<RecordID>>> children = index.getLeafChildren();
+				if (i == 0) {		//if we're on the first IndexNode layer
+					for (Node<Integer, ArrayList<RecordID>> child : children) {
+						int addr = leaves.indexOf(child);
+						tw.writeOneInt(addr);	//addresses of all children of node, in order
+					}
+				}
+				else {				//if we're on any higher IndexNode layer
+					for (Node<Integer, ArrayList<RecordID>> child : children) {
+						int addr = leaves.size() + prevLayersCount + children.indexOf(child);
+						tw.writeOneInt(addr);	//addresses of all children of node, in order
+					}
+				}	
+				prevLayersCount += children.size();
+				tw.writeNewPageIndex();
+			}
+		}
 	}
 
 	/**

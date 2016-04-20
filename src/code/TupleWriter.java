@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
+import index.RecordID;
+
 /**
  * TupleWriter contains a method to write a tuple to file.
  * It buffers tuples in memory until it has a full page then 
@@ -69,6 +71,27 @@ public class TupleWriter {
 	}
 	
 	/**
+	 * Writes out the current buffer to the output stream. Reallocates 
+	 * the buffer to start accepting more tuples.
+	 * This version of writeNewPage is specifically for writing out our indexes.
+	 */
+	public void writeNewPageIndex() {
+		//flip buffer, buffer.flip() doesn't work for this
+		buffer.limit(buffer.capacity());
+		buffer.position(0);
+		
+		//output buffer to channel
+		try {
+			fc.write(buffer);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//clear buffer, buffer.clear() doesn't work for this
+		buffer = ByteBuffer.allocate(4096);
+	}
+	
+	/**
 	 * Adds tuple to the buffer, which will write to file
 	 * when full.
 	 * @param t Tuple to be written to file
@@ -99,5 +122,35 @@ public class TupleWriter {
 		numTuples++;
 	}
 	
+	/**
+	 * Specifically used with building our indexes.
+	 * Since we can assume that each node (and the header) will fit
+	 * on one page, don't have to worry about force-writing a new page
+	 * when we hit buffer capacity.
+	 */
+	public void writeOneInt(int x) {
+		buffer.putInt(x);
+	}
 	
+	/**
+	 * Specifically used with building our indexes.
+	 * To write a whole list of integers, such as keys.
+	 */
+	public void writeManyInts(ArrayList<Integer> list) {
+		for (int i : list) 
+			buffer.putInt(i);
+	}
+	
+	private int i = 0;
+	/**
+	 * Specifically used with building our indexes.
+	 * To write a whole list of RecordIDs.
+	 */
+	public void writeRecordIDs(ArrayList<RecordID> list) {
+		for (RecordID r : list) {
+			buffer.putInt(r.getPageID());
+			buffer.putInt(r.getTupleID());
+			i++;
+		}
+	}
 }

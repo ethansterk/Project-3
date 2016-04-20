@@ -13,12 +13,7 @@ public class DataEntryComparator implements Comparator<DataEntry> {
 		else if (o1 == null) return 1;
 		else if (o2 == null) return -1;
 		
-		if (o1.getSortKey() < o2.getSortKey())
-			return -1;
-		else if (o1.getSortKey() > o2.getSortKey())
-			return 1;
-		else
-			return 0;
+		return Integer.compare(o1.getSortKey(), o2.getSortKey());
 	}
 
 }

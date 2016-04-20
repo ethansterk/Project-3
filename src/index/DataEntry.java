@@ -44,18 +44,20 @@ public class DataEntry {
 	 */
 	public void insertRecordID(int pageID, int tupleID) {
 		int index = 0;
+		
 		for (int i = 0; i < recIDs.size(); i++) {
-			if (pageID == recIDs.get(i).getPageID()) {
-				if (tupleID > recIDs.get(i).getTupleID())
+			if (pageID < recIDs.get(i).getPageID())
+				index = i;
+			else if (pageID == recIDs.get(i).getPageID()) {
+				if (tupleID < recIDs.get(i).getTupleID())
 					index = i;
 				else
-					break;
+					index = i + 1;				
 			}
-			else if (pageID > recIDs.get(i).getPageID())
-				index = i;
 			else
-				break;
+				index = i + 1;
 		}
+		
 		recIDs.add(index, new RecordID(pageID, tupleID));
 	}
 }
