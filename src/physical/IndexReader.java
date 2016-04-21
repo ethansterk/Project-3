@@ -80,6 +80,7 @@ public class IndexReader {
 	 */
 	private void handleFirstDescent() {
 		//go into header
+		System.out.println("First descent.");
 		try {
 			if (fc.read(buffer) < 1) {
 				System.out.println("ERR: reached end of FileChannel");
@@ -144,7 +145,18 @@ public class IndexReader {
 			// at key that is greater than or equal to lowKey
 			ridsLeft = buffer.getInt();
 			// the buffer is now positioned to return the first rid
+			// TODO tuple reader must be reset to just rid
+			if(clustered) {
+				int pageID = buffer.getInt();
+				int tupleID = buffer.getInt();
+				
+				int resetIndex = 0;
+				int numAttr = DatabaseCatalog.getInstance().getSchema(tableName).getNumCols();
+				resetIndex = pageID * 4096 + tupleID * (4 * numAttr);
+				tr.reset(resetIndex);
+			}
 		}
+		
 	}
 
 	/**
