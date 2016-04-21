@@ -152,7 +152,8 @@ public class IndexReader {
 				
 				int resetIndex = 0;
 				int numAttr = DatabaseCatalog.getInstance().getSchema(tableName).getNumCols();
-				resetIndex = pageID * 4096 + tupleID * (4 * numAttr);
+				int tuplesPerPage = 4088 / (4 * numAttr);
+				resetIndex = pageID * tuplesPerPage + tupleID;
 				tr.reset(resetIndex);
 			}
 		}
@@ -178,6 +179,8 @@ public class IndexReader {
 				name = alias;
 			else
 				name = tableName;
+			if(t == null) // TODO hmmm
+				return null;
 			int i = t.getFields().indexOf(name + "." + sortAttr);
 			int x = Integer.parseInt(t.getValues().get(i));
 			if (x > highKey)
@@ -196,7 +199,8 @@ public class IndexReader {
 		
 		int resetIndex = 0;
 		int numAttr = DatabaseCatalog.getInstance().getSchema(tableName).getNumCols();
-		resetIndex = pageID * 4096 + tupleID * (4 * numAttr);
+		int tuplesPerPage = 4088 / (4 * numAttr);
+		resetIndex = pageID * tuplesPerPage + tupleID;
 		tr.reset(resetIndex);
 		
 		Tuple t = tr.readNextTuple();
