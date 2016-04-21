@@ -184,8 +184,7 @@ public class IndexReader {
 		
 		int resetIndex = 0;
 		int numAttr = DatabaseCatalog.getInstance().getSchema(tableName).getNumCols();
-		int tuplesPerPage = 4088 / (4 * numAttr);		//4088 to account 8 bytes metadata
-		resetIndex = pageID * tuplesPerPage + pageID * 8 + tupleID * (4 * numAttr);
+		resetIndex = pageID * 4096 + tupleID * (4 * numAttr);
 		tr.reset(resetIndex);
 		
 		Tuple t = tr.readNextTuple();
