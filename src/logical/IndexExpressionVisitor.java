@@ -199,7 +199,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		arg0.getRightExpression().accept(this);
 		if(isIndexSubExp) {
 			// add expr to indexCond
-			indexCond = new AndExpression(indexCond, arg0);
+			if(indexCond != null)
+				indexCond = new AndExpression(indexCond, arg0);
+			else
+				indexCond = arg0;
 			// set lowkey/highkey if better than existing ones
 			int tempKey = nums.pop();
 			if(tempKey > lowKey) {
@@ -211,7 +214,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		}
 		else {
 			// add expr to nonindexCond
-			regCond = new AndExpression(regCond, arg0);
+			if (regCond != null)
+				regCond = new AndExpression(regCond, arg0);
+			else
+				regCond = arg0;
 		}
 		// reset statistics
 		isIndexSubExp = false;
@@ -227,7 +233,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		arg0.getRightExpression().accept(this);
 		if(isIndexSubExp) {
 			// add expr to indexCond
-			indexCond = new AndExpression(indexCond, arg0);
+			if(indexCond != null)
+				indexCond = new AndExpression(indexCond, arg0);
+			else
+				indexCond = arg0;
 			// set lowkey/highkey if better than existing ones
 			int tempKey = nums.pop();
 			if(intOnLeft) { // 3 > R.A
@@ -243,7 +252,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		}
 		else {
 			// add expr to nonindexCond
-			regCond = new AndExpression(regCond, arg0);
+			if (regCond != null)
+				regCond = new AndExpression(regCond, arg0);
+			else
+				regCond = arg0;
 		}
 		// reset statistics
 		isIndexSubExp = false;
@@ -259,7 +271,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		arg0.getRightExpression().accept(this);
 		if(isIndexSubExp) {
 			// add expr to indexCond
-			indexCond = new AndExpression(indexCond, arg0);
+			if(indexCond != null)
+				indexCond = new AndExpression(indexCond, arg0);
+			else
+				indexCond = arg0;
 			// set lowkey/highkey if better than existing ones
 			int tempKey = nums.pop();
 			if(intOnLeft) { // 3 > R.A
@@ -275,7 +290,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		}
 		else {
 			// add expr to nonindexCond
-			regCond = new AndExpression(regCond, arg0);
+			if (regCond != null)
+				regCond = new AndExpression(regCond, arg0);
+			else
+				regCond = arg0;
 		}
 		// reset statistics
 		isIndexSubExp = false;
@@ -309,7 +327,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		arg0.getRightExpression().accept(this);
 		if(isIndexSubExp) {
 			// add expr to indexCond
-			indexCond = new AndExpression(indexCond, arg0);
+			if(indexCond != null)
+				indexCond = new AndExpression(indexCond, arg0);
+			else
+				indexCond = arg0;
 			// set lowkey/highkey if better than existing ones
 			int tempKey = nums.pop();
 			if(intOnLeft) { // 3 < R.A
@@ -325,7 +346,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		}
 		else {
 			// add expr to nonindexCond
-			regCond = new AndExpression(regCond, arg0);
+			if (regCond != null)
+				regCond = new AndExpression(regCond, arg0);
+			else
+				regCond = arg0;
 		}
 		// reset statistics
 		isIndexSubExp = false;
@@ -341,7 +365,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		arg0.getRightExpression().accept(this);
 		if(isIndexSubExp) {
 			// add expr to indexCond
-			indexCond = new AndExpression(indexCond, arg0);
+			if(indexCond != null)
+				indexCond = new AndExpression(indexCond, arg0);
+			else
+				indexCond = arg0;
 			// set lowkey/highkey if better than existing ones
 			int tempKey = nums.pop();
 			if(intOnLeft) { // 3 < R.A
@@ -357,7 +384,10 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		}
 		else {
 			// add expr to nonindexCond
-			regCond = new AndExpression(regCond, arg0);
+			if (regCond != null)
+				regCond = new AndExpression(regCond, arg0);
+			else
+				regCond = arg0;
 		}
 		// reset statistics
 		isIndexSubExp = false;

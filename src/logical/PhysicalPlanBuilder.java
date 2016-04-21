@@ -75,6 +75,8 @@ public class PhysicalPlanBuilder {
 	 * @param logicalSelect
 	 */
 	public void visit(LogicalSelect logicalSelect) {
+		//TODO for testing
+		//indexSelect = false;
 		if (indexSelect) {
 			// see if there is an index on the relation
 			ArrayList<String> tableNames = logicalSelect.getChild().getBaseTables();
@@ -100,6 +102,7 @@ public class PhysicalPlanBuilder {
 			Expression e = logicalSelect.getCondition();
 			// use visitor on condition e
 			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
+			e.accept(visitor);
 			Expression indexE = visitor.getIndexCond();
 			// part that is index-able is put into an IndexScan
 			if (indexE != null) {
@@ -110,7 +113,11 @@ public class PhysicalPlanBuilder {
 				IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey);
 				// part that is not is put into a regular SelectOp with a Scan Op
 				Expression regE = visitor.getRegCond();
-				SelectOperator newOp = new SelectOperator(scanOp, regE);
+				Operator newOp = null;
+				if(regE != null)
+					newOp = new SelectOperator(scanOp, regE);
+				else
+					newOp = scanOp;
 				ops.push(newOp);
 				return;
 			}

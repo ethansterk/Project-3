@@ -35,7 +35,6 @@ public class IndexScan extends Operator{
 			alias = s.split(" ")[2];
 		
 		String sortAttr = Indexes.getInstance().getIndexCols(tablename);
-		
 		// create an IndexReader (similar to the TupleReader)
 		ir = new IndexReader(indexDir, lowKey, highKey, clustered, tablename, alias, sortAttr);
 	}

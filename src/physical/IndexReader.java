@@ -25,6 +25,7 @@ import code.TupleReader;
 public class IndexReader {
 
 	private String tableName;
+	private String alias;
 	private String sortAttr;
 	private FileChannel fc;
 	private ByteBuffer buffer;
@@ -53,6 +54,7 @@ public class IndexReader {
 		this.clustered = clustered;
 		tr = new TupleReader(tableName, alias, false, null, null);
 		this.tableName = tableName;
+		this.alias = alias;
 		this.sortAttr = sortAttr;
 		
 		//retrieve the file channel
@@ -85,6 +87,7 @@ public class IndexReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		buffer.position(0);
 		// root in header file
 		ROOT_ADDR = buffer.getInt();
 		// store number of leaves
@@ -160,7 +163,8 @@ public class IndexReader {
 		
 		if (clustered) {
 			Tuple t = tr.readNextTuple();
-			int x = Integer.parseInt(t.getValues().get(t.getFields().indexOf(sortAttr)));
+			int i = t.getFields().indexOf(alias + "." + sortAttr);
+			int x = Integer.parseInt(t.getValues().get(i));
 			if (x > highKey)
 				return null;
 			return t;
@@ -182,7 +186,8 @@ public class IndexReader {
 		tr.reset(resetIndex);
 		
 		Tuple t = tr.readNextTuple();
-		int x = Integer.parseInt(t.getValues().get(t.getFields().indexOf(sortAttr)));
+		int i = t.getFields().indexOf(alias + "." + sortAttr);
+		int x = Integer.parseInt(t.getValues().get(i));
 		if (x > highKey)
 			return null;
 		return t;
@@ -249,6 +254,7 @@ public class IndexReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		buffer.position(0);
 	}
 	
 	/**

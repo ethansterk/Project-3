@@ -36,14 +36,12 @@ public class SelectOperator extends Operator {
 	 */
 	@Override
 	public Tuple getNextTuple() {
-		Tuple t = child.getNextTuple();
-		if (t != null){
+		Tuple t;
+		while((t = child.getNextTuple()) != null) {
 			EvaluateExpressionVisitor v = new EvaluateExpressionVisitor(t);
 			condition.accept(v);
 			if (v.getResult()) //if condition holds on t
 				return t;
-			else 
-				return this.getNextTuple();
 		}
 		return null;
 	}
