@@ -39,7 +39,7 @@ public class IndexReader {
 	private int currentPage;
 	private int dataEntriesLeft;
 	private int ridsLeft;
-	private boolean notInIndex = false;
+	private boolean inIndex;
 	
 	/**
 	 * Constructs an IndexReader.
@@ -56,7 +56,7 @@ public class IndexReader {
 		this.tableName = tableName;
 		this.alias = alias;
 		this.sortAttr = sortAttr;
-		
+		inIndex = true;
 		//retrieve the file channel
 		FileInputStream fin = null;
 		try {
@@ -141,7 +141,7 @@ public class IndexReader {
 			dataEntriesLeft--;
 		}
 		if (dataEntriesLeft == 0)
-			notInIndex = true;
+			inIndex = false;
 		else {
 			// at key that is greater than or equal to lowKey
 			ridsLeft = buffer.getInt();
@@ -158,12 +158,17 @@ public class IndexReader {
 	 * @return
 	 */
 	public Tuple readNextTuple() {
-		if (notInIndex)
+		if (!inIndex)
 			return null;
 		
 		if (clustered) {
 			Tuple t = tr.readNextTuple();
-			int i = t.getFields().indexOf(alias + "." + sortAttr);
+			String name;
+			if(alias != null)
+				name = alias;
+			else
+				name = tableName;
+			int i = t.getFields().indexOf(name + "." + sortAttr);
 			int x = Integer.parseInt(t.getValues().get(i));
 			if (x > highKey)
 				return null;
@@ -186,7 +191,12 @@ public class IndexReader {
 		tr.reset(resetIndex);
 		
 		Tuple t = tr.readNextTuple();
-		int i = t.getFields().indexOf(alias + "." + sortAttr);
+		String name;
+		if(alias != null)
+			name = alias;
+		else
+			name = tableName;
+		int i = t.getFields().indexOf(name + "." + sortAttr);
 		int x = Integer.parseInt(t.getValues().get(i));
 		if (x > highKey)
 			return null;
@@ -228,6 +238,7 @@ public class IndexReader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		buffer.position(0);
 		int isIndexNode = buffer.getInt();
 		dataEntriesLeft = buffer.getInt();
 		if(!(isIndexNode == 1)) {
