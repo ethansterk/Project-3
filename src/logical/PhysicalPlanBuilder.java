@@ -100,7 +100,6 @@ public class PhysicalPlanBuilder {
 			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
 			e.accept(visitor);
 			Expression indexE = visitor.getIndexCond();
-			System.out.println("Index cond" + );
 			// part that is index-able is put into an IndexScan
 			if (indexE != null) {
 				int highKey = visitor.getHighKey();
@@ -108,7 +107,7 @@ public class PhysicalPlanBuilder {
 				String indexDir = Indexes.getInstance().getIndexDir(tableName + "." + indexCol);
 				boolean isClustered = Indexes.getInstance().getClustered(tableName);
 				IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey);
-				// part that is not is put into a regular SelectOp with a Scan Op
+				// part that is non index is put into a regular SelectOp with a Scan Op
 				Expression regE = visitor.getRegCond();
 				Operator newOp = null;
 				if(regE != null)
