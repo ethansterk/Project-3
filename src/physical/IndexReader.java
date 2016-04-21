@@ -129,9 +129,7 @@ public class IndexReader {
 		// at leaf node, find the key that is greater than or equal to lowKey
 		dataEntriesLeft = buffer.getInt();
 		int key = -1;
-		while(lowKey > key && dataEntriesLeft > 0) {
-			// set position for next key
-			key = buffer.getInt();
+		while(lowKey > (key = buffer.getInt()) && dataEntriesLeft > 0) {
 			int numRids = buffer.getInt();
 			int oldPos = buffer.position();
 			if(oldPos + (numRids * 2) * 4 > 4095) {

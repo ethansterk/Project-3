@@ -86,10 +86,6 @@ public class PhysicalPlanBuilder {
 			String s = tableNames.get(0);
 			String[] tokens = s.split(" ");
 			String tableName = tokens[0];
-			/*String alias = null;
-			if (tokens.length > 2) {
-				alias = tokens[2];
-			}*/
 			// TODO for project 5, there may be multiple indexCols
 			String indexCol = Indexes.getInstance().getIndexCols(tableName);
 			if (indexCol == null) { // index does not exist on underlying relation
@@ -104,6 +100,7 @@ public class PhysicalPlanBuilder {
 			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
 			e.accept(visitor);
 			Expression indexE = visitor.getIndexCond();
+			System.out.println("Index cond" + );
 			// part that is index-able is put into an IndexScan
 			if (indexE != null) {
 				int highKey = visitor.getHighKey();
