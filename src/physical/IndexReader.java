@@ -80,7 +80,6 @@ public class IndexReader {
 	 */
 	private void handleFirstDescent() {
 		//go into header
-		System.out.println("First descent.");
 		try {
 			if (fc.read(buffer) < 1) {
 				System.out.println("ERR: reached end of FileChannel");
