@@ -130,21 +130,21 @@ public class IndexReader {
 		dataEntriesLeft = buffer.getInt();
 		int key = -1;
 		while(lowKey > (key = buffer.getInt()) && dataEntriesLeft > 0) {
+			dataEntriesLeft--;
 			int numRids = buffer.getInt();
 			int oldPos = buffer.position();
 			if(oldPos + (numRids * 2) * 4 > 4095) {
 				System.out.println("Not enough room in buffer.");
 			}
 			buffer.position(oldPos + (numRids * 2) * 4);
-			dataEntriesLeft--;
 		}
-		if (dataEntriesLeft == 0)
+		dataEntriesLeft--; // TODO added
+		if (dataEntriesLeft == -1) // TODO changed to -1
 			inIndex = false;
 		else {
 			// at key that is greater than or equal to lowKey
 			ridsLeft = buffer.getInt();
 			// the buffer is now positioned to return the first rid
-			// TODO tuple reader must be reset to just rid
 			if(clustered) {
 				int pageID = buffer.getInt();
 				int tupleID = buffer.getInt();
@@ -178,7 +178,7 @@ public class IndexReader {
 				name = alias;
 			else
 				name = tableName;
-			if(t == null) // TODO hmmm
+			if(t == null)
 				return null;
 			int i = t.getFields().indexOf(name + "." + sortAttr);
 			int x = Integer.parseInt(t.getValues().get(i));
@@ -187,11 +187,12 @@ public class IndexReader {
 			return t;
 		}
 		//else.. 
-		if (ridsLeft == 0) {
+		if (ridsLeft < 1) {
 			if(!readNewDataEntry()) {
 				return null;
 			}
 		}
+		
 		ridsLeft--;
 		int pageID = buffer.getInt();
 		int tupleID = buffer.getInt();
@@ -236,21 +237,7 @@ public class IndexReader {
 	 * @return True if this is a leaf page.
 	 */
 	private boolean readNewLeafPage() {
-		buffer = ByteBuffer.allocate(4096);
-		currentPage++;
-		try {
-			fc.position(currentPage * 4096);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
-			if (fc.read(buffer) < 1) {
-				System.out.println("ERR: reached end of FileChannel");
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		buffer.position(0);
+		setBufferToAddress(++currentPage);
 		int isIndexNode = buffer.getInt();
 		dataEntriesLeft = buffer.getInt();
 		if(!(isIndexNode == 1)) {
