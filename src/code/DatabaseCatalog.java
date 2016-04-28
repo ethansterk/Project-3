@@ -39,7 +39,7 @@ public class DatabaseCatalog {
 	 */
 	public static void createCatalog(String inputDir) {
 		File schema = new File(inputDir + File.separator + "db" + File.separator + "schema.txt");
-
+		// TODO create stats file here (have it be empty)
 	    try {
 	        Scanner sc = new Scanner(schema);   
 	        while (sc.hasNextLine()) {
@@ -52,6 +52,8 @@ public class DatabaseCatalog {
 	    catch (FileNotFoundException e) {
 	        e.printStackTrace();
 	    }
+	    
+	    
 	}
 	
 	/**

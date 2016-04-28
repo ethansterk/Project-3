@@ -35,8 +35,28 @@ public class Schema {
 		columns.remove(0);
 		numcols = columns.size();
 		tableDir = inputDir + File.separator + "db" + File.separator + "data" + File.separator + name;
+		generateStats();
 	}
 	
+	private void generateStats() {
+		// TODO generate stats about relations
+		// RelationName NumTuples ColName,Min,Max
+		// RelationName - can get from schemas (loop?)
+		// NumTuples - have to scan each relation
+		// ColName,Min,Max - maintain info as scanning relation (all available in Tuple)
+		String relName = name;
+		int numTuples = 0;
+		ArrayList<ColStats> relColStats = new ArrayList<ColStats>();
+		for(String colName : columns) {
+			ColStats temp = new ColStats(colName);
+			relColStats.add(temp);
+		}
+		// scan relation
+			// log info
+		// format to match formatting above
+		// output to stats file (having had created it in DatabaseCatalog)
+	}
+
 	/**
 	 * Returns the name of this relation.
 	 * 
