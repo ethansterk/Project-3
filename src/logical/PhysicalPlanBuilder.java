@@ -26,9 +26,14 @@ import physical.*;
 public class PhysicalPlanBuilder {
 
 	private Stack<Operator> ops;
-	private String[] joinMethod;
-	private String[] sortMethod;
-	private boolean indexSelect;
+	//private String[] joinMethod;
+	//private String[] sortMethod;
+	//private boolean indexSelect;
+	// TODO hard-coded for now:
+	private int joinType = 2;
+	private int joinBufferSize = 5;
+	private int sortType = 1;
+	private int sortBufferSize = 5;
 	
 	/**
 	 * Initializes the PhysicalPlanBuilder by giving it the root of the logical plan
@@ -37,8 +42,8 @@ public class PhysicalPlanBuilder {
 	 * @param root
 	 * @param configDir
 	 */
-	public PhysicalPlanBuilder(LogicalOperator root, String configDir) {
-		File config = new File(configDir + File.separator + "plan_builder_config.txt");
+	public PhysicalPlanBuilder(LogicalOperator root/*, String inputDir*/) {
+		/*File config = new File(inputDir + File.separator + "plan_builder_config.txt");
 		try {
 	        Scanner sc = new Scanner(config);   
 	        String joinMethod = sc.nextLine();
@@ -53,10 +58,11 @@ public class PhysicalPlanBuilder {
 	        	indexSelect = true;
 	        }
 	        sc.close();
+	        
 	    } 
 	    catch (FileNotFoundException e) {
 	        e.printStackTrace();
-	    }
+	    }*/
 		
 		ops = new Stack<Operator>();
 		root.accept(this);
@@ -75,62 +81,60 @@ public class PhysicalPlanBuilder {
 	 * @param logicalSelect
 	 */
 	public void visit(LogicalSelect logicalSelect) {
-		//TODO for testing
-		//indexSelect = false;
-		if (indexSelect) {
-			// see if there is an index on the relation
-			ArrayList<String> tableNames = logicalSelect.getChild().getBaseTables();
-			if (tableNames.size() != 1) {
-				System.out.println("ERR: getBaseTables wrong for selection");
-			}
-			String s = tableNames.get(0);
-			String[] tokens = s.split(" ");
-			String tableName = tokens[0];
-			// TODO for project 5, there may be multiple indexCols
-			String indexCol = Indexes.getInstance().getIndexCols(tableName);
-			if (indexCol == null) { // index does not exist on underlying relation
-				logicalSelect.getChild().accept(this);
-				Operator child = ops.pop();
-				SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
-				ops.push(newOp);
-				return;
-			}
-			Expression e = logicalSelect.getCondition();
-			// use visitor on condition e
-			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
-			e.accept(visitor);
-			Expression indexE = visitor.getIndexCond();
-			// part that is index-able is put into an IndexScan
-			if (indexE != null) {
-				int highKey = visitor.getHighKey();
-				int lowKey = visitor.getLowKey();
-				String indexDir = Indexes.getInstance().getIndexDir(tableName + "." + indexCol);
-				boolean isClustered = Indexes.getInstance().getClustered(tableName);
-				IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey);
-				// part that is non index is put into a regular SelectOp with a Scan Op
-				Expression regE = visitor.getRegCond();
-				Operator newOp = null;
-				if(regE != null)
-					newOp = new SelectOperator(scanOp, regE);
-				else
-					newOp = scanOp;
-				ops.push(newOp);
-				return;
-			}
-			else {
-				logicalSelect.getChild().accept(this);
-				Operator child = ops.pop();
-				SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
-				ops.push(newOp);
-				return;
-			}
+		//if (indexSelect) {
+		// see if there is an index on the relation
+		ArrayList<String> tableNames = logicalSelect.getChild().getBaseTables();
+		if (tableNames.size() != 1) {
+			System.out.println("ERR: getBaseTables wrong for selection");
+		}
+		String s = tableNames.get(0);
+		String[] tokens = s.split(" ");
+		String tableName = tokens[0];
+		// TODO for project 5, there may be multiple indexCols
+		String indexCol = Indexes.getInstance().getIndexCols(tableName);
+		if (indexCol == null) { // index does not exist on underlying relation
+			logicalSelect.getChild().accept(this);
+			Operator child = ops.pop();
+			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
+			ops.push(newOp);
+			return;
+		}
+		Expression e = logicalSelect.getCondition();
+		// use visitor on condition e
+		IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
+		e.accept(visitor);
+		Expression indexE = visitor.getIndexCond();
+		// part that is index-able is put into an IndexScan
+		if (indexE != null) {
+			int highKey = visitor.getHighKey();
+			int lowKey = visitor.getLowKey();
+			String indexDir = Indexes.getInstance().getIndexDir(tableName + "." + indexCol);
+			boolean isClustered = Indexes.getInstance().getClustered(tableName);
+			IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey);
+			// part that is non index is put into a regular SelectOp with a Scan Op
+			Expression regE = visitor.getRegCond();
+			Operator newOp = null;
+			if(regE != null)
+				newOp = new SelectOperator(scanOp, regE);
+			else
+				newOp = scanOp;
+			ops.push(newOp);
+			return;
 		}
 		else {
 			logicalSelect.getChild().accept(this);
 			Operator child = ops.pop();
 			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
 			ops.push(newOp);
+			return;
 		}
+		//}
+		/*else {
+			logicalSelect.getChild().accept(this);
+			Operator child = ops.pop();
+			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
+			ops.push(newOp);
+		}*/
 	}
 
 	/**
@@ -156,7 +160,6 @@ public class PhysicalPlanBuilder {
 		Operator right = ops.pop();
 		Operator left = ops.pop();
 		
-		int joinType = Integer.valueOf(joinMethod[0]);
 		Expression e = logicalJoin.getCondition();
 		Operator newOp = null;
 		switch(joinType) {
@@ -164,7 +167,7 @@ public class PhysicalPlanBuilder {
 			newOp = new JoinOperator(left, right, e);
 			break;
 		case 1:
-			int bufferSize = Integer.valueOf(joinMethod[1]);
+			int bufferSize = joinBufferSize;
 			newOp = new BNLJOperator(left, right, e, bufferSize);
 			break;
 		case 2:
@@ -173,7 +176,6 @@ public class PhysicalPlanBuilder {
 			if (e != null)
 				e.accept(visitor);
 			// create two sorts as children (left and right)
-			int sortType = Integer.valueOf(sortMethod[0]);
 			Operator leftOp = null;
 			Operator rightOp = null;
 			switch(sortType) {
@@ -182,7 +184,7 @@ public class PhysicalPlanBuilder {
 				rightOp = new SortOperator(right, visitor.getRightSortCols());
 				break;
 			case 1:
-				int numSortBuffers = Integer.valueOf(sortMethod[1]);
+				int numSortBuffers = sortBufferSize;
 				leftOp = new ExternalSortOperator(left, numSortBuffers, visitor.getLeftSortCols());
 				rightOp = new ExternalSortOperator(right, numSortBuffers, visitor.getRightSortCols());
 				break;
@@ -206,19 +208,19 @@ public class PhysicalPlanBuilder {
 		logicalSort.getChild().accept(this);
 		Operator child = ops.pop();
 		
-		int sortType = Integer.valueOf(sortMethod[0]);
+		int tempSortType = sortType;
 		Operator newOp = null;
 		
 		//ensure that implementation of DISTINCT doesn't use unbounded state (always uses P2's sorting method)
 		if (logicalSort.getDistinct())
-			sortType = 0;
+			tempSortType = 0;
 		
-		switch(sortType) {
+		switch(tempSortType) {
 		case 0:
 			newOp = new SortOperator(child, logicalSort.getList());
 			break;
 		case 1:
-			int numSortBuffers = Integer.valueOf(sortMethod[1]);
+			int numSortBuffers = sortBufferSize;
 			List<OrderByElement> list = logicalSort.getList();
 			ArrayList<String> sortList = new ArrayList<String>();
 			for (OrderByElement o : list)
@@ -237,15 +239,15 @@ public class PhysicalPlanBuilder {
 		logicalDuplicateElimination.getChild().accept(this);
 		Operator child = ops.pop();
 
-		int sortType = Integer.valueOf(sortMethod[0]);
+		int tempSortType = sortType;
 		Operator newOp = null;
 		
-		switch(sortType) {
+		switch(tempSortType) {
 		case 0:
 			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), 0);
 			break;
 		case 1:
-			int numSortBuffers = Integer.valueOf(sortMethod[1]);
+			int numSortBuffers = sortBufferSize;
 			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), numSortBuffers);
 			break;
 		}
