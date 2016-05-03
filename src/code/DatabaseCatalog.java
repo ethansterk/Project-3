@@ -33,7 +33,8 @@ public class DatabaseCatalog {
 	/**
 	 * Creates the DatabaseCatalog. This is called only once, from the
 	 * main() function in Parser. It constructs the DBCatalog by
-	 * creating the schema from the schema file.
+	 * creating the schema from the schema file. It also creates a stats
+	 * file which is used to print out statistics as Schemas are initialized.
 	 * 
 	 * @param inputDir
 	 */

@@ -46,6 +46,16 @@ public class Schema {
 		generateStats(stats, name);
 	}
 	
+	/**
+	 * Another constructor was necessary to initialize Schemas before
+	 * putting them into the HashMap in DBCatalog. The reason we needed
+	 * this catalog is because when we initialize the Schema again, we
+	 * rely on a TupleReader to scan the file, and the TupleReader relies
+	 * on this HashMap existing.
+	 * @param s String that contains the name of the relation and names of the columns,
+	 * separated by spaces.
+	 * @param inputDir String that contains the directory of the /input/ file.
+	 */
 	public Schema(String s, String inputDir) {
 		String[] tokens = s.split(" ");
 		name = tokens[0];
@@ -55,12 +65,13 @@ public class Schema {
 		tableDir = inputDir + File.separator + "db" + File.separator + "data" + File.separator + name;
 	}
 	
+	/**
+	 * Gathers statistics on the relation relevant to this schema and
+	 * writes these to the statistics text file.
+	 * @param stats File than contains statistics.
+	 * @param tablename Full name of the relations (i.e. Sailors, Boats, etc.).
+	 */
 	private void generateStats(File stats, String tablename) {
-		// TODO generate stats about relations
-		// RelationName NumTuples ColName,Min,Max
-		// RelationName - can get from schemas (loop?)
-		// NumTuples - have to scan each relation
-		// ColName,Min,Max - maintain info as scanning relation (all available in Tuple)
 		String relName = name;
 		int numTuples = 0;
 		ArrayList<ColStats> relColStats = new ArrayList<ColStats>();
@@ -96,7 +107,6 @@ public class Schema {
 		try {
 			writer = new PrintWriter(new FileWriter(stats, true));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		writer.println(statsMessage);
