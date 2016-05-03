@@ -1,6 +1,8 @@
 package code;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -74,9 +76,6 @@ public class Schema {
 			for (ColStats c : relColStats) {
 				String col = c.getColName();
 				int i = t.getFields().indexOf(tablename + "." + col);
-				//System.out.println("Col: " + col);
-				//System.out.println("i = " + i);
-				//System.out.println("Fields of t: " + t.getFields());
 				int val = Integer.valueOf(t.getValues().get(i));
 				int max = c.getMaxVal();
 				int min = c.getMinVal();
@@ -95,11 +94,8 @@ public class Schema {
 		
 		PrintWriter writer = null;
 		try {
-			writer = new PrintWriter(stats.getAbsolutePath(), "UTF-8");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
+			writer = new PrintWriter(new FileWriter(stats, true));
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
