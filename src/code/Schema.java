@@ -1,7 +1,13 @@
 package code;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
+
+import physical.ScanOperator;
 
 /**
  * The Schema class keeps track of each table's information such as:
@@ -28,6 +34,16 @@ public class Schema {
 	 * separated by spaces.
 	 * @param inputDir String that contains the directory of the /input/ file.
 	 */
+	public Schema(String s, String inputDir, File stats) {
+		String[] tokens = s.split(" ");
+		name = tokens[0];
+		columns = new ArrayList<String>(Arrays.asList(tokens));
+		columns.remove(0);
+		numcols = columns.size();
+		tableDir = inputDir + File.separator + "db" + File.separator + "data" + File.separator + name;
+		generateStats(stats, name);
+	}
+	
 	public Schema(String s, String inputDir) {
 		String[] tokens = s.split(" ");
 		name = tokens[0];
@@ -35,10 +51,9 @@ public class Schema {
 		columns.remove(0);
 		numcols = columns.size();
 		tableDir = inputDir + File.separator + "db" + File.separator + "data" + File.separator + name;
-		generateStats();
 	}
 	
-	private void generateStats() {
+	private void generateStats(File stats, String tablename) {
 		// TODO generate stats about relations
 		// RelationName NumTuples ColName,Min,Max
 		// RelationName - can get from schemas (loop?)
@@ -51,10 +66,45 @@ public class Schema {
 			ColStats temp = new ColStats(colName);
 			relColStats.add(temp);
 		}
-		// scan relation
-			// log info
-		// format to match formatting above
-		// output to stats file (having had created it in DatabaseCatalog)
+
+		ScanOperator statsScan = new ScanOperator(tablename);
+		Tuple t;
+		while((t = statsScan.getNextTuple()) != null) {
+			numTuples++;
+			for (ColStats c : relColStats) {
+				String col = c.getColName();
+				int i = t.getFields().indexOf(tablename + "." + col);
+				//System.out.println("Col: " + col);
+				//System.out.println("i = " + i);
+				//System.out.println("Fields of t: " + t.getFields());
+				int val = Integer.valueOf(t.getValues().get(i));
+				int max = c.getMaxVal();
+				int min = c.getMinVal();
+				if (val > max)
+					c.setMaxVal(val);
+				if (val < min)
+					c.setMinVal(val);
+			}
+		}
+
+		String statsMessage = "";
+		statsMessage += relName + " " + numTuples;
+		for (ColStats c : relColStats) {
+			statsMessage += " " + c.getColName() + "," + c.getMinVal() + "," + c.getMaxVal();
+		}
+		
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter(stats.getAbsolutePath(), "UTF-8");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		writer.println(statsMessage);
+		writer.close();
 	}
 
 	/**

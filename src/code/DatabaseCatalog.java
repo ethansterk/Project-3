@@ -39,13 +39,18 @@ public class DatabaseCatalog {
 	 */
 	public static void createCatalog(String inputDir) {
 		File schema = new File(inputDir + File.separator + "db" + File.separator + "schema.txt");
-		// TODO create stats file here (have it be empty)
+		// TODO create stats file here (have it be empty) -- will be written to by schemas
+		String statsFilename = inputDir + File.separator + "db" + File.separator + "stats.txt";
+		File stats = new File(statsFilename);
 	    try {
 	        Scanner sc = new Scanner(schema);   
 	        while (sc.hasNextLine()) {
 	            String s = sc.nextLine();
+
+	            // TODO this might not work... testing
 	            Schema sch = new Schema(s, inputDir);
 	            schemas.put(sch.getName(),sch);
+	            sch = new Schema(s, inputDir, stats);
 	        }
 	        sc.close();
 	    } 
