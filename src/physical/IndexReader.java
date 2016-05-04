@@ -138,8 +138,8 @@ public class IndexReader {
 			}
 			buffer.position(oldPos + (numRids * 2) * 4);
 		}
-		dataEntriesLeft--; // TODO added
-		if (dataEntriesLeft == -1) // TODO changed to -1
+		dataEntriesLeft--;
+		if (dataEntriesLeft == -1)
 			inIndex = false;
 		else {
 			// at key that is greater than or equal to lowKey

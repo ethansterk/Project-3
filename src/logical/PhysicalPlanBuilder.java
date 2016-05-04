@@ -81,8 +81,6 @@ public class PhysicalPlanBuilder {
 	 * @param logicalSelect
 	 */
 	public void visit(LogicalSelect logicalSelect) {
-		//if (indexSelect) {
-		// see if there is an index on the relation
 		ArrayList<String> tableNames = logicalSelect.getChild().getBaseTables();
 		if (tableNames.size() != 1) {
 			System.out.println("ERR: getBaseTables wrong for selection");
@@ -91,8 +89,8 @@ public class PhysicalPlanBuilder {
 		String[] tokens = s.split(" ");
 		String tableName = tokens[0];
 		// TODO for project 5, there may be multiple indexCols
-		String indexCol = Indexes.getInstance().getIndexCols(tableName);
-		if (indexCol == null) { // index does not exist on underlying relation
+		ArrayList<String> indexCols = Indexes.getInstance().getIndexCols(tableName);
+		if (indexCols == null) { // index does not exist on underlying relation
 			logicalSelect.getChild().accept(this);
 			Operator child = ops.pop();
 			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());

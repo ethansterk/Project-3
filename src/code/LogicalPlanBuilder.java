@@ -12,6 +12,7 @@ import logical.LogicalScan;
 import logical.LogicalSelect;
 import logical.LogicalSort;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
@@ -95,23 +96,61 @@ public class LogicalPlanBuilder {
 				
 				LogicalOperator temp = new LogicalScan(fromItem.toString());
 				Expression e;
-				ArrayList<String> leftBaseTables = new ArrayList<String>();
-				String rightBaseTable = null;
+				// TODO left and right base tables must be initialized in the PPBuilder
+				// after determining join order
+				//ArrayList<String> leftBaseTables = new ArrayList<String>();
+				//String rightBaseTable = null;
 				if(usesAliases) {
 					String aliasName = wholeTableName[2];
 					e = selectConditions.get(aliasName);
-					leftBaseTables.add(aliasName);
+					//leftBaseTables.add(aliasName);
 				}
 				else {
 					e = selectConditions.get(tableName);
-					leftBaseTables.add(tableName);
+					//leftBaseTables.add(tableName);
 				}
 				if (e != null) {
 					temp = new LogicalSelect(temp,e);
 				}
 				
-				
+				// Project 5 implementation:
+				ArrayList<LogicalOperator> children = new ArrayList<LogicalOperator>();
+				children.add(temp);
+				Expression joinE = null;
 				for (Join j : joins) {
+					String tempWholeTableName = j.getRightItem().toString();
+					String[] split = tempWholeTableName.split(" ");
+					String tempTableName = split[0];
+					LogicalOperator tempOp = new LogicalScan(tempWholeTableName);
+					Expression selectE;
+					if (usesAliases) {
+						String tempAliasName = split[2];
+						selectE = selectConditions.get(tempAliasName);
+						Expression nextJoinCond = joinConditions.get(tempAliasName);
+						if (joinE == null)
+							joinE = nextJoinCond;
+						else if (nextJoinCond != null)
+							joinE = new AndExpression(joinE, nextJoinCond);
+					}
+					else {
+						selectE = selectConditions.get(tempTableName);
+						Expression nextJoinCond = joinConditions.get(tempTableName);
+						if (joinE == null)
+							joinE = nextJoinCond;
+						else if (nextJoinCond != null)
+							joinE = new AndExpression(joinE, nextJoinCond);
+					}
+					if (selectE != null)
+						tempOp = new LogicalSelect(tempOp, selectE);
+					
+					children.add(tempOp);
+				}
+				root = new LogicalJoin(children, joinE);
+				root = temp;
+				
+				
+				// Project 4 code:
+				/*for (Join j : joins) {
 					if (rightBaseTable != null)
 						leftBaseTables.add(rightBaseTable);
 					
@@ -137,9 +176,10 @@ public class LogicalPlanBuilder {
 					
 					ArrayList<String> tempList = new ArrayList<String>();
 					tempList.addAll(leftBaseTables);
+					
 					temp = new LogicalJoin(temp, tempRight, joinE, tempList, rightBaseTable);
 				}
-				root = temp;	
+				root = temp;*/	
 			}
 			else {
 				root = new LogicalScan(fromItem.toString());

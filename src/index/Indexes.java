@@ -29,7 +29,7 @@ public class Indexes {
 
 	private static final Indexes instance = new Indexes();
 	private static final HashMap<String,String> indexDir = new HashMap<String,String>();
-	private static final HashMap<String,String> relToIndex = new HashMap<String,String>();
+	private static final HashMap<String,ArrayList<String>> relToIndex = new HashMap<String,ArrayList<String>>();
 	private static final HashMap<String,Boolean> relToClustered = new HashMap<String,Boolean>();
 	
 	private static int entryIndex = 0;
@@ -76,8 +76,15 @@ public class Indexes {
 			String value = dbDir + File.separator + "indexes" + File.separator + key;
 			
 			indexDir.put(key, value);
-			// TODO change for Project 5 when supports more than one column per relation
-			relToIndex.put(tableName, colName);
+			// TODO changed for project 5 (untested)
+			if(relToIndex.containsKey(tableName)) {
+				relToIndex.get(tableName).add(colName);
+			}
+			else {
+				ArrayList<String> colNames = new ArrayList<String>();
+				colNames.add(colName);
+				relToIndex.put(tableName, colNames);
+			}
 			Boolean isClusteredBool = isClustered.equals("1");
 			relToClustered.put(tableName, isClusteredBool);
 			buildIndex(value, tokens);
@@ -488,10 +495,11 @@ public class Indexes {
 	
 	/**
 	 * Getter method for the index's key columns for a given relation.
-	 * @param relation
-	 * @return
+	 * @param relation Name of relation.
+	 * @return list of names of columns that have indexes on them for this relation.
 	 */
-	public String getIndexCols(String relation) {
+	public ArrayList<String> getIndexCols(String relation) {
+		// TODO changed for project 5
 		if (relToIndex.containsKey(relation))
 			return relToIndex.get(relation);
 		else

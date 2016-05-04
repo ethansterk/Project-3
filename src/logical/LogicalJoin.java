@@ -14,34 +14,26 @@ import net.sf.jsqlparser.expression.Expression;
  */
 public class LogicalJoin extends LogicalOperator{
 
-	private LogicalOperator left;
-	private LogicalOperator right;
+	//private LogicalOperator left;
+	//private LogicalOperator right;
+	private ArrayList<LogicalOperator> children;
 	private Expression condition;
-	private ArrayList<String> leftBaseTables;
-	private String rightBaseTable;
+	//private ArrayList<String> leftBaseTables;
+	//private String rightBaseTable;
 	
-	public LogicalJoin(LogicalOperator left, LogicalOperator right, Expression condition, ArrayList<String> leftBaseTables, String rightBaseTable) {
-		this.left = left;
-		this.right = right;
+	public LogicalJoin(ArrayList<LogicalOperator> children, Expression condition) {
+		this.children = children;
 		this.condition = condition;
-		this.leftBaseTables = leftBaseTables;
-		this.rightBaseTable = rightBaseTable;
+		//this.leftBaseTables = leftBaseTables;
+		//this.rightBaseTable = rightBaseTable;
 	}
 
 	/**
-	 * Getter method for the left-child of this operator
-	 * @return left
+	 * Getter method for the children of this operator
+	 * @return children
 	 */
-	public LogicalOperator getLeft() {
-		return left;
-	}
-
-	/**
-	 * Getter method for the right-child of this operator
-	 * @return right
-	 */
-	public LogicalOperator getRight() {
-		return right;
+	public ArrayList<LogicalOperator> getChildren() {
+		return children;
 	}
 
 	/**
@@ -60,21 +52,24 @@ public class LogicalJoin extends LogicalOperator{
 		visitor.visit(this);
 	}
 
-	public ArrayList<String> getLeftBaseTables() {
+	/*public ArrayList<String> getLeftBaseTables() {
 		return leftBaseTables;
 	}
 
 	public String getRightBaseTable() {
 		return rightBaseTable;
-	}
+	}*/
 	
 	@Override
 	public ArrayList<String> getBaseTables() {
-		ArrayList<String> leftTables = left.getBaseTables();
-		ArrayList<String> rightTables = right.getBaseTables();
+		ArrayList<ArrayList<String>> childrenTables = new ArrayList<ArrayList<String>>();
+		for(LogicalOperator op : children) {
+			childrenTables.add(op.getBaseTables());
+		}
 		ArrayList<String> tables = new ArrayList<String>();
-		tables.addAll(leftTables);
-		tables.addAll(rightTables);
+		for(ArrayList<String> childBaseTable : childrenTables) {
+			tables.addAll(childBaseTable);
+		}
 		return tables;
 	}
 }
