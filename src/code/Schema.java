@@ -1,13 +1,10 @@
 package code;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
 
 import physical.ScanOperator;
 
@@ -28,7 +25,8 @@ public class Schema {
 	private ArrayList<String> columns;
 	private int numcols;
 	private String tableDir;
-	
+	private Stats stats;
+
 	/**
 	 * Initializes a schema with given name and columns.
 	 * 
@@ -103,6 +101,10 @@ public class Schema {
 			statsMessage += " " + c.getColName() + "," + c.getMinVal() + "," + c.getMaxVal();
 		}
 		
+		// Create a Stats object for this relation
+		this.stats = new Stats(relName, numTuples, relColStats);
+		
+		// Write to statistics file
 		PrintWriter writer = null;
 		try {
 			writer = new PrintWriter(new FileWriter(stats, true));
@@ -111,6 +113,15 @@ public class Schema {
 		}
 		writer.println(statsMessage);
 		writer.close();
+	}
+	
+	/**
+	 * Returns the Stats object for this relation.
+	 * 
+	 * @return stats Stats object for this relation.
+	 */
+	public Stats getStats() {
+		return stats;
 	}
 
 	/**

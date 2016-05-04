@@ -63,7 +63,7 @@ public class DatabaseCatalog {
 	            Schema sch = new Schema(s, inputDir);
 	            schemas.put(sch.getName(),sch);
 	            sch = new Schema(s, inputDir, stats);
-	        }
+	         }
 	        sc.close();
 	    } 
 	    catch (FileNotFoundException e) {
