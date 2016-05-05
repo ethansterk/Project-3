@@ -1,5 +1,6 @@
 package logical;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class UnionFind {
@@ -22,37 +23,46 @@ public class UnionFind {
 	public void union(UnionFindElement el1, UnionFindElement el2) {
 		UnionFindElement merge = new UnionFindElement();
 		
-		merge.addAllAttributes(el1.getAttributes());
-		merge.addAllAttributes(el2.getAttributes());
+		ArrayList<String> el1Attrs = el1.getAttributes();
+		ArrayList<String> el2Attrs = el2.getAttributes();
+		for (String attr : el1Attrs) {
+			elementOfAttr.put(attr, merge);
+		}
+		for (String attr : el2Attrs) {
+			elementOfAttr.put(attr, merge);
+		}
+		
+		merge.addAllAttributes(el1Attrs);
+		merge.addAllAttributes(el2Attrs);
 		
 		Integer el1EQ = el1.getEqualityConstr();
 		Integer el2EQ = el2.getEqualityConstr();
 		if (el1EQ != null) {
 			merge.setEqualityConstr(el1EQ);
-			merge.setLowBound(el1EQ);
-			merge.setHighBound(el1EQ);
+			merge.setIfLowBound(el1EQ);
+			merge.setIfHighBound(el1EQ);
 		}
 		else if (el2EQ != null) {
 			merge.setEqualityConstr(el2EQ);
-			merge.setLowBound(el2EQ);
-			merge.setHighBound(el2EQ);
+			merge.setIfLowBound(el2EQ);
+			merge.setIfHighBound(el2EQ);
 		}
 		else {
 			int el1Low = el1.getLowBound();
 			int el2Low = el2.getLowBound();
 			if (el1Low > el2Low) {
-				merge.setLowBound(el1Low);
+				merge.setIfLowBound(el1Low);
 			}
 			else {
-				merge.setLowBound(el2Low);
+				merge.setIfLowBound(el2Low);
 			}
 			int el1High = el1.getHighBound();
 			int el2High = el2.getHighBound();
 			if (el1High < el2High) {
-				merge.setHighBound(el1High);
+				merge.setIfHighBound(el1High);
 			}
 			else {
-				merge.setHighBound(el2High);
+				merge.setIfHighBound(el2High);
 			}
 		}
 	}

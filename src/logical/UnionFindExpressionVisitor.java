@@ -44,48 +44,22 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
-public class IndexExpressionVisitor implements ExpressionVisitor {
+public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
-	// fields for the IndexScan
-	private int lowKey;
-	private int highKey;
-	private Expression indexCond;
-	// fields for the normal Scan
-	private Expression regCond;
+	private UnionFind uf;
 	
-	// fields for keeping visiting statistics
-	private String indexCol;
-	private Stack<Integer> nums;
-	private boolean isIndexSubExp;
+	private Stack<Integer> vals; // collect integer operands
+	private Stack<UnionFindElement> elements; // collect column operands
 	
-	public IndexExpressionVisitor(Expression e, String indexCol) {
-		// we should know what indexes we have (use Indexes getIndexCols())
-		lowKey = Integer.MIN_VALUE;
-		highKey = Integer.MAX_VALUE;
-		indexCond = null;
-		regCond = null;
+	private Expression unusable; // collect unusable comparisons
+	
+	public UnionFindExpressionVisitor() {
+		vals = new Stack<Integer>();
+		elements = new Stack<UnionFindElement>();
 		
-		this.indexCol = indexCol;
-		nums = new Stack<Integer>();
-		isIndexSubExp = false;
+		unusable = null;
 	}
-
-	public int getLowKey() {
-		return lowKey;
-	}
-
-	public int getHighKey() {
-		return highKey;
-	}
-
-	public Expression getIndexCond() {
-		return indexCond;
-	}
-
-	public Expression getRegCond() {
-		return regCond;
-	}
-
+	
 	@Override
 	public void visit(NullValue arg0) {
 		// TODO Auto-generated method stub
@@ -118,7 +92,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(LongValue arg0) {
-		nums.push((int)arg0.getValue());
+		vals.add((int) (arg0.getValue()));
 	}
 
 	@Override
@@ -197,107 +171,77 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 	public void visit(EqualsTo arg0) {
 		arg0.getLeftExpression().accept(this);
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
-			// add expr to indexCond
-			if(indexCond != null)
-				indexCond = new AndExpression(indexCond, arg0);
-			else
-				indexCond = arg0;
-			// set lowkey/highkey if better than existing ones
-			int tempKey = nums.pop();
-			if(tempKey > lowKey) {
-				lowKey = tempKey;
-			}
-			if(tempKey < highKey) {
-				highKey = tempKey;
-			}
+		int numVals = vals.size();
+		switch(numVals) {
+		case 0:
+			UnionFindElement ufe1 = elements.pop();
+			UnionFindElement ufe2 = elements.pop();
+			uf.union(ufe1, ufe2);
+			break;
+		case 1:
+			int equalityVal = vals.pop();
+			UnionFindElement ufe = elements.pop();
+			ufe.setEqualityConstr(equalityVal);
+			break;
 		}
-		else {
-			// add expr to nonindexCond
-			if (regCond != null)
-				regCond = new AndExpression(regCond, arg0);
-			else
-				regCond = arg0;
-		}
-		// reset statistics
-		isIndexSubExp = false;
-		nums.clear();
 	}
 
 	@Override
 	public void visit(GreaterThan arg0) {
-		boolean intOnLeft = false;
+		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
-		if(!nums.isEmpty())
-			intOnLeft = true;
+		if (vals.size() > 0)
+			valIsLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
-			// add expr to indexCond
-			if(indexCond != null)
-				indexCond = new AndExpression(indexCond, arg0);
-			else
-				indexCond = arg0;
-			// set lowkey/highkey if better than existing ones
-			int tempKey = nums.pop();
-			if(intOnLeft) { // 3 > R.A
-				if(tempKey < highKey) {
-					highKey = tempKey;
-				}
+		int numVals = vals.size();
+		switch(numVals) {
+		case 0:
+			addToUnusable(arg0);
+			break;
+		case 1:
+			if (valIsLeft) { 	// 3 > R.A
+				int highBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfHighBound(highBound - 1);
 			}
-			else { // R.A > 3
-				if(tempKey > lowKey) {
-					lowKey = tempKey;
-				}
+			else {				// R.A > 3
+				int lowBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfLowBound(lowBound + 1);
 			}
+			break;
 		}
-		else {
-			// add expr to nonindexCond
-			if (regCond != null)
-				regCond = new AndExpression(regCond, arg0);
-			else
-				regCond = arg0;
-		}
-		// reset statistics
-		isIndexSubExp = false;
-		nums.clear();
+		vals.clear();
+		elements.clear();
 	}
 
 	@Override
 	public void visit(GreaterThanEquals arg0) {
-		boolean intOnLeft = false;
+		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
-		if(!nums.isEmpty())
-			intOnLeft = true;
+		if (vals.size() > 0)
+			valIsLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
-			// add expr to indexCond
-			if(indexCond != null)
-				indexCond = new AndExpression(indexCond, arg0);
-			else
-				indexCond = arg0;
-			// set lowkey/highkey if better than existing ones
-			int tempKey = nums.pop();
-			if(intOnLeft) { // 3 > R.A
-				if(tempKey < highKey) {
-					highKey = tempKey;
-				}
+		int numVals = vals.size();
+		switch(numVals) {
+		case 0:
+			addToUnusable(arg0);
+			break;
+		case 1:
+			if (valIsLeft) { 	// 3 >= R.A
+				int highBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfHighBound(highBound);
 			}
-			else { // R.A > 3
-				if(tempKey > lowKey) {
-					lowKey = tempKey;
-				}
+			else {				// R.A >= 3
+				int lowBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfLowBound(lowBound);
 			}
+			break;
 		}
-		else {
-			// add expr to nonindexCond
-			if (regCond != null)
-				regCond = new AndExpression(regCond, arg0);
-			else
-				regCond = arg0;
-		}
-		// reset statistics
-		isIndexSubExp = false;
-		nums.clear();
+		vals.clear();
+		elements.clear();
 	}
 
 	@Override
@@ -320,94 +264,78 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(MinorThan arg0) {
-		boolean intOnLeft = false;
+		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
-		if(!nums.isEmpty())
-			intOnLeft = true;
+		if (vals.size() > 0)
+			valIsLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
-			// add expr to indexCond
-			if(indexCond != null)
-				indexCond = new AndExpression(indexCond, arg0);
-			else
-				indexCond = arg0;
-			// set lowkey/highkey if better than existing ones
-			int tempKey = nums.pop();
-			if(intOnLeft) { // 3 < R.A
-				if(tempKey > lowKey) {
-					lowKey = tempKey;
-				}
+		int numVals = vals.size();
+		switch(numVals) {
+		case 0:
+			addToUnusable(arg0);
+			break;
+		case 1:
+			if (valIsLeft) { 	// 3 < R.A
+				int lowBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfLowBound(lowBound + 1);
 			}
-			else { // R.A < 3
-				if(tempKey < highKey) {
-					highKey = tempKey;
-				}
+			else {				// R.A < 3
+				int highBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfHighBound(highBound - 1);
 			}
+			break;
 		}
-		else {
-			// add expr to nonindexCond
-			if (regCond != null)
-				regCond = new AndExpression(regCond, arg0);
-			else
-				regCond = arg0;
-		}
-		// reset statistics
-		isIndexSubExp = false;
-		nums.clear();
+		vals.clear();
+		elements.clear();
 	}
 
 	@Override
 	public void visit(MinorThanEquals arg0) {
-		boolean intOnLeft = false;
+		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
-		if(!nums.isEmpty())
-			intOnLeft = true;
+		if (vals.size() > 0)
+			valIsLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
-			// add expr to indexCond
-			if(indexCond != null)
-				indexCond = new AndExpression(indexCond, arg0);
-			else
-				indexCond = arg0;
-			// set lowkey/highkey if better than existing ones
-			int tempKey = nums.pop();
-			if(intOnLeft) { // 3 < R.A
-				if(tempKey > lowKey) {
-					lowKey = tempKey;
-				}
+		int numVals = vals.size();
+		switch(numVals) {
+		case 0:
+			addToUnusable(arg0);
+			break;
+		case 1:
+			if (valIsLeft) { 	// 3 <= R.A
+				int lowBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfLowBound(lowBound);
 			}
-			else { // R.A < 3
-				if(tempKey < highKey) {
-					highKey = tempKey;
-				}
+			else {				// R.A <= 3
+				int highBound = vals.pop();
+				UnionFindElement ufe = elements.pop();
+				ufe.setIfHighBound(highBound);
 			}
+			break;
 		}
-		else {
-			// add expr to nonindexCond
-			if (regCond != null)
-				regCond = new AndExpression(regCond, arg0);
-			else
-				regCond = arg0;
-		}
-		// reset statistics
-		isIndexSubExp = false;
-		nums.clear();
+		vals.clear();
+		elements.clear();
 	}
 
 	@Override
 	public void visit(NotEqualsTo arg0) {
-		if (regCond != null)
-			regCond = new AndExpression(regCond, arg0);
-		else
-			regCond = arg0;
+		addToUnusable(arg0);
 	}
 
 	@Override
 	public void visit(Column arg0) {
-		String col = arg0.getColumnName();
-		if(col.equals(indexCol)) {
-			isIndexSubExp = true;
-		}
+		String attributeName = "";
+		String tablename = arg0.getTable().getAlias(); // TODO check this (should be R, S, etc)
+		if (tablename == null)
+			tablename = arg0.getTable().getName();
+		String colname = arg0.getColumnName();
+		attributeName = tablename + "." + colname;
+		
+		UnionFindElement el = uf.find(attributeName);
+		elements.add(el);
 	}
 
 	@Override
@@ -474,6 +402,13 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 	public void visit(BitwiseXor arg0) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	private void addToUnusable(Expression arg0) {
+		if (unusable == null)
+			unusable = arg0;
+		else
+			unusable = new AndExpression(unusable, arg0);
 	}
 
 }

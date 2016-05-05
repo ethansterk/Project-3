@@ -36,16 +36,18 @@ public class UnionFindElement {
 		return lowBound;
 	}
 
-	public void setLowBound(int lowBound) {
-		this.lowBound = lowBound;
+	public void setIfLowBound(int lowBound) {
+		if (lowBound > this.lowBound)
+			this.lowBound = lowBound;
 	}
 
 	public int getHighBound() {
 		return highBound;
 	}
 
-	public void setHighBound(int highBound) {
-		this.highBound = highBound;
+	public void setIfHighBound(int highBound) {
+		if (highBound < this.highBound)
+			this.highBound = highBound;
 	}
 
 	public Integer getEqualityConstr() {
@@ -54,5 +56,7 @@ public class UnionFindElement {
 
 	public void setEqualityConstr(Integer equalityConstr) {
 		this.equalityConstr = equalityConstr;
+		this.lowBound = equalityConstr;
+		this.highBound = equalityConstr;
 	}
 }
