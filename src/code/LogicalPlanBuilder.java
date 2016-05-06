@@ -11,8 +11,13 @@ import logical.LogicalProject;
 import logical.LogicalScan;
 import logical.LogicalSelect;
 import logical.LogicalSort;
+import logical.UnionFind;
+import logical.UnionFindElement;
+import logical.UnionFindExpressionVisitor;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
@@ -58,11 +63,11 @@ public class LogicalPlanBuilder {
 	private void createQueryPlan() {
 		if (fromItem != null) {
 			if (joins != null) {
-				
-				JoinEvaluateExpressionVisitor joinVisitor = new JoinEvaluateExpressionVisitor(joins);
-				if (where != null) where.accept(joinVisitor);
-				HashMap<String,Expression> selectConditions = joinVisitor.getSelectConditions();
-				HashMap<String,Expression> joinConditions = joinVisitor.getJoinConditions();
+				// commented out for P5:
+				//JoinEvaluateExpressionVisitor joinVisitor = new JoinEvaluateExpressionVisitor(joins);
+				//if (where != null) where.accept(joinVisitor);
+				//HashMap<String,Expression> selectConditions = joinVisitor.getSelectConditions();
+				//HashMap<String,Expression> joinConditions = joinVisitor.getJoinConditions();
 				
 				//Initialize the Alias -> TableName HashMap in DBCatalog
 				DatabaseCatalog db = DatabaseCatalog.getInstance();
@@ -94,6 +99,17 @@ public class LogicalPlanBuilder {
 					}
 				}
 				
+				UnionFind uf = new UnionFind();
+				UnionFindExpressionVisitor ufVisitor = new UnionFindExpressionVisitor(uf);
+				if (where != null)
+					where.accept(ufVisitor);
+				Expression unusable = uf.getUnusable();
+				
+				JoinEvaluateExpressionVisitor joinVisitor = new JoinEvaluateExpressionVisitor(joins);
+				if (unusable != null)
+					unusable.accept(joinVisitor);
+				HashMap<String,Expression> selectConditions = joinVisitor.getSelectConditions();
+				
 				LogicalOperator temp = new LogicalScan(fromItem.toString());
 				Expression e;
 				// TODO left and right base tables must be initialized in the PPBuilder
@@ -103,6 +119,21 @@ public class LogicalPlanBuilder {
 				if(usesAliases) {
 					String aliasName = wholeTableName[2];
 					e = selectConditions.get(aliasName);
+					// for each column in this table, get attr conditions and append to e
+					ArrayList<String> cols = DatabaseCatalog.getInstance().getSchema(tableName).getCols();
+					for (String col : cols) {
+						String attributeName = aliasName + "." + col;
+						UnionFindElement el = uf.find(attributeName);
+						if (el.getEqualityConstr() != null) {
+							Column c = new Column();
+							c.setColumnName(col);
+							Table t = new Table();
+							c.setTable(new );
+							// TODO left off here
+							EqualsTo ex = new EqualsTo();
+							MyUtils.safeConcatExpression(e, );
+						}
+					}
 					//leftBaseTables.add(aliasName);
 				}
 				else {

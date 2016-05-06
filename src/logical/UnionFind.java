@@ -3,12 +3,18 @@ package logical;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import code.MyUtils;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
+
 public class UnionFind {
 
 	private HashMap<String,UnionFindElement> elementOfAttr;
+	private Expression unusable;
 	
 	public UnionFind() {
-		
+		elementOfAttr = new HashMap<String,UnionFindElement>();
+		unusable = null;
 	}
 	
 	public UnionFindElement find(String attr) {
@@ -65,5 +71,13 @@ public class UnionFind {
 				merge.setIfHighBound(el2High);
 			}
 		}
+	}
+	
+	public Expression getUnusable() {
+		return unusable;
+	}
+	
+	public void addToUnusable(Expression ex) {
+		MyUtils.safeConcatExpression(unusable, ex);
 	}
 }

@@ -2,6 +2,7 @@ package logical;
 
 import java.util.Stack;
 
+import code.MyUtils;
 import net.sf.jsqlparser.expression.AllComparisonExpression;
 import net.sf.jsqlparser.expression.AnyComparisonExpression;
 import net.sf.jsqlparser.expression.CaseExpression;
@@ -51,13 +52,11 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 	private Stack<Integer> vals; // collect integer operands
 	private Stack<UnionFindElement> elements; // collect column operands
 	
-	private Expression unusable; // collect unusable comparisons
-	
-	public UnionFindExpressionVisitor() {
+	public UnionFindExpressionVisitor(UnionFind uf) {
+		this.uf = uf;
+		
 		vals = new Stack<Integer>();
 		elements = new Stack<UnionFindElement>();
-		
-		unusable = null;
 	}
 	
 	@Override
@@ -196,7 +195,7 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 		int numVals = vals.size();
 		switch(numVals) {
 		case 0:
-			addToUnusable(arg0);
+			uf.addToUnusable(arg0);
 			break;
 		case 1:
 			if (valIsLeft) { 	// 3 > R.A
@@ -225,7 +224,7 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 		int numVals = vals.size();
 		switch(numVals) {
 		case 0:
-			addToUnusable(arg0);
+			uf.addToUnusable(arg0);
 			break;
 		case 1:
 			if (valIsLeft) { 	// 3 >= R.A
@@ -272,7 +271,7 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 		int numVals = vals.size();
 		switch(numVals) {
 		case 0:
-			addToUnusable(arg0);
+			uf.addToUnusable(arg0);
 			break;
 		case 1:
 			if (valIsLeft) { 	// 3 < R.A
@@ -301,7 +300,7 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 		int numVals = vals.size();
 		switch(numVals) {
 		case 0:
-			addToUnusable(arg0);
+			uf.addToUnusable(arg0);
 			break;
 		case 1:
 			if (valIsLeft) { 	// 3 <= R.A
@@ -322,7 +321,7 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(NotEqualsTo arg0) {
-		addToUnusable(arg0);
+		uf.addToUnusable(arg0);
 	}
 
 	@Override
@@ -402,13 +401,6 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 	public void visit(BitwiseXor arg0) {
 		// TODO Auto-generated method stub
 		
-	}
-	
-	private void addToUnusable(Expression arg0) {
-		if (unusable == null)
-			unusable = arg0;
-		else
-			unusable = new AndExpression(unusable, arg0);
 	}
 
 }
