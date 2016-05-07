@@ -116,30 +116,30 @@ public class LogicalPlanBuilder {
 				// after determining join order
 				//ArrayList<String> leftBaseTables = new ArrayList<String>();
 				//String rightBaseTable = null;
-				if(usesAliases) {
-					String aliasName = wholeTableName[2];
-					e = selectConditions.get(aliasName);
-					// for each column in this table, get attr conditions and append to e
-					ArrayList<String> cols = DatabaseCatalog.getInstance().getSchema(tableName).getCols();
-					for (String col : cols) {
-						String attributeName = aliasName + "." + col;
-						UnionFindElement el = uf.find(attributeName);
-						if (el.getEqualityConstr() != null) {
-							Column c = new Column();
-							c.setColumnName(col);
-							Table t = new Table();
-							c.setTable(new );
-							// TODO left off here
-							EqualsTo ex = new EqualsTo();
-							MyUtils.safeConcatExpression(e, );
-						}
-					}
-					//leftBaseTables.add(aliasName);
+				String relName;
+				if (usesAliases)
+					relName = wholeTableName[2];
+				else
+					relName = tableName;
+				e = selectConditions.get(relName);
+				// for each column in this table, get attr conditions and append to e
+				ArrayList<UnionFindElement> usedElements = new ArrayList<UnionFindElement>();
+				// avoid using same element (with same condition) twice for one relation
+				ArrayList<String> cols = DatabaseCatalog.getInstance().getSchema(tableName).getCols();
+				for (String col : cols) {
+					String attributeName = relName + "." + col;
+					
+					UnionFindElement el = uf.find(attributeName);
+					if (usedElements.contains(el))
+						continue;
+					usedElements.add(el);
+					
+					Expression elExpr = el.getExpressionOfRelation(relName);
+					if (elExpr != null)
+						MyUtils.safeConcatExpression(e, elExpr);
 				}
-				else {
-					e = selectConditions.get(tableName);
-					//leftBaseTables.add(tableName);
-				}
+				//leftBaseTables.add(relName);
+				
 				if (e != null) {
 					temp = new LogicalSelect(temp,e);
 				}
