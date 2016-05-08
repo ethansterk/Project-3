@@ -115,6 +115,14 @@ public class PhysicalPlanBuilder {
 		}
 	}
 
+	/**
+	 * This function calculates the cost of scanning the relation by
+	 * using a normal scan versus using index scans.
+	 * @param baseTable The table to be scanned. (In form "R","S","T", etc.).
+	 * @param e The selection condition we are considering.
+	 * @return The name of the column on which we are using the index for. If
+	 * not using an index scan, return null.
+	 */
 	private String calculateCosts(String baseTable, Expression e) {
 		// calculate cost of regular scan
 		Stats stats = DatabaseCatalog.getInstance().getSchema(baseTable).getStats();
@@ -155,6 +163,12 @@ public class PhysicalPlanBuilder {
 		return leastCostIndex;
 	}
 
+	/**
+	 * This function returns the number of leaf pages for a specific index.
+	 * @param indexDir The directory of the index.
+	 * @return The number of leaf pages of the index, based on the value
+	 * stored on the header page of the index.
+	 */
 	@SuppressWarnings("resource")
 	private int getNumLeafPages(String indexDir) {
 		FileInputStream fin = null;

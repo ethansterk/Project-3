@@ -2,6 +2,15 @@ package code;
 
 import java.util.ArrayList;
 
+/**
+ * 
+ * The Stats class is used for storing information about a particular relation.
+ * This is used for both generating statistics and using this information in
+ * the physical and logical query plans.
+ * 
+ * @author Ethan (ejs334) and Laura (ln233)
+ *
+ */
 public class Stats {
 
 	private String relName;
