@@ -14,18 +14,12 @@ import net.sf.jsqlparser.expression.Expression;
  */
 public class LogicalJoin extends LogicalOperator{
 
-	//private LogicalOperator left;
-	//private LogicalOperator right;
 	private ArrayList<LogicalOperator> children;
 	private Expression condition;
-	//private ArrayList<String> leftBaseTables;
-	//private String rightBaseTable;
 	
 	public LogicalJoin(ArrayList<LogicalOperator> children, Expression condition) {
 		this.children = children;
 		this.condition = condition;
-		//this.leftBaseTables = leftBaseTables;
-		//this.rightBaseTable = rightBaseTable;
 	}
 
 	/**
@@ -51,24 +45,12 @@ public class LogicalJoin extends LogicalOperator{
 	public void accept(PhysicalPlanBuilder visitor) {
 		visitor.visit(this);
 	}
-
-	/*public ArrayList<String> getLeftBaseTables() {
-		return leftBaseTables;
-	}
-
-	public String getRightBaseTable() {
-		return rightBaseTable;
-	}*/
 	
 	@Override
 	public ArrayList<String> getBaseTables() {
-		ArrayList<ArrayList<String>> childrenTables = new ArrayList<ArrayList<String>>();
-		for(LogicalOperator op : children) {
-			childrenTables.add(op.getBaseTables());
-		}
 		ArrayList<String> tables = new ArrayList<String>();
-		for(ArrayList<String> childBaseTable : childrenTables) {
-			tables.addAll(childBaseTable);
+		for(LogicalOperator op : children) {
+			tables.addAll(op.getBaseTables());
 		}
 		return tables;
 	}

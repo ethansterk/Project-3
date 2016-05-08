@@ -499,7 +499,6 @@ public class Indexes {
 	 * @return list of names of columns that have indexes on them for this relation.
 	 */
 	public ArrayList<String> getIndexCols(String relation) {
-		// TODO changed for project 5
 		if (relToIndex.containsKey(relation))
 			return relToIndex.get(relation);
 		else

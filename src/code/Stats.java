@@ -33,6 +33,14 @@ public class Stats {
 	public ArrayList<ColStats> getCols() {
 		return cols;
 	}
+	
+	public ColStats getColWithName(String colName) {
+		for (ColStats col : cols) {
+			if (col.getColName().equals(colName))
+				return col;
+		}
+		return null;
+	}
 
 	public void setCols(ArrayList<ColStats> cols) {
 		this.cols = cols;

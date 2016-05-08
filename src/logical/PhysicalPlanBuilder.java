@@ -2,13 +2,18 @@ package logical;
 import index.Indexes;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 
 import code.DatabaseCatalog;
+import code.Stats;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import physical.*;
@@ -43,27 +48,6 @@ public class PhysicalPlanBuilder {
 	 * @param configDir
 	 */
 	public PhysicalPlanBuilder(LogicalOperator root/*, String inputDir*/) {
-		/*File config = new File(inputDir + File.separator + "plan_builder_config.txt");
-		try {
-	        Scanner sc = new Scanner(config);   
-	        String joinMethod = sc.nextLine();
-	        String sortMethod = sc.nextLine();
-	        this.joinMethod = joinMethod.split(" ");
-	        this.sortMethod = sortMethod.split(" ");
-	        String indexSelectS = sc.nextLine();
-	        if (indexSelectS.equals("0")) {
-	        	indexSelect = false;
-	        }
-	        else {
-	        	indexSelect = true;
-	        }
-	        sc.close();
-	        
-	    } 
-	    catch (FileNotFoundException e) {
-	        e.printStackTrace();
-	    }*/
-		
 		ops = new Stack<Operator>();
 		root.accept(this);
 	}
@@ -81,33 +65,36 @@ public class PhysicalPlanBuilder {
 	 * @param logicalSelect
 	 */
 	public void visit(LogicalSelect logicalSelect) {
-		ArrayList<String> tableNames = logicalSelect.getChild().getBaseTables();
-		if (tableNames.size() != 1) {
+		ArrayList<String> baseTables = logicalSelect.getChild().getBaseTables();
+		if (baseTables.size() != 1) {
 			System.out.println("ERR: getBaseTables wrong for selection");
 		}
-		String s = tableNames.get(0);
+		String s = baseTables.get(0);
 		String[] tokens = s.split(" ");
-		String tableName = tokens[0];
-		// TODO for project 5, there may be multiple indexCols
-		ArrayList<String> indexCols = Indexes.getInstance().getIndexCols(tableName);
-		if (indexCols == null) { // index does not exist on underlying relation
+		String baseTable = tokens[0];
+		
+		Expression e = logicalSelect.getCondition();
+		String leastCostIndex = calculateCosts(baseTable, e);
+		
+		if (leastCostIndex == null) { // normal scan is best cost
 			logicalSelect.getChild().accept(this);
 			Operator child = ops.pop();
 			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
 			ops.push(newOp);
 			return;
 		}
-		Expression e = logicalSelect.getCondition();
+		
 		// use visitor on condition e
-		IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
+		IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, leastCostIndex);
 		e.accept(visitor);
 		Expression indexE = visitor.getIndexCond();
-		// part that is index-able is put into an IndexScan
+		
 		if (indexE != null) {
 			int highKey = visitor.getHighKey();
 			int lowKey = visitor.getLowKey();
-			String indexDir = Indexes.getInstance().getIndexDir(tableName + "." + indexCol);
-			boolean isClustered = Indexes.getInstance().getClustered(tableName);
+			String indexDir = Indexes.getInstance().getIndexDir(baseTable + "." + leastCostIndex);
+			boolean isClustered = Indexes.getInstance().getClustered(baseTable);
+			// part that is index-able is put into an IndexScan
 			IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey);
 			// part that is non index is put into a regular SelectOp with a Scan Op
 			Expression regE = visitor.getRegCond();
@@ -126,13 +113,68 @@ public class PhysicalPlanBuilder {
 			ops.push(newOp);
 			return;
 		}
-		//}
-		/*else {
-			logicalSelect.getChild().accept(this);
-			Operator child = ops.pop();
-			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
-			ops.push(newOp);
-		}*/
+	}
+
+	private String calculateCosts(String baseTable, Expression e) {
+		// calculate cost of regular scan
+		Stats stats = DatabaseCatalog.getInstance().getSchema(baseTable).getStats();
+		int numTuples = stats.getNumTuples();
+		int tupleSize = stats.getCols().size();
+		int regularScanCost = numTuples * tupleSize / 4096;
+		// calculate cost of each index
+		String leastCostIndex = null; // if it stays null, normal scan is best cost
+		int leastCost = regularScanCost;
+		
+		Indexes ind = Indexes.getInstance();
+		ArrayList<String> indexCols = ind.getIndexCols(baseTable);
+		for (String indexCol : indexCols) {
+			IndexExpressionVisitor visitor = new IndexExpressionVisitor(e, indexCol);
+			e.accept(visitor);
+			int rangeSelection = visitor.getHighKey() - visitor.getLowKey();
+			int rangeValues = stats.getColWithName(indexCol).getMaxVal() - stats.getColWithName(indexCol).getMinVal();
+			int rf = 0;
+			if (rangeValues != 0)
+				rf = rangeSelection / rangeValues;
+			int numPages = regularScanCost; // TODO is this correct?
+			String indDir = ind.getIndexDir(baseTable + "." + indexCol);
+			int numLeafPages = getNumLeafPages(indDir);
+			
+			boolean isClustered = ind.getClustered(baseTable);
+			int indexCost = Integer.MAX_VALUE;
+			if (isClustered) {
+				indexCost = 3 + numPages * rf;
+			}
+			else {
+				indexCost = 3 + numLeafPages * rf + numTuples * rf;
+			}
+			if (indexCost < leastCost) {
+				leastCost = indexCost;
+				leastCostIndex = indexCol;
+			}
+		}
+		return leastCostIndex;
+	}
+
+	@SuppressWarnings("resource")
+	private int getNumLeafPages(String indexDir) {
+		FileInputStream fin = null;
+		try {
+			fin = new FileInputStream(indexDir);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		FileChannel fc = fin.getChannel();
+		ByteBuffer buffer = ByteBuffer.allocate(4096);
+		try {
+			if (fc.read(buffer) < 1) {
+				System.out.println("ERR: reached end of FileChannel");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		buffer.position(4);
+		int numLeafPages = buffer.getInt();
+		return numLeafPages;
 	}
 
 	/**

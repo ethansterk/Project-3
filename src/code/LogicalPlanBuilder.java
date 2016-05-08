@@ -63,13 +63,6 @@ public class LogicalPlanBuilder {
 	private void createQueryPlan() {
 		if (fromItem != null) {
 			if (joins != null) {
-				// commented out for P5:
-				//JoinEvaluateExpressionVisitor joinVisitor = new JoinEvaluateExpressionVisitor(joins);
-				//if (where != null) where.accept(joinVisitor);
-				//HashMap<String,Expression> selectConditions = joinVisitor.getSelectConditions();
-				//HashMap<String,Expression> joinConditions = joinVisitor.getJoinConditions();
-				
-				//Initialize the Alias -> TableName HashMap in DBCatalog
 				DatabaseCatalog db = DatabaseCatalog.getInstance();
 				boolean usesAliases;
 				
@@ -114,8 +107,8 @@ public class LogicalPlanBuilder {
 				Expression e;
 				// TODO left and right base tables must be initialized in the PPBuilder
 				// after determining join order
-				//ArrayList<String> leftBaseTables = new ArrayList<String>();
-				//String rightBaseTable = null;
+				// maybe have each selection/ join have its own method for getting 
+				// base tables
 				String relName;
 				if (usesAliases)
 					relName = wholeTableName[2];
@@ -125,7 +118,7 @@ public class LogicalPlanBuilder {
 				// for each column in this table, get attr conditions and append to e
 				ArrayList<UnionFindElement> usedElements = new ArrayList<UnionFindElement>();
 				// avoid using same element (with same condition) twice for one relation
-				ArrayList<String> cols = DatabaseCatalog.getInstance().getSchema(tableName).getCols();
+				ArrayList<String> cols = db.getSchema(tableName).getCols();
 				for (String col : cols) {
 					String attributeName = relName + "." + col;
 					
@@ -138,7 +131,6 @@ public class LogicalPlanBuilder {
 					if (elExpr != null)
 						MyUtils.safeConcatExpression(e, elExpr);
 				}
-				//leftBaseTables.add(relName);
 				
 				if (e != null) {
 					temp = new LogicalSelect(temp,e);
@@ -178,39 +170,6 @@ public class LogicalPlanBuilder {
 				}
 				root = new LogicalJoin(children, joinE);
 				root = temp;
-				
-				
-				// Project 4 code:
-				/*for (Join j : joins) {
-					if (rightBaseTable != null)
-						leftBaseTables.add(rightBaseTable);
-					
-					String tempWholeTableName = j.getRightItem().toString();
-					String[] split = tempWholeTableName.split(" ");
-					String tempTableName = split[0];
-					LogicalOperator tempRight = new LogicalScan(tempWholeTableName);
-					Expression selectE;
-					Expression joinE;
-					if (usesAliases) {
-						String tempAliasName = split[2];
-						selectE = selectConditions.get(tempAliasName);
-						joinE = joinConditions.get(tempAliasName);
-						rightBaseTable = tempAliasName;
-					}
-					else {
-						selectE = selectConditions.get(tempTableName);
-						joinE = joinConditions.get(tempTableName);
-						rightBaseTable = tempTableName;
-					}
-					if (selectE != null)
-						tempRight = new LogicalSelect(tempRight, selectE);
-					
-					ArrayList<String> tempList = new ArrayList<String>();
-					tempList.addAll(leftBaseTables);
-					
-					temp = new LogicalJoin(temp, tempRight, joinE, tempList, rightBaseTable);
-				}
-				root = temp;*/	
 			}
 			else {
 				root = new LogicalScan(fromItem.toString());
