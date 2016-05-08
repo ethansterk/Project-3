@@ -209,10 +209,20 @@ public class PhysicalPlanBuilder {
 	 * @param logicalJoin
 	 */
 	public void visit(LogicalJoin logicalJoin) {
-		logicalJoin.getLeft().accept(this);
+		/*logicalJoin.getLeft().accept(this);
 		logicalJoin.getRight().accept(this);
 		Operator right = ops.pop();
-		Operator left = ops.pop();
+		Operator left = ops.pop();*/
+		
+		// has arbitrary number of children -- must choose join order
+		// have base tables R1, R2, ..., Rk
+		// iterate over all subsets of R in increasing order of size
+		int numChildren = logicalJoin.getChildren().size();
+		for (int subset = 1; subset <= numChildren; subset++) { // for each subset length
+			for (int i = 0; i < numChildren; i++) { // for each combination of this subset
+				
+			}
+		}
 		
 		Expression e = logicalJoin.getCondition();
 		Operator newOp = null;

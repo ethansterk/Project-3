@@ -84,6 +84,7 @@ public class Parser {
 					
 					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
 					//produces logical tree with root
+					
 					LogicalOperator logRoot = builderL.getRoot();
 					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot/*, inputDir*/);
 					//produces physical tree with root
