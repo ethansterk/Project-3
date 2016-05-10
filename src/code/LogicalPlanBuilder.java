@@ -1,5 +1,6 @@
 package code;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,8 @@ import logical.UnionFindExpressionVisitor;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.parser.ParseException;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
@@ -98,39 +101,10 @@ public class LogicalPlanBuilder {
 					where.accept(ufVisitor);
 				Expression unusable = uf.getUnusable();
 				
-				JoinEvaluateExpressionVisitor joinVisitor = new JoinEvaluateExpressionVisitor(joins);
-				if (unusable != null)
-					unusable.accept(joinVisitor);
-				HashMap<String,Expression> selectConditions = joinVisitor.getSelectConditions();
-				
 				LogicalOperator temp = new LogicalScan(fromItem.toString());
-				Expression e;
-				// TODO left and right base tables must be initialized in the PPBuilder
-				// after determining join order
-				// maybe have each selection/ join have its own method for getting 
-				// base tables
-				String relName;
-				if (usesAliases)
-					relName = wholeTableName[2];
-				else
-					relName = tableName;
-				e = selectConditions.get(relName);
-				// for each column in this table, get attr conditions and append to e
-				ArrayList<UnionFindElement> usedElements = new ArrayList<UnionFindElement>();
-				// avoid using same element (with same condition) twice for one relation
-				ArrayList<String> cols = db.getSchema(tableName).getCols();
-				for (String col : cols) {
-					String attributeName = relName + "." + col;
-					
-					UnionFindElement el = uf.find(attributeName);
-					if (usedElements.contains(el))
-						continue;
-					usedElements.add(el);
-					
-					Expression elExpr = el.getExpressionOfRelation(relName);
-					if (elExpr != null)
-						MyUtils.safeConcatExpression(e, elExpr);
-				}
+				Expression e = null;
+
+				e = appendUnionConstraints(e,wholeTableName,uf);
 				
 				if (e != null) {
 					temp = new LogicalSelect(temp,e);
@@ -139,36 +113,21 @@ public class LogicalPlanBuilder {
 				// Project 5 implementation:
 				ArrayList<LogicalOperator> children = new ArrayList<LogicalOperator>();
 				children.add(temp);
-				Expression joinE = null;
+				
 				for (Join j : joins) {
 					String tempWholeTableName = j.getRightItem().toString();
 					String[] split = tempWholeTableName.split(" ");
-					String tempTableName = split[0];
 					LogicalOperator tempOp = new LogicalScan(tempWholeTableName);
-					Expression selectE;
-					if (usesAliases) {
-						String tempAliasName = split[2];
-						selectE = selectConditions.get(tempAliasName);
-						Expression nextJoinCond = joinConditions.get(tempAliasName);
-						if (joinE == null)
-							joinE = nextJoinCond;
-						else if (nextJoinCond != null)
-							joinE = new AndExpression(joinE, nextJoinCond);
-					}
-					else {
-						selectE = selectConditions.get(tempTableName);
-						Expression nextJoinCond = joinConditions.get(tempTableName);
-						if (joinE == null)
-							joinE = nextJoinCond;
-						else if (nextJoinCond != null)
-							joinE = new AndExpression(joinE, nextJoinCond);
-					}
+					Expression selectE = null;
+					
+					selectE = appendUnionConstraints(selectE, split, uf);
+					
 					if (selectE != null)
 						tempOp = new LogicalSelect(tempOp, selectE);
 					
 					children.add(tempOp);
 				}
-				root = new LogicalJoin(children, joinE);
+				root = new LogicalJoin(children, unusable);
 				root = temp;
 			}
 			else {
@@ -192,6 +151,64 @@ public class LogicalPlanBuilder {
 		}
 	}
 	
+	private Expression appendUnionConstraints(Expression e, String[] wholeTableName, UnionFind uf) {
+		String relName;
+		String tableName = wholeTableName[0];
+		if (wholeTableName.length > 1)
+			relName = wholeTableName[2];
+		else
+			relName = wholeTableName[0];
+		// for each column in this table, get attr conditions and append to e
+		ArrayList<UnionFindElement> usedElements = new ArrayList<UnionFindElement>();
+		// avoid using same element (with same condition) twice for one relation
+		ArrayList<String> cols = DatabaseCatalog.getInstance().getSchema(tableName).getCols();
+		for (String col : cols) {
+			String attributeName = relName + "." + col;
+			
+			UnionFindElement el = uf.find(attributeName);
+			if (usedElements.contains(el))
+				continue;
+			usedElements.add(el);
+			
+			Expression elExpr = null;
+			Integer eq = el.getEqualityConstr();
+			if (eq != null) {
+				String stringE = attributeName + "=" + eq;
+				elExpr = createExpressionFromString(elExpr, stringE);
+			}
+			else {
+				int low = el.getHighBound();
+				int high = el.getLowBound();
+				if (low != Integer.MAX_VALUE) {
+					low -= 1;
+					String stringE = attributeName + ">" + low;
+					elExpr = createExpressionFromString(elExpr, stringE);
+				}
+				if (elExpr != null)
+					e = MyUtils.safeConcatExpression(e, elExpr);
+				if (high != Integer.MIN_VALUE) {
+					high += 1;
+					String stringE = attributeName + "<" + high;
+					elExpr = createExpressionFromString(elExpr, stringE);
+				}
+			}
+			if (elExpr != null)
+				e = MyUtils.safeConcatExpression(e, elExpr);
+		}
+		return e;
+	}
+
+	// TODO: Site in acknowledgments: "From OH: Austin" 
+	private Expression createExpressionFromString(Expression e, String stringE) {
+		CCJSqlParser parser = new CCJSqlParser(new StringReader(stringE));
+		try {
+			e = parser.Expression();
+		} catch (ParseException e1) {
+			e1.printStackTrace();
+		}
+		return e;
+	}
+
 	/**
 	 * Access method to return the top-most LogicalOperator in the query plan. 
 	 * Used by the interpreter/parser to create a physical plan.

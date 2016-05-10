@@ -78,6 +78,6 @@ public class UnionFind {
 	}
 	
 	public void addToUnusable(Expression ex) {
-		MyUtils.safeConcatExpression(unusable, ex);
+		unusable = MyUtils.safeConcatExpression(unusable, ex);
 	}
 }

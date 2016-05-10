@@ -1,11 +1,6 @@
 package logical;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-
-import code.MyUtils;
-import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 
 public class UnionFindElement {
 
@@ -14,15 +9,11 @@ public class UnionFindElement {
 	private int highBound;
 	private Integer equalityConstr;
 	
-	private HashMap<String,Expression> exprOfRel;
-	
 	public UnionFindElement() {
 		attributes = new ArrayList<String>();
 		lowBound = Integer.MAX_VALUE;
 		highBound = Integer.MIN_VALUE;
 		equalityConstr = null;
-		
-		exprOfRel = new HashMap<String,Expression>();
 	}
 
 	public ArrayList<String> getAttributes() {
@@ -67,21 +58,5 @@ public class UnionFindElement {
 		this.equalityConstr = equalityConstr;
 		this.lowBound = equalityConstr;
 		this.highBound = equalityConstr;
-	}
-	
-	// TODO This below might not work well because it relies on getting epxressions for
-	// each relation, and this is difficult in the visitor.
-	public void addExpressionToRelation(String relName, Expression e) {
-		if (exprOfRel.get(relName) == null)
-			exprOfRel.put(relName, e);
-		else {
-			Expression tempE = exprOfRel.get(relName);
-			MyUtils.safeConcatExpression(tempE, e);
-			exprOfRel.put(relName, tempE);
-		}
-	}
-	
-	public Expression getExpressionOfRelation(String relName) {
-		return exprOfRel.get(relName);
 	}
 }
