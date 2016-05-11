@@ -179,13 +179,16 @@ public class LogicalPlanBuilder {
 				}
 				if (elExpr != null)
 					e = MyUtils.safeConcatExpression(e, elExpr);
+				elExpr = null;
 				if (high != null) {
 					String stringE = attributeName + "<" + high;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
 			}
-			if (elExpr != null)
+			
+			if (elExpr != null) {
 				e = MyUtils.safeConcatExpression(e, elExpr);
+			}
 		}
 		return e;
 	}
