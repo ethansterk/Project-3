@@ -224,42 +224,58 @@ public class PhysicalPlanBuilder {
 			}
 		}
 		
-		Expression e = logicalJoin.getCondition();
-		Operator newOp = null;
-		switch(joinType) {
-		case 0:
-			newOp = new JoinOperator(left, right, e);
-			break;
-		case 1:
-			int bufferSize = joinBufferSize;
-			newOp = new BNLJOperator(left, right, e, bufferSize);
-			break;
-		case 2:
-			String rightBaseTable = logicalJoin.getRightBaseTable();
-			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor(rightBaseTable);
-			if (e != null)
-				e.accept(visitor);
-			// create two sorts as children (left and right)
-			Operator leftOp = null;
-			Operator rightOp = null;
-			switch(sortType) {
-			case 0:
-				leftOp = new SortOperator(left, visitor.getLeftSortCols());
-				rightOp = new SortOperator(right, visitor.getRightSortCols());
-				break;
-			case 1:
-				int numSortBuffers = sortBufferSize;
-				leftOp = new ExternalSortOperator(left, numSortBuffers, visitor.getLeftSortCols());
-				rightOp = new ExternalSortOperator(right, numSortBuffers, visitor.getRightSortCols());
-				break;
-			}
-			// create SMJOperator with sorts as its children
-			newOp = new SMJOperator(leftOp, rightOp, visitor.getLeftSortCols(), visitor.getRightSortCols());
-			break;
-		default:
-			System.out.println("ERR: Join Type selection.");
+		//dumb join logic (doesn't optimize join, uses only BNLJ-5pages) so that something works
+		//how to split the condition?
+		//first accept all children (in reverse order), so first child is at top of stack
+		for (int i = numChildren - 1; i >= 0; i--) {
+			logicalJoin.getChildren().get(i).accept(this);
 		}
-		ops.push(newOp);
+		//then chain them all together, left-deep style
+		Operator first = ops.pop();
+		Operator second = ops.pop();
+		Operator temp = new BNLJOperator(first, second, logicalJoin.getCondition(), 5);
+		for (int i = 2; i < numChildren; i++) {
+			temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5);
+		}
+		ops.push(temp);
+		
+		//UNTOUCHED CODE BELOW
+//		Expression e = logicalJoin.getCondition();
+//		Operator newOp = null;
+//		switch(joinType) {
+//		case 0:
+//			newOp = new JoinOperator(left, right, e);
+//			break;
+//		case 1:
+//			int bufferSize = joinBufferSize;
+//			newOp = new BNLJOperator(left, right, e, bufferSize);
+//			break;
+//		case 2:
+//			String rightBaseTable = logicalJoin.getRightBaseTable();
+//			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor(rightBaseTable);
+//			if (e != null)
+//				e.accept(visitor);
+//			// create two sorts as children (left and right)
+//			Operator leftOp = null;
+//			Operator rightOp = null;
+//			switch(sortType) {
+//			case 0:
+//				leftOp = new SortOperator(left, visitor.getLeftSortCols());
+//				rightOp = new SortOperator(right, visitor.getRightSortCols());
+//				break;
+//			case 1:
+//				int numSortBuffers = sortBufferSize;
+//				leftOp = new ExternalSortOperator(left, numSortBuffers, visitor.getLeftSortCols());
+//				rightOp = new ExternalSortOperator(right, numSortBuffers, visitor.getRightSortCols());
+//				break;
+//			}
+//			// create SMJOperator with sorts as its children
+//			newOp = new SMJOperator(leftOp, rightOp, visitor.getLeftSortCols(), visitor.getRightSortCols());
+//			break;
+//		default:
+//			System.out.println("ERR: Join Type selection.");
+//		}
+//		ops.push(newOp);
 	}
 
 	/**
