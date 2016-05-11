@@ -132,8 +132,6 @@ public class LogicalPlanBuilder {
 				//Check for WHERE conditions
 				if (where != null) {
 					root = new LogicalSelect(root, where);
-					//Check for SELECT projections: "SELECT * FROM ___" or "SELECT x1,... FROM ___"
-					root = checkForProjection(root);
 				}
 			}
 			//Check for SELECT projections: "SELECT * FROM ___" or "SELECT x1,... FROM ___"

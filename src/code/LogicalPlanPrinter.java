@@ -64,7 +64,7 @@ public class LogicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		List<SelectItem> projCols = logicalProject.getSelectItems();
-		System.out.print("Project" + projCols.toString() + '\n'); // TODO check formatting of this
+		System.out.print("Project" + projCols.toString() + '\n');
 		nestLevel++;
 		logicalProject.getChild().accept(this);
 	}
@@ -83,7 +83,7 @@ public class LogicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		Expression e = logicalSelect.getCondition();
-		System.out.print("Select[" + e.toString() + "]\n"); // TODO check formatting
+		System.out.print("Select[" + e.toString() + "]\n");
 		nestLevel++;
 		logicalSelect.getChild().accept(this);
 	}
