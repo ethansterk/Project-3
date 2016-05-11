@@ -115,7 +115,7 @@ public class LogicalPlanBuilder {
 					String[] split = tempWholeTableName.split(" ");
 					LogicalOperator tempOp = new LogicalScan(tempWholeTableName);
 					Expression selectE = null;
-					
+
 					selectE = appendUnionConstraints(selectE, split, uf);
 					
 					if (selectE != null)
@@ -171,17 +171,15 @@ public class LogicalPlanBuilder {
 				elExpr = createExpressionFromString(elExpr, stringE);
 			}
 			else {
-				Integer low = el.getHighBound();
-				Integer high = el.getLowBound();
+				Integer low = el.getLowBound();
+				Integer high = el.getHighBound();
 				if (low != null) {
-					low -= 1;
 					String stringE = attributeName + ">" + low;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
 				if (elExpr != null)
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				if (high != null) {
-					high += 1;
 					String stringE = attributeName + "<" + high;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
