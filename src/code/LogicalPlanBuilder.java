@@ -124,7 +124,7 @@ public class LogicalPlanBuilder {
 					children.add(tempOp);
 				}
 				root = new LogicalJoin(children, unusable, uf);
-				root = temp;
+				//root = temp;
 			}
 			else {
 				root = new LogicalScan(fromItem.toString());
@@ -171,16 +171,16 @@ public class LogicalPlanBuilder {
 				elExpr = createExpressionFromString(elExpr, stringE);
 			}
 			else {
-				int low = el.getHighBound();
-				int high = el.getLowBound();
-				if (low != Integer.MAX_VALUE) {
+				Integer low = el.getHighBound();
+				Integer high = el.getLowBound();
+				if (low != null) {
 					low -= 1;
 					String stringE = attributeName + ">" + low;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
 				if (elExpr != null)
 					e = MyUtils.safeConcatExpression(e, elExpr);
-				if (high != Integer.MIN_VALUE) {
+				if (high != null) {
 					high += 1;
 					String stringE = attributeName + "<" + high;
 					elExpr = createExpressionFromString(elExpr, stringE);

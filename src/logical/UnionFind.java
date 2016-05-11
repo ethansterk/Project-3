@@ -2,6 +2,7 @@ package logical;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import code.MyUtils;
 import net.sf.jsqlparser.expression.Expression;
@@ -53,22 +54,18 @@ public class UnionFind {
 			merge.setIfHighBound(el2EQ);
 		}
 		else {
-			int el1Low = el1.getLowBound();
-			int el2Low = el2.getLowBound();
-			if (el1Low > el2Low) {
+			Integer el1Low = el1.getLowBound();
+			Integer el2Low = el2.getLowBound();
+			if (el1Low != null)
 				merge.setIfLowBound(el1Low);
-			}
-			else {
+			if (el2Low != null)
 				merge.setIfLowBound(el2Low);
-			}
-			int el1High = el1.getHighBound();
-			int el2High = el2.getHighBound();
-			if (el1High < el2High) {
+			Integer el1High = el1.getHighBound();
+			Integer el2High = el2.getHighBound();
+			if (el1High != null)
 				merge.setIfHighBound(el1High);
-			}
-			else {
+			if (el2High != null)
 				merge.setIfHighBound(el2High);
-			}
 		}
 	}
 	
@@ -82,9 +79,11 @@ public class UnionFind {
 
 	public ArrayList<UnionFindElement> getElements() {
 		ArrayList<UnionFindElement> vals = new ArrayList<UnionFindElement>();
+		HashSet<UnionFindElement> valsSet = new HashSet<UnionFindElement>();
 		for (String key: elementOfAttr.keySet()) {
-		    vals.add(elementOfAttr.get(key));
+		    valsSet.add(elementOfAttr.get(key));
 		}
+		vals.addAll(valsSet);
 		return vals;
 	}
 }

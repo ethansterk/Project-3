@@ -28,7 +28,12 @@ public class LogicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		Expression unusable = logicalJoin.getCondition();
-		System.out.print("Join[" + unusable.toString() + "]\n");
+		String unusableS;
+		if (unusable == null)
+			unusableS = "";
+		else
+			unusableS = "[" + unusable.toString() + "]";
+		System.out.print("Join" + unusableS + '\n');
 		ArrayList<UnionFindElement> els = logicalJoin.getUnionFind().getElements();
 		for (UnionFindElement el : els) {
 			ArrayList<String> attrs = el.getAttributes();
@@ -40,13 +45,13 @@ public class LogicalPlanPrinter {
 				eq = Integer.toString(el.getEqualityConstr());
 			
 			String min;
-			if (el.getLowBound() == Integer.MAX_VALUE)
+			if (el.getLowBound() == null)
 				min = "null";
 			else
 				min = Integer.toString(el.getLowBound());
 			
 			String max;
-			if (el.getHighBound() == Integer.MIN_VALUE)
+			if (el.getHighBound() == null)
 				max = "null";
 			else
 				max = Integer.toString(el.getHighBound());

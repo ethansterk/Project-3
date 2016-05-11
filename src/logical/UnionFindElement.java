@@ -5,14 +5,14 @@ import java.util.ArrayList;
 public class UnionFindElement {
 
 	private ArrayList<String> attributes;
-	private int lowBound;
-	private int highBound;
+	private Integer lowBound;
+	private Integer highBound;
 	private Integer equalityConstr;
 	
 	public UnionFindElement() {
 		attributes = new ArrayList<String>();
-		lowBound = Integer.MAX_VALUE;
-		highBound = Integer.MIN_VALUE;
+		lowBound = null;
+		highBound = null;
 		equalityConstr = null;
 	}
 
@@ -32,21 +32,25 @@ public class UnionFindElement {
 		this.attributes.addAll(attrs);
 	}
 
-	public int getLowBound() {
+	public Integer getLowBound() {
 		return lowBound;
 	}
 
 	public void setIfLowBound(int lowBound) {
-		if (lowBound > this.lowBound)
+		if (this.lowBound == null)
+			this.lowBound = lowBound;
+		else if (lowBound > this.lowBound)
 			this.lowBound = lowBound;
 	}
 
-	public int getHighBound() {
+	public Integer getHighBound() {
 		return highBound;
 	}
 
 	public void setIfHighBound(int highBound) {
-		if (highBound < this.highBound)
+		if (this.highBound == null)
+			this.highBound = highBound;
+		else if (highBound < this.highBound)
 			this.highBound = highBound;
 	}
 

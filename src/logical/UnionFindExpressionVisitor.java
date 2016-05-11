@@ -43,6 +43,14 @@ import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
+/**
+ * The UnionFindExpressionVisitor is used to visit an expression and 
+ * initialize a UnionFind data structure so that is has elements that
+ * correspond with the expression and the base tables.
+ * 
+ * @author Ethan Sterk (ejs334) and Laura Ng (ln233)
+ *
+ */
 public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
 	private UnionFind uf;

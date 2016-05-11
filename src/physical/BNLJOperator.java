@@ -33,7 +33,10 @@ public class BNLJOperator extends Operator{
 		this.condition = condition;
 		currentIndex = 0;
 		tRightCurrent = right.getNextTuple();	//initialize the first inner relation tuple
-		int outerRelationNumAttr = this.left.getNextTuple().getFields().size();
+		Tuple firstLeft = this.left.getNextTuple();
+		int outerRelationNumAttr = 1;
+		if (firstLeft != null)
+			outerRelationNumAttr = firstLeft.getFields().size();
 		this.left.reset();	//clear left again
 		int numTuples = bufferSize * 4096 / (4 * outerRelationNumAttr);
 		buffer = new Tuple[numTuples];
