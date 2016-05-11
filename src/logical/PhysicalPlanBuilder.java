@@ -95,7 +95,7 @@ public class PhysicalPlanBuilder {
 			String indexDir = Indexes.getInstance().getIndexDir(baseTable + "." + leastCostIndex);
 			boolean isClustered = Indexes.getInstance().getClustered(baseTable);
 			// part that is index-able is put into an IndexScan
-			IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey);
+			IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey, leastCostIndex);
 			// part that is non index is put into a regular SelectOp with a Scan Op
 			Expression regE = visitor.getRegCond();
 			Operator newOp = null;
@@ -126,7 +126,6 @@ public class PhysicalPlanBuilder {
 	private String calculateCosts(String baseTable, Expression e) {
 		// calculate cost of regular scan
 		Stats stats = DatabaseCatalog.getInstance().getSchema(baseTable).getStats();
-		System.out.println("Base table = " + baseTable);
 		int numTuples = stats.getNumTuples();
 		int tupleSize = stats.getCols().size();
 		int regularScanCost = numTuples * tupleSize / 4096;
@@ -219,11 +218,11 @@ public class PhysicalPlanBuilder {
 		// have base tables R1, R2, ..., Rk
 		// iterate over all subsets of R in increasing order of size
 		int numChildren = logicalJoin.getChildren().size();
-		for (int subset = 1; subset <= numChildren; subset++) { // for each subset length
-			for (int i = 0; i < numChildren; i++) { // for each combination of this subset
+		//for (int subset = 1; subset <= numChildren; subset++) { // for each subset length
+		//	for (int i = 0; i < numChildren; i++) { // for each combination of this subset
 				
-			}
-		}
+		//	}
+		//}
 		
 		//dumb join logic (doesn't optimize join, uses only BNLJ-5pages) so that something works
 		//how to split the condition?
@@ -236,7 +235,7 @@ public class PhysicalPlanBuilder {
 		Operator second = ops.pop();
 		Operator temp = new BNLJOperator(first, second, logicalJoin.getCondition(), 5);
 		for (int i = 2; i < numChildren; i++) {
-			temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5);
+			temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5); // TODO logicalJoin.getCondition() might not be correct
 		}
 		ops.push(temp);
 		

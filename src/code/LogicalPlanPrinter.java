@@ -64,7 +64,7 @@ public class LogicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		List<SelectItem> projCols = logicalProject.getSelectItems();
-		System.out.print("Sort" + projCols.toString() + '\n'); // TODO check formatting of this
+		System.out.print("Project" + projCols.toString() + '\n'); // TODO check formatting of this
 		nestLevel++;
 		logicalProject.getChild().accept(this);
 	}
@@ -73,6 +73,9 @@ public class LogicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		String baseTable = logicalScan.getTablename();
+		String[] split = baseTable.split(" ");
+		if (split.length > 1)
+			baseTable = split[0];
 		System.out.print("Leaf[" + baseTable + "]\n");
 	}
 
@@ -80,7 +83,7 @@ public class LogicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		Expression e = logicalSelect.getCondition();
-		System.out.print("Sort[" + e.toString() + "]\n"); // TODO check formatting
+		System.out.print("Select[" + e.toString() + "]\n"); // TODO check formatting
 		nestLevel++;
 		logicalSelect.getChild().accept(this);
 	}

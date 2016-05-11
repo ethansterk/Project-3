@@ -29,14 +29,11 @@ public class IndexScan extends Operator{
 	 * @param lowKey Lower bound (inclusive) on the condition
 	 * @param highKey Upper bound (inclusive) on the condition
 	 */
-	public IndexScan(String indexDir, String s, boolean clustered, int lowKey, int highKey) {
+	public IndexScan(String indexDir, String s, boolean clustered, int lowKey, int highKey, String sortAttr) {
 		tablename = s.split(" ")[0];		//trims off the alias, if there's one
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
 		
-		// TODO should probably have PPBuilder send in which column we want to index
-		// then we won't have to do this.
-		String sortAttr = Indexes.getInstance().getIndexCols(tablename);
 		// create an IndexReader (similar to the TupleReader)
 		ir = new IndexReader(indexDir, lowKey, highKey, clustered, tablename, alias, sortAttr);
 	}
