@@ -121,6 +121,8 @@ public class Schema {
 	 * @return stats Stats object for this relation.
 	 */
 	public Stats getStats() {
+		if (stats == null)
+			System.out.println("Stats is null for " + name);
 		return stats;
 	}
 

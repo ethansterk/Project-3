@@ -84,13 +84,13 @@ public class Parser {
 					
 					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
 					//produces logical tree with root
-					// TODO From OH: use visitor to visitor builders and print
 					LogicalOperator logRoot = builderL.getRoot();
 					LogicalPlanPrinter printP = new LogicalPlanPrinter(logRoot);
 					// prints the logical plan
 					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot/*, inputDir*/);
 					//produces physical tree with root
 					Operator phiRoot = builderP.getRoot();
+					// TODO From OH: use visitor to visitor builders and print
 					//get time before dump
 					long timeBefore = System.currentTimeMillis();
 					phiRoot.dump();

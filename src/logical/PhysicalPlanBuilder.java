@@ -126,6 +126,7 @@ public class PhysicalPlanBuilder {
 	private String calculateCosts(String baseTable, Expression e) {
 		// calculate cost of regular scan
 		Stats stats = DatabaseCatalog.getInstance().getSchema(baseTable).getStats();
+		System.out.println("Base table = " + baseTable);
 		int numTuples = stats.getNumTuples();
 		int tupleSize = stats.getCols().size();
 		int regularScanCost = numTuples * tupleSize / 4096;

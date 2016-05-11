@@ -63,6 +63,7 @@ public class DatabaseCatalog {
 	            Schema sch = new Schema(s, inputDir);
 	            schemas.put(sch.getName(),sch);
 	            sch = new Schema(s, inputDir, stats);
+	            schemas.put(sch.getName(),sch);
 	         }
 	        sc.close();
 	    } 
