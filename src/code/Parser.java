@@ -86,6 +86,8 @@ public class Parser {
 					//produces logical tree with root
 					// TODO From OH: use visitor to visitor builders and print
 					LogicalOperator logRoot = builderL.getRoot();
+					LogicalPlanPrinter printP = new LogicalPlanPrinter(logRoot);
+					// prints the logical plan
 					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot/*, inputDir*/);
 					//produces physical tree with root
 					Operator phiRoot = builderP.getRoot();

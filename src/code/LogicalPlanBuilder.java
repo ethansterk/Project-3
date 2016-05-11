@@ -2,7 +2,6 @@ package code;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import logical.LogicalDuplicateElimination;
@@ -16,11 +15,8 @@ import logical.UnionFind;
 import logical.UnionFindElement;
 import logical.UnionFindExpressionVisitor;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
-import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.parser.CCJSqlParser;
 import net.sf.jsqlparser.parser.ParseException;
-import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.statement.select.AllColumns;
 import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
@@ -127,7 +123,7 @@ public class LogicalPlanBuilder {
 					
 					children.add(tempOp);
 				}
-				root = new LogicalJoin(children, unusable);
+				root = new LogicalJoin(children, unusable, uf);
 				root = temp;
 			}
 			else {

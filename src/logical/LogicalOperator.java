@@ -2,6 +2,8 @@ package logical;
 
 import java.util.ArrayList;
 
+import code.LogicalPlanPrinter;
+
 /**
  * Basic abstract class that defines the accept method for all logical 
  * operators. Mirrors the Operator class in the physical package.
@@ -22,5 +24,11 @@ public abstract class LogicalOperator {
 	 * @return List of relations.
 	 */
 	public abstract ArrayList<String> getBaseTables();
+
+	/**
+	 * accept method that is used in LogicalPlanPrinter
+	 * @param visitor
+	 */
+	public abstract void accept(LogicalPlanPrinter visitor);
 	
 }

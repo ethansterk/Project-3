@@ -2,6 +2,7 @@ package logical;
 
 import java.util.ArrayList;
 
+import code.LogicalPlanPrinter;
 import net.sf.jsqlparser.expression.Expression;
 
 /**
@@ -49,5 +50,10 @@ public class LogicalSelect extends LogicalOperator{
 	@Override
 	public ArrayList<String> getBaseTables() {
 		return child.getBaseTables();
+	}
+
+	@Override
+	public void accept(LogicalPlanPrinter visitor) {
+		visitor.visit(this);
 	}
 }

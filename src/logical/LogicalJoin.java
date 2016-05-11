@@ -2,6 +2,7 @@ package logical;
 
 import java.util.ArrayList;
 
+import code.LogicalPlanPrinter;
 import net.sf.jsqlparser.expression.Expression;
 
 /**
@@ -16,10 +17,12 @@ public class LogicalJoin extends LogicalOperator{
 
 	private ArrayList<LogicalOperator> children;
 	private Expression condition;
+	private UnionFind uf;
 	
-	public LogicalJoin(ArrayList<LogicalOperator> children, Expression condition) {
+	public LogicalJoin(ArrayList<LogicalOperator> children, Expression condition, UnionFind uf) {
 		this.children = children;
 		this.condition = condition;
+		this.uf = uf;
 	}
 
 	/**
@@ -53,5 +56,14 @@ public class LogicalJoin extends LogicalOperator{
 			tables.addAll(op.getBaseTables());
 		}
 		return tables;
+	}
+
+	@Override
+	public void accept(LogicalPlanPrinter visitor) {
+		visitor.visit(this);
+	}
+
+	public UnionFind getUnionFind() {
+		return uf;
 	}
 }

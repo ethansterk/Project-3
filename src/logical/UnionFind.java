@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 import code.MyUtils;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 
 public class UnionFind {
 
@@ -20,9 +19,9 @@ public class UnionFind {
 	public UnionFindElement find(String attr) {
 		if(elementOfAttr.containsKey(attr))
 			return elementOfAttr.get(attr);
-		// TODO initialize the lowBound/highBound/equality?
 		UnionFindElement el = new UnionFindElement();
 		el.addAttribute(attr);
+		elementOfAttr.put(attr,el);
 		return el;
 	}
 	
@@ -79,5 +78,13 @@ public class UnionFind {
 	
 	public void addToUnusable(Expression ex) {
 		unusable = MyUtils.safeConcatExpression(unusable, ex);
+	}
+
+	public ArrayList<UnionFindElement> getElements() {
+		ArrayList<UnionFindElement> vals = new ArrayList<UnionFindElement>();
+		for (String key: elementOfAttr.keySet()) {
+		    vals.add(elementOfAttr.get(key));
+		}
+		return vals;
 	}
 }
