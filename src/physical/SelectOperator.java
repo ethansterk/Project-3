@@ -56,4 +56,20 @@ public class SelectOperator extends Operator {
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
 	}
+	
+	/**
+	 * Getter method for child
+	 * @return child
+	 */
+	public Operator getChild() {
+		return child;
+	}
+	
+	/**
+	 * Getter method for condition
+	 * @return condition
+	 */
+	public Expression getCondition() {
+		return condition;
+	}
 }

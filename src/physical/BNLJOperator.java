@@ -120,4 +120,28 @@ public class BNLJOperator extends Operator{
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
 	}
+	
+	/**
+	 * Getter method for left child
+	 * @return left
+	 */
+	public Operator getLeftChild() {
+		return left;
+	}
+	
+	/**
+	 * Getter method for right child
+	 * @return right
+	 */
+	public Operator getRightChild() {
+		return right;
+	}
+
+	/**
+	 * Getter method for condition
+	 * @return condition
+	 */
+	public Expression getCondition() {
+		return condition;
+	}
 }

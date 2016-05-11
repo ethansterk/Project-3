@@ -184,4 +184,20 @@ public class SMJOperator extends Operator {
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
 	}
+	
+	/**
+	 * Getter method for left child
+	 * @return R
+	 */
+	public Operator getLeftChild() {
+		return R;
+	}
+	
+	/**
+	 * Getter method for right child
+	 * @return S
+	 */
+	public Operator getRightChild() {
+		return S;
+	}
 }

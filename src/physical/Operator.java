@@ -38,12 +38,6 @@ public abstract class Operator {
 	public abstract void reset();
 	
 	/**
-	 * accept method that is used in PhysicalPlanPrinter
-	 * @param visitor
-	 */
-	public abstract void accept(PhysicalPlanPrinter visitor);
-	
-	/**
 	 * Used only in the sort operators to reset to a particular index in 
 	 * the relation.
 	 * @param i Index in relation to reset to.
@@ -97,4 +91,10 @@ public abstract class Operator {
 			}
 		}
 	}
+
+	/**
+	 * accept method that is used in PhysicalPlanPrinter
+	 * @param visitor
+	 */
+	public abstract void accept(PhysicalPlanPrinter visitor);
 }

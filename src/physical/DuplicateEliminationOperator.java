@@ -61,4 +61,12 @@ public class DuplicateEliminationOperator extends Operator {
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
 	}
+	
+	/**
+	 * Getter method for child
+	 * @return child
+	 */
+	public Operator getChild() {
+		return child;
+	}
 }

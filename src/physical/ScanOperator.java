@@ -65,4 +65,12 @@ public class ScanOperator extends Operator {
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
 	}
+	
+	/**
+	 * Getter method for the tablename
+	 * @return tablename
+	 */
+	public String getTablename() {
+		return tablename;
+	}
 }

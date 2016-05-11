@@ -17,6 +17,9 @@ public class IndexScan extends Operator{
 	private String tablename;
 	private String alias = null;
 	private IndexReader ir;
+	private int lowKey;
+	private int highKey;
+	private String sortAttr;
 	
 	/**
 	 * This constructs an IndexScan and initializes the first data entry
@@ -31,6 +34,9 @@ public class IndexScan extends Operator{
 		tablename = s.split(" ")[0];		//trims off the alias, if there's one
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
+		this.lowKey = lowKey;
+		this.highKey = highKey;
+		this.sortAttr = sortAttr;
 		
 		// create an IndexReader (similar to the TupleReader)
 		ir = new IndexReader(indexDir, lowKey, highKey, clustered, tablename, alias, sortAttr);
@@ -60,5 +66,37 @@ public class IndexScan extends Operator{
 	@Override
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
+	}
+	
+	/**
+	 * Getter method for the tablename
+	 * @return tablename
+	 */
+	public String getTablename() {
+		return tablename;
+	}
+	
+	/**
+	 * Getter method for the sort attribute
+	 * @return sortAttr
+	 */
+	public String getAttribute() {
+		return sortAttr;
+	}
+	
+	/**
+	 * Getter method for the low key
+	 * @return lowKey
+	 */
+	public int getLowKey() {
+		return lowKey;
+	}
+	
+	/**
+	 * Getter method for the high key
+	 * @return highKey
+	 */
+	public int getHighKey() {
+		return highKey;
 	}
 }

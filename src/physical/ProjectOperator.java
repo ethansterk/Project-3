@@ -76,4 +76,20 @@ public class ProjectOperator extends Operator {
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
 	}
+	
+	/**
+	 * Getter method for child
+	 * @return child
+	 */
+	public Operator getChild() {
+		return child;
+	}
+	
+	/**
+	 * Getter method for selectItems
+	 * @return selectItems
+	 */
+	public List<SelectItem> getSelectItems() {
+		return selectItems;
+	}
 }

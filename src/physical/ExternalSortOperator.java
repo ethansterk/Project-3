@@ -360,4 +360,20 @@ public class ExternalSortOperator extends Operator {
 	public void accept(PhysicalPlanPrinter visitor) {
 		visitor.visit(this);
 	}
+	
+	/**
+	 * Getter method for child
+	 * @return child
+	 */
+	public Operator getChild() {
+		return child;
+	}
+	
+	/**
+	 * Getter method for columns
+	 * @return columns
+	 */
+	public ArrayList<String> getColumns() {
+		return columns;
+	}
 }

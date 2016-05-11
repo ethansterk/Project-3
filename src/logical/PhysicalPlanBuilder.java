@@ -1,7 +1,6 @@
 package logical;
 import index.Indexes;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Stack;
 
 import code.DatabaseCatalog;
