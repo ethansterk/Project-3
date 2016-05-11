@@ -1,6 +1,7 @@
 package physical;
 import code.EvaluateExpressionVisitor;
 import code.Tuple;
+import logical.PhysicalPlanPrinter;
 import net.sf.jsqlparser.expression.Expression;
 
 /**
@@ -76,4 +77,8 @@ public class JoinOperator extends Operator {
 		tRight = null;
 	}
 	
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
+	}
 }

@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import code.Tuple;
+import logical.PhysicalPlanPrinter;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 
 /**
@@ -54,5 +55,10 @@ public class DuplicateEliminationOperator extends Operator {
 	@Override
 	public void reset() {
 		child.reset();
+	}
+	
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
 	}
 }

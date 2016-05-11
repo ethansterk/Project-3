@@ -1,9 +1,7 @@
 package physical;
 
-import code.Table;
 import code.Tuple;
-import code.TupleReader;
-import index.Indexes;
+import logical.PhysicalPlanPrinter;
 
 /**
  * 
@@ -59,4 +57,8 @@ public class IndexScan extends Operator{
 		ir.reset();
 	}
 
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
+	}
 }

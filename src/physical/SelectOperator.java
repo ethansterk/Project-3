@@ -1,6 +1,7 @@
 package physical;
 import code.EvaluateExpressionVisitor;
 import code.Tuple;
+import logical.PhysicalPlanPrinter;
 import net.sf.jsqlparser.expression.Expression;
 /**
  * SelectOperator is a representation of the relational algebra 
@@ -49,5 +50,10 @@ public class SelectOperator extends Operator {
 	@Override
 	public void reset() {
 		child.reset();
+	}
+	
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
 	}
 }

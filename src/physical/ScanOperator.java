@@ -2,6 +2,7 @@ package physical;
 import code.Table;
 import code.Tuple;
 import code.TupleReader;
+import logical.PhysicalPlanPrinter;
 
 /**
  * The ScanOperator is a relational algebra operator that scans a base table.
@@ -58,5 +59,10 @@ public class ScanOperator extends Operator {
 		else {
 			pointer = 0;			
 		}
+	}
+	
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
 	}
 }

@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import code.OutputWriter;
 import code.Tuple;
 import code.TupleWriter;
+import logical.PhysicalPlanPrinter;
 
 /**
  * The Operator class is an abstract representation of the relational algebra
@@ -35,6 +36,12 @@ public abstract class Operator {
 	 * return the first tuple in that Operator's output.
 	 */
 	public abstract void reset();
+	
+	/**
+	 * accept method that is used in PhysicalPlanPrinter
+	 * @param visitor
+	 */
+	public abstract void accept(PhysicalPlanPrinter visitor);
 	
 	/**
 	 * Used only in the sort operators to reset to a particular index in 

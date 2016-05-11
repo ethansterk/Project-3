@@ -5,8 +5,8 @@ import net.sf.jsqlparser.expression.Expression;
 import java.util.Arrays;
 
 import code.EvaluateExpressionVisitor;
-import code.Logger;
 import code.Tuple;
+import logical.PhysicalPlanPrinter;
 
 /**
  * BNLJOperator is an alternative to the TNLJ method used in JoinOperator.
@@ -114,5 +114,10 @@ public class BNLJOperator extends Operator{
 			}
 		}
 		return;
+	}
+	
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
 	}
 }

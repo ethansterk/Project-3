@@ -5,6 +5,7 @@ import java.util.List;
 
 import code.OrderComparator;
 import code.Tuple;
+import logical.PhysicalPlanPrinter;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 
 /**
@@ -101,5 +102,10 @@ public class SortOperator extends Operator {
 	@Override
 	public void reset(int i) {
 		pointer = i;
+	}
+	
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
 	}
 }

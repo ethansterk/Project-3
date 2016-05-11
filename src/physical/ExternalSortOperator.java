@@ -12,6 +12,7 @@ import code.OutputWriter;
 import code.Tuple;
 import code.TupleReader;
 import code.TupleWriter;
+import logical.PhysicalPlanPrinter;
 
 /**
  * ExternalSortOperator is an alternative to the naive sort method.
@@ -353,5 +354,10 @@ public class ExternalSortOperator extends Operator {
 	@Override
 	public void reset(int i) {
 		tr.reset(i);
+	}
+	
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
 	}
 }

@@ -2,6 +2,7 @@ package physical;
 
 import java.util.ArrayList;
 import code.Tuple;
+import logical.PhysicalPlanPrinter;
 
 /**
  * SMJOperator is another alternative to the TNLJ or BNLJ methods. Both its
@@ -179,4 +180,8 @@ public class SMJOperator extends Operator {
 		wasInPartition = false;
 	}
 
+	@Override
+	public void accept(PhysicalPlanPrinter visitor) {
+		visitor.visit(this);
+	}
 }
