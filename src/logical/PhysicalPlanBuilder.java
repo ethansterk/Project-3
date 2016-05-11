@@ -231,10 +231,11 @@ public class PhysicalPlanBuilder {
 		//then chain them all together, left-deep style
 		Operator first = ops.pop();
 		Operator second = ops.pop();
-		Operator temp = new BNLJOperator(first, second, logicalJoin.getCondition(), 5);
-		for (int i = 2; i < numChildren; i++) {
-			temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5); // TODO logicalJoin.getCondition() might not be correct
+		Operator temp = new BNLJOperator(first, second, null, 5);
+		for (int i = 2; i < numChildren - 1; i++) {
+			temp = new BNLJOperator(temp, ops.pop(), null, 5); // TODO logicalJoin.getCondition() might not be correct
 		}
+		temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5);
 		ops.push(temp);
 		
 		//UNTOUCHED CODE BELOW

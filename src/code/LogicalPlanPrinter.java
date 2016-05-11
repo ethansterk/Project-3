@@ -56,12 +56,15 @@ public class LogicalPlanPrinter {
 			else
 				max = Integer.toString(el.getHighBound());
 			
+			if (eq.equals("null") && min.equals("null") && max.equals("null") && attrs.size() == 1)
+				continue;
 			System.out.print("[" + attrs + ", equals " + eq + ", min " + min + ", max " + max + "]\n");
 		}
 		nestLevel++;
 		ArrayList<LogicalOperator> children = logicalJoin.getChildren();
 		for (LogicalOperator child : children) {
 			child.accept(this);
+			nestLevel--;
 		}
 	}
 
