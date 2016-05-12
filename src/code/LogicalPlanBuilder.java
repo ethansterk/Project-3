@@ -178,22 +178,31 @@ public class LogicalPlanBuilder {
 				Integer low = el.getLowBound();
 				Integer high = el.getHighBound();
 				if (low != null) {
-					String stringE = attributeName + ">" + low;
+					String stringE = attributeName + ">=" + low;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
 				if (elExpr != null)
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				elExpr = null;
 				if (high != null) {
-					String stringE = attributeName + "<" + high;
+					String stringE = attributeName + "=<" + high;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
 				if (elExpr != null) {
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				}
 			}
-			// TODO check for R.A = R.B
-			
+			ArrayList<String> attrs = el.getAttributes();
+			for (String att : attrs) {
+				String[] split = att.split("."); // [R,A]
+				System.out.println(att);
+				System.out.println(split[0]);
+				if (relName.equals(split[0]) && !col.equals(split[1])) {
+					String stringE = attributeName + "=" + att;
+					elExpr = createExpressionFromString(elExpr, stringE);
+					e = MyUtils.safeConcatExpression(e, elExpr);
+				}
+			}
 		}
 		return e;
 	}
