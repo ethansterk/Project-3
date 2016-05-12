@@ -24,7 +24,7 @@ public class DatabaseCatalog {
 	private static final DatabaseCatalog instance = new DatabaseCatalog();
 	private static final HashMap<String,Schema> schemas = new HashMap<String,Schema>();
 	private static HashMap<String,String> tableFromAlias = new HashMap<String,String>();
-	List<Join> joins;
+	private List<Join> joins;
 	
 	/**
 	 * Since there is only one instance of the DBCatalog, there is no need
@@ -44,7 +44,6 @@ public class DatabaseCatalog {
 	 */
 	public static void createCatalog(String inputDir) {
 		File schema = new File(inputDir + File.separator + "db" + File.separator + "schema.txt");
-		
 		String statsFilename = inputDir + File.separator + "db" + File.separator + "stats.txt";
 		File stats = new File(statsFilename);
 		// Clear previous contents of file

@@ -1,7 +1,11 @@
 package code;
 
+import java.io.File;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import logical.LogicalDuplicateElimination;
@@ -111,8 +115,8 @@ public class LogicalPlanBuilder {
 				ArrayList<LogicalOperator> children = new ArrayList<LogicalOperator>();
 				children.add(temp);
 				
-				for (Join j : joins) {
-					String tempWholeTableName = j.getRightItem().toString();
+				ArrayList<String> newJoinOrder = rearrange(joins);
+				for (String tempWholeTableName : newJoinOrder) {
 					String[] split = tempWholeTableName.split(" ");
 					LogicalOperator tempOp = new LogicalScan(tempWholeTableName);
 					Expression selectE = null;
@@ -274,5 +278,57 @@ public class LogicalPlanBuilder {
 			temp = childOp;
 		
 		return temp;
+	}
+	
+	/**
+	 * Naive method to choose the join order by ordering
+	 * the relations from smallest to largest
+	 * @return joins
+	 */
+	private ArrayList<String> rearrange(List<Join> joins) {
+		HashMap<String, String> wholeNames = new HashMap<String, String>();
+		ArrayList<String> tempJoins = new ArrayList<String>();
+		ArrayList<Integer> sizes = new ArrayList<Integer>();
+		DatabaseCatalog dc = DatabaseCatalog.getInstance();
+
+		for (Join j : joins) {
+			String jsW = j.getRightItem().toString();
+			String js = jsW.split(" ")[0];
+			tempJoins.add(js);
+			sizes.add(dc.getSchema(js).getStats().getNumTuples());
+			wholeNames.put(js,  jsW);
+		}
+		
+		ArrayList<String> newJoins = new ArrayList<String>();
+		ArrayList<Integer> newSizes = new ArrayList<Integer>();
+		while (tempJoins.size() > 0) {
+			if (newJoins.size() == 0) {
+				newJoins.add(tempJoins.get(0));
+				newSizes.add(sizes.get(0));
+				tempJoins.remove(0);
+				sizes.remove(0);
+				continue;
+			}
+			for (int i = 0; i < newJoins.size(); i++) {
+				if (sizes.get(0) < newSizes.get(i)) {
+					newJoins.add(i, tempJoins.get(0));
+					newSizes.add(i, sizes.get(0));
+					tempJoins.remove(0);
+					sizes.remove(0);
+					break;
+				}
+			}
+			if (tempJoins.size() > 0) {
+				newJoins.add(tempJoins.get(0));
+				newSizes.add(sizes.get(0));
+				tempJoins.remove(0);
+				sizes.remove(0);
+			}
+		}
+		
+		ArrayList<String> newJoinOrder = new ArrayList<String>();
+		for (String j : newJoins)
+			newJoinOrder.add(wholeNames.get(j));
+		return newJoinOrder;
 	}
 }
