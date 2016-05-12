@@ -10,6 +10,12 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import logical.*;
 
+/**
+ * LogicalPlanPrinter uses the visitor pattern to print a human-readable
+ * version of the logical plan.
+ * @author Laura Ng (ln233) and Ethan Sterk (ejs334)
+ *
+ */
 public class LogicalPlanPrinter {
 
 	private int nestLevel;

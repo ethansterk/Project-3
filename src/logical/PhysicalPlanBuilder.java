@@ -236,7 +236,7 @@ public class PhysicalPlanBuilder {
 		Expression e = logicalJoin.getUnionFind().getUnusable();
 		List<Join> joins = DatabaseCatalog.getInstance().getJoins();
 		OptimizeJoinExpressionVisitor visitor = new OptimizeJoinExpressionVisitor(joins);
-		e.accept(visitor);
+		if (e != null) e.accept(visitor);
 		HashMap<String,Expression> selectConditions = visitor.getSelectConditions();
 		HashMap<String,Expression> joinConditions = visitor.getJoinConditions();
 		/*for (String name: selectConditions.keySet()){
