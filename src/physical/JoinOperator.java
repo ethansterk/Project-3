@@ -1,4 +1,6 @@
 package physical;
+import java.util.ArrayList;
+
 import code.EvaluateExpressionVisitor;
 import code.Tuple;
 import logical.PhysicalPlanPrinter;
@@ -20,11 +22,13 @@ public class JoinOperator extends Operator {
 	private Expression condition;						//if null, it's a cross-product
 	private Tuple tLeftCurrent;		//current Tuple in left child, starts at first tuple
 	private Tuple tRight;
+	private ArrayList<String> baseTables;
 	
-	public JoinOperator(Operator left, Operator right, Expression condition) {
+	public JoinOperator(Operator left, Operator right, Expression condition, ArrayList<String> baseTables) {
 		this.left = left;
 		this.right = right;
 		this.condition = condition;
+		this.baseTables = baseTables;
 	}
 	
 	/**
@@ -104,5 +108,10 @@ public class JoinOperator extends Operator {
 	 */
 	public Expression getCondition() {
 		return condition;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

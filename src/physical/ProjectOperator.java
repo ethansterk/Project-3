@@ -21,6 +21,7 @@ public class ProjectOperator extends Operator {
 	
 	private Operator child;
 	private List<SelectItem> selectItems;
+	private ArrayList<String> baseTables;
 	
 	/**
 	 * Initializes a project operator with specific columns to select.
@@ -28,9 +29,10 @@ public class ProjectOperator extends Operator {
 	 * @param child The input for the projection.
 	 * @param selectItems The columns to include in the output tuples.
 	 */
-	public ProjectOperator(Operator child, List<SelectItem> selectItems) {
+	public ProjectOperator(Operator child, List<SelectItem> selectItems, ArrayList<String> baseTables) {
 		this.child = child;				//can be SelectOperator (if there's a WHERE clause) or a ScanOperator
 		this.selectItems = selectItems;
+		this.baseTables = baseTables;
 	}
 
 	/**
@@ -91,5 +93,10 @@ public class ProjectOperator extends Operator {
 	 */
 	public List<SelectItem> getSelectItems() {
 		return selectItems;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

@@ -63,6 +63,7 @@ public class LogicalPlanBuilder {
 		if (fromItem != null) {
 			if (joins != null) {
 				DatabaseCatalog db = DatabaseCatalog.getInstance();
+				db.setJoins(joins);
 				boolean usesAliases;
 				
 				String[] wholeTableName = fromItem.toString().split(" ");

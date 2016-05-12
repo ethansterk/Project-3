@@ -26,8 +26,10 @@ public class SortOperator extends Operator {
 	private ArrayList<String> columns = new ArrayList<String>();
 	private ArrayList<Tuple> collection = new ArrayList<Tuple>();
 	private int pointer = 0;
+	private ArrayList<String> baseTables;
 	
-	public SortOperator(Operator child, List<OrderByElement> list) {
+	public SortOperator(Operator child, List<OrderByElement> list, ArrayList<String> baseTables) {
+		this.baseTables = baseTables;
 		this.child = child;
 		if (list == null)
 			list = null;
@@ -123,5 +125,10 @@ public class SortOperator extends Operator {
 	 */
 	public ArrayList<String> getColumns() {
 		return columns;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

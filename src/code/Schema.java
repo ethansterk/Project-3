@@ -78,7 +78,7 @@ public class Schema {
 			relColStats.add(temp);
 		}
 
-		ScanOperator statsScan = new ScanOperator(tablename);
+		ScanOperator statsScan = new ScanOperator(tablename, null);
 		Tuple t;
 		while((t = statsScan.getNextTuple()) != null) {
 			numTuples++;

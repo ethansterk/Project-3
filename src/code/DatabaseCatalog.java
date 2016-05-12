@@ -1,7 +1,10 @@
 package code;
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
+
+import net.sf.jsqlparser.statement.select.Join;
 
 /**
  * The DatabaseCatalog keeps track of information such as:
@@ -21,6 +24,7 @@ public class DatabaseCatalog {
 	private static final DatabaseCatalog instance = new DatabaseCatalog();
 	private static final HashMap<String,Schema> schemas = new HashMap<String,Schema>();
 	private static HashMap<String,String> tableFromAlias = new HashMap<String,String>();
+	List<Join> joins;
 	
 	/**
 	 * Since there is only one instance of the DBCatalog, there is no need
@@ -98,5 +102,13 @@ public class DatabaseCatalog {
 	
 	public String getTableFromAlias(String alias) {
 		return tableFromAlias.get(alias);
+	}
+	
+	public void setJoins(List<Join> joins) {
+		this.joins = joins;
+	}
+	
+	public List<Join> getJoins() {
+		return joins;
 	}
 }

@@ -2,6 +2,7 @@ package physical;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import code.OutputWriter;
 import code.Tuple;
@@ -97,4 +98,10 @@ public abstract class Operator {
 	 * @param visitor
 	 */
 	public abstract void accept(PhysicalPlanPrinter visitor);
+	
+	/**
+	 * Returns a list of relations that this operator has as leaves.
+	 * @return List of relations.
+	 */
+	public abstract ArrayList<String> getBaseTables();
 }

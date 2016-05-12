@@ -237,7 +237,7 @@ public class Indexes {
 	 * @param tableDir
 	 */
 	private static void sortClustered(String tableName, ArrayList<String> sortCol, String tableDir){
-		Operator op = new SortOperator(new ScanOperator(tableName), sortCol);
+		Operator op = new SortOperator(new ScanOperator(tableName, null), sortCol);
 		
 		//dump op into the source file using TupleWriter			
 		File sourceFile = new File(tableDir);

@@ -1,4 +1,6 @@
 package physical;
+import java.util.ArrayList;
+
 import code.Table;
 import code.Tuple;
 import code.TupleReader;
@@ -19,12 +21,14 @@ public class ScanOperator extends Operator {
 	private int pointer = 0;		//points to current tuple
 	private boolean project_three_io = true;
 	private TupleReader tr;
+	private ArrayList<String> baseTables;
 	
 	/**
 	 * Initialize a scan operator with a specific table to scan.
 	 * @param s Name of the table.
 	 */
-	public ScanOperator(String s) {
+	public ScanOperator(String s, ArrayList<String> baseTables) {
+		this.baseTables = baseTables;
 		tablename = s.split(" ")[0];		//trims off the alias, if there's one
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
@@ -72,5 +76,10 @@ public class ScanOperator extends Operator {
 	 */
 	public String getTablename() {
 		return tablename;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

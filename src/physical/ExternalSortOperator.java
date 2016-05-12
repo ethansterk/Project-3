@@ -44,8 +44,10 @@ public class ExternalSortOperator extends Operator {
 	private TupleWriter tw;
 	private Scanner sc;
 	private PrintStream p;
+	private ArrayList<String> baseTables;
 	
-	public ExternalSortOperator(Operator child, int numBufferPages, ArrayList<String> list) {
+	public ExternalSortOperator(Operator child, int numBufferPages, ArrayList<String> list, ArrayList<String> baseTables) {
+		this.baseTables = baseTables;
 		this.child = child;
 		this.B = numBufferPages;
 		if (list == null)
@@ -375,5 +377,10 @@ public class ExternalSortOperator extends Operator {
 	 */
 	public ArrayList<String> getColumns() {
 		return columns;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

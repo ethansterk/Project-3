@@ -7,12 +7,14 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
 import code.DatabaseCatalog;
 import code.Stats;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import physical.*;
 
@@ -77,7 +79,7 @@ public class PhysicalPlanBuilder {
 		if (leastCostIndex == null) { // normal scan is best cost
 			logicalSelect.getChild().accept(this);
 			Operator child = ops.pop();
-			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
+			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition(), baseTables);
 			ops.push(newOp);
 			return;
 		}
@@ -93,12 +95,12 @@ public class PhysicalPlanBuilder {
 			String indexDir = Indexes.getInstance().getIndexDir(baseTable + "." + leastCostIndex);
 			boolean isClustered = Indexes.getInstance().getClustered(baseTable);
 			// part that is index-able is put into an IndexScan
-			IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey, leastCostIndex);
+			IndexScan scanOp = new IndexScan(indexDir, s, isClustered, lowKey, highKey, leastCostIndex, baseTables);
 			// part that is non index is put into a regular SelectOp with a Scan Op
 			Expression regE = visitor.getRegCond();
 			Operator newOp = null;
 			if(regE != null)
-				newOp = new SelectOperator(scanOp, regE);
+				newOp = new SelectOperator(scanOp, regE, baseTables);
 			else
 				newOp = scanOp;
 			ops.push(newOp);
@@ -107,7 +109,7 @@ public class PhysicalPlanBuilder {
 		else {
 			logicalSelect.getChild().accept(this);
 			Operator child = ops.pop();
-			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition());
+			SelectOperator newOp = new SelectOperator(child, logicalSelect.getCondition(), baseTables);
 			ops.push(newOp);
 			return;
 		}
@@ -196,7 +198,7 @@ public class PhysicalPlanBuilder {
 	public void visit(LogicalProject logicalProject) {
 		logicalProject.getChild().accept(this);
 		Operator child = ops.pop();
-		ProjectOperator newOp = new ProjectOperator(child, logicalProject.getSelectItems());
+		ProjectOperator newOp = new ProjectOperator(child, logicalProject.getSelectItems(), logicalProject.getBaseTables());
 		ops.push(newOp);
 	}
 	
@@ -229,13 +231,21 @@ public class PhysicalPlanBuilder {
 			logicalJoin.getChildren().get(i).accept(this);
 		}
 		//then chain them all together, left-deep style
+		// TODO use a JoinEvalExprVisitor to get join conditions for each BNLJ
+		Expression e = logicalJoin.getUnionFind().getUnusable();
+		List<Join> joins = DatabaseCatalog.getInstance().getJoins();
+		OptimizeJoinExpressionVisitor visitor = new OptimizeJoinExpressionVisitor(joins);
+		e.accept(visitor);
+		HashMap<String,Expression> joinConditions = visitor.getJoinConditions();
+		
+		
 		Operator first = ops.pop();
 		Operator second = ops.pop();
-		Operator temp = new BNLJOperator(first, second, null, 5);
+		Operator temp = new BNLJOperator(first, second, null, 5, null);
 		for (int i = 2; i < numChildren - 1; i++) {
-			temp = new BNLJOperator(temp, ops.pop(), null, 5); // TODO logicalJoin.getCondition() might not be correct
+			temp = new BNLJOperator(temp, ops.pop(), null, 5, null);
 		}
-		temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5);
+		temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5, null);
 		ops.push(temp);
 		
 		//UNTOUCHED CODE BELOW
@@ -296,7 +306,7 @@ public class PhysicalPlanBuilder {
 		
 		switch(tempSortType) {
 		case 0:
-			newOp = new SortOperator(child, logicalSort.getList());
+			newOp = new SortOperator(child, logicalSort.getList(), logicalSort.getBaseTables());
 			break;
 		case 1:
 			int numSortBuffers = sortBufferSize;
@@ -304,7 +314,7 @@ public class PhysicalPlanBuilder {
 			ArrayList<String> sortList = new ArrayList<String>();
 			for (OrderByElement o : list)
 				sortList.add(o.getExpression().toString());
-			newOp = new ExternalSortOperator(child, numSortBuffers, sortList);
+			newOp = new ExternalSortOperator(child, numSortBuffers, sortList, logicalSort.getBaseTables());
 			break;
 		}
 		ops.push(newOp);
@@ -315,6 +325,7 @@ public class PhysicalPlanBuilder {
 	 * @param logicalDuplicateElimination
 	 */
 	public void visit(LogicalDuplicateElimination logicalDuplicateElimination) {
+		ArrayList<String> baseTables = logicalDuplicateElimination.getBaseTables();
 		logicalDuplicateElimination.getChild().accept(this);
 		Operator child = ops.pop();
 
@@ -323,11 +334,11 @@ public class PhysicalPlanBuilder {
 		
 		switch(tempSortType) {
 		case 0:
-			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), 0);
+			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), 0, baseTables);
 			break;
 		case 1:
 			int numSortBuffers = sortBufferSize;
-			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), numSortBuffers);
+			newOp = new DuplicateEliminationOperator(child, logicalDuplicateElimination.getList(), numSortBuffers, baseTables);
 			break;
 		}
 		ops.push(newOp);
@@ -338,7 +349,7 @@ public class PhysicalPlanBuilder {
 	 * @param logicalScan
 	 */
 	public void visit(LogicalScan logicalScan) {
-		ScanOperator newOp = new ScanOperator(logicalScan.getTablename());
+		ScanOperator newOp = new ScanOperator(logicalScan.getTablename(), logicalScan.getBaseTables());
 		ops.push(newOp);
 	}
 

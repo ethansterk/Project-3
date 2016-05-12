@@ -1,4 +1,6 @@
 package physical;
+import java.util.ArrayList;
+
 import code.EvaluateExpressionVisitor;
 import code.Tuple;
 import logical.PhysicalPlanPrinter;
@@ -16,6 +18,7 @@ public class SelectOperator extends Operator {
 
 	private Operator child;
 	private Expression condition;
+	private ArrayList<String> baseTables;
 	
 	/**
 	 * Initializes a select operator.
@@ -23,7 +26,8 @@ public class SelectOperator extends Operator {
 	 * @param child The input of this select operator.
 	 * @param condition The condition on this select operator.
 	 */
-	public SelectOperator(Operator child, Expression condition) {
+	public SelectOperator(Operator child, Expression condition, ArrayList<String> baseTables) {
+		this.baseTables = baseTables;
 		this.child = child;	
 		this.condition = condition;
 	}
@@ -71,5 +75,10 @@ public class SelectOperator extends Operator {
 	 */
 	public Expression getCondition() {
 		return condition;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

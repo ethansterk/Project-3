@@ -28,7 +28,12 @@ public class PhysicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		Expression unusable = op.getCondition();
-		System.out.print("TNLJ[" + unusable.toString() + "]\n");
+		String unusableS;
+		if (unusable == null)
+			unusableS = "";
+		else
+			unusableS = "[" + unusable.toString() + "]";
+		System.out.print("TNLJ" + unusableS + '\n');
 		nestLevel++;
 		op.getLeftChild().accept(this);
 		op.getRightChild().accept(this);
@@ -38,7 +43,12 @@ public class PhysicalPlanPrinter {
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
 		Expression unusable = op.getCondition();
-		System.out.print("BNLJ[" + unusable.toString() + "]\n");
+		String unusableS;
+		if (unusable == null)
+			unusableS = "";
+		else
+			unusableS = "[" + unusable.toString() + "]";
+		System.out.print("BNLJ" + unusableS + '\n');
 		nestLevel++;
 		op.getLeftChild().accept(this);
 		op.getRightChild().accept(this);
@@ -48,8 +58,20 @@ public class PhysicalPlanPrinter {
 		//TODO
 		for(int i = 0; i < nestLevel; i++)
 			System.out.print("-");
-		Expression unusable = op.getCondition();
-		System.out.print("Join[" + unusable.toString() + "]\n");
+		String joinC = "";
+		ArrayList<String> rCols = op.getRSortCols();
+		ArrayList<String> sCols = op.getSSortCols();
+		if (rCols.size() > 0)
+			joinC = "[";
+		for (int i = 0; i < rCols.size(); i++) {
+			joinC += rCols.get(i) + " = " + sCols.get(i);
+			if (i != rCols.size())
+				joinC += " ";
+			else
+				joinC += "]";
+		}
+		
+		System.out.print("Join" + joinC + '\n');
 		nestLevel++;
 		op.getLeftChild().accept(this);
 		op.getRightChild().accept(this);

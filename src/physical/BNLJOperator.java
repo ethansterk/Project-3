@@ -2,6 +2,7 @@ package physical;
 
 import net.sf.jsqlparser.expression.Expression;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import code.EvaluateExpressionVisitor;
@@ -26,11 +27,13 @@ public class BNLJOperator extends Operator{
 	private Tuple[] buffer;
 	private int currentIndex;	//keep track of where we are in outer relation buffer
 	private Tuple tRightCurrent;	//keep track of where we are in inner relation
+	private ArrayList<String> baseTables;
 	
-	public BNLJOperator(Operator left, Operator right, Expression condition, int bufferSize) {
+	public BNLJOperator(Operator left, Operator right, Expression condition, int bufferSize, ArrayList<String> baseTables) {
 		this.left = left;
 		this.right = right;
 		this.condition = condition;
+		this.baseTables = baseTables;
 		currentIndex = 0;
 		tRightCurrent = right.getNextTuple();	//initialize the first inner relation tuple
 		Tuple firstLeft = this.left.getNextTuple();
@@ -143,5 +146,10 @@ public class BNLJOperator extends Operator{
 	 */
 	public Expression getCondition() {
 		return condition;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

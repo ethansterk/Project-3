@@ -20,8 +20,10 @@ public class DuplicateEliminationOperator extends Operator {
 
 	private Operator child;
 	private Tuple next;
+	private ArrayList<String> baseTables;
 	
-	public DuplicateEliminationOperator(Operator child, List<OrderByElement> list, int extBufferPages) {
+	public DuplicateEliminationOperator(Operator child, List<OrderByElement> list, int extBufferPages, ArrayList<String> baseTables) {
+		this.baseTables = baseTables;
 		if (child instanceof SortOperator || child instanceof ExternalSortOperator)
 			this.child = child;
 		else {
@@ -29,10 +31,10 @@ public class DuplicateEliminationOperator extends Operator {
 				ArrayList<String> sortList = new ArrayList<String>();
 				for (OrderByElement o : list)
 					sortList.add(o.getExpression().toString());
-				this.child = new ExternalSortOperator(child, extBufferPages, sortList);
+				this.child = new ExternalSortOperator(child, extBufferPages, sortList, baseTables);
 			}
 			else
-				this.child = new SortOperator(child, list);
+				this.child = new SortOperator(child, list, baseTables);
 		}
 		next = this.child.getNextTuple();
 	}
@@ -68,5 +70,10 @@ public class DuplicateEliminationOperator extends Operator {
 	 */
 	public Operator getChild() {
 		return child;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

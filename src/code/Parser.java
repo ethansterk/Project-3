@@ -8,6 +8,7 @@ import java.util.Scanner;
 import index.Indexes;
 import logical.LogicalOperator;
 import logical.PhysicalPlanBuilder;
+import logical.PhysicalPlanPrinter;
 import physical.Operator;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParser;
@@ -85,12 +86,12 @@ public class Parser {
 					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
 					//produces logical tree with root
 					LogicalOperator logRoot = builderL.getRoot();
-					LogicalPlanPrinter printP = new LogicalPlanPrinter(logRoot);
+					//LogicalPlanPrinter printPL = new LogicalPlanPrinter(logRoot);
 					// prints the logical plan
 					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot/*, inputDir*/);
 					//produces physical tree with root
 					Operator phiRoot = builderP.getRoot();
-					// TODO From OH: use visitor to visitor builders and print
+					PhysicalPlanPrinter printPP = new PhysicalPlanPrinter(phiRoot);
 					//get time before dump
 					long timeBefore = System.currentTimeMillis();
 					phiRoot.dump();

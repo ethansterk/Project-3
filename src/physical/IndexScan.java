@@ -1,5 +1,7 @@
 package physical;
 
+import java.util.ArrayList;
+
 import code.Tuple;
 import logical.PhysicalPlanPrinter;
 
@@ -20,6 +22,7 @@ public class IndexScan extends Operator{
 	private int lowKey;
 	private int highKey;
 	private String sortAttr;
+	private ArrayList<String> baseTables;
 	
 	/**
 	 * This constructs an IndexScan and initializes the first data entry
@@ -30,7 +33,8 @@ public class IndexScan extends Operator{
 	 * @param lowKey Lower bound (inclusive) on the condition
 	 * @param highKey Upper bound (inclusive) on the condition
 	 */
-	public IndexScan(String indexDir, String s, boolean clustered, int lowKey, int highKey, String sortAttr) {
+	public IndexScan(String indexDir, String s, boolean clustered, int lowKey, int highKey, String sortAttr, ArrayList<String> baseTables) {
+		this.baseTables = baseTables;
 		tablename = s.split(" ")[0];		//trims off the alias, if there's one
 		if (s.split(" ").length > 1) 
 			alias = s.split(" ")[2];
@@ -98,5 +102,12 @@ public class IndexScan extends Operator{
 	 */
 	public int getHighKey() {
 		return highKey;
+	}
+
+
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }

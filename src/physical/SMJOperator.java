@@ -1,6 +1,7 @@
 package physical;
 
 import java.util.ArrayList;
+
 import code.Tuple;
 import logical.PhysicalPlanPrinter;
 
@@ -27,6 +28,7 @@ public class SMJOperator extends Operator {
 	private ArrayList<String> sSortCols; // the attributes S is sorted on (size n)
 	private int sPartitionIndex;
 	private boolean wasInPartition;
+	private ArrayList<String> baseTables;
 	
 	/**
 	 * 
@@ -36,7 +38,8 @@ public class SMJOperator extends Operator {
 	 * @param leftSortCols The attributes "left" is sorted on. Order matters.
 	 * @param rightSortCols The attributes "right" is sorted on. Order matters
 	 */
-	public SMJOperator(Operator left, Operator right, ArrayList<String> leftSortCols, ArrayList<String> rightSortCols) {
+	public SMJOperator(Operator left, Operator right, ArrayList<String> leftSortCols, ArrayList<String> rightSortCols, ArrayList<String> baseTables) {
+		this.baseTables = baseTables;
 		R = left;
 		S = right;
 		Tr = R.getNextTuple();
@@ -199,5 +202,18 @@ public class SMJOperator extends Operator {
 	 */
 	public Operator getRightChild() {
 		return S;
+	}
+	
+	public ArrayList<String> getRSortCols() {
+		return rSortCols;
+	}
+	
+	public ArrayList<String> getSSortCols() {
+		return sSortCols;
+	}
+
+	@Override
+	public ArrayList<String> getBaseTables() {
+		return baseTables;
 	}
 }
