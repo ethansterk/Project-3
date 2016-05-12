@@ -1,8 +1,12 @@
 package logical;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import code.OutputWriter;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.SelectItem;
 import physical.*;
@@ -10,30 +14,38 @@ import physical.*;
 public class PhysicalPlanPrinter {
 
 	private int nestLevel;
+	private PrintStream output;
 	
-	public PhysicalPlanPrinter(Operator root) {
-		root.accept(this);
+	public PhysicalPlanPrinter(Operator root, String outputDir) {
 		nestLevel = 0;
+		int queryNumber = OutputWriter.getInstance().getQueryNumber();
+		File f = new File(outputDir + File.separator + "query" + queryNumber + "_physicalplan");
+		try {
+			output = new PrintStream(f);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		root.accept(this);
 	}
 
 	public void visit(DuplicateEliminationOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
-		System.out.print("DupElim\n");
+			output.print("-");
+		output.print("DupElim\n");
 		nestLevel++;
 		op.getChild().accept(this);
 	}
 	
 	public void visit(JoinOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		Expression unusable = op.getCondition();
 		String unusableS;
 		if (unusable == null)
 			unusableS = "";
 		else
 			unusableS = "[" + unusable.toString() + "]";
-		System.out.print("TNLJ" + unusableS + '\n');
+		output.print("TNLJ" + unusableS + '\n');
 		nestLevel++;
 		op.getLeftChild().accept(this);
 		op.getRightChild().accept(this);
@@ -41,14 +53,14 @@ public class PhysicalPlanPrinter {
 
 	public void visit(BNLJOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		Expression unusable = op.getCondition();
 		String unusableS;
 		if (unusable == null)
 			unusableS = "";
 		else
 			unusableS = "[" + unusable.toString() + "]";
-		System.out.print("BNLJ" + unusableS + '\n');
+		output.print("BNLJ" + unusableS + '\n');
 		nestLevel++;
 		op.getLeftChild().accept(this);
 		op.getRightChild().accept(this);
@@ -57,7 +69,7 @@ public class PhysicalPlanPrinter {
 	public void visit(SMJOperator op) {
 		//TODO
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		String joinC = "";
 		ArrayList<String> rCols = op.getRSortCols();
 		ArrayList<String> sCols = op.getSSortCols();
@@ -71,7 +83,7 @@ public class PhysicalPlanPrinter {
 				joinC += "]";
 		}
 		
-		System.out.print("Join" + joinC + '\n');
+		output.print("Join" + joinC + '\n');
 		nestLevel++;
 		op.getLeftChild().accept(this);
 		op.getRightChild().accept(this);
@@ -79,44 +91,44 @@ public class PhysicalPlanPrinter {
 
 	public void visit(ProjectOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		List<SelectItem> projCols = op.getSelectItems();
-		System.out.print("Project" + projCols.toString() + '\n');
+		output.print("Project" + projCols.toString() + '\n');
 		nestLevel++;
 		op.getChild().accept(this);
 	}
 
 	public void visit(ScanOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		String baseTable = op.getTablename();
 		String[] split = baseTable.split(" ");
 		if (split.length > 1)
 			baseTable = split[0];
-		System.out.print("TableScan[" + baseTable + "]\n");
+		output.print("TableScan[" + baseTable + "]\n");
 	}
 
 	public void visit(SelectOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		Expression e = op.getCondition();
-		System.out.print("Select[" + e.toString() + "]\n");
+		output.print("Select[" + e.toString() + "]\n");
 		nestLevel++;
 		op.getChild().accept(this);
 	}
 
 	public void visit(ExternalSortOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		ArrayList<String> sortCols = op.getColumns();
-		System.out.print("ExternalSort" + sortCols + '\n');
+		output.print("ExternalSort" + sortCols + '\n');
 		nestLevel++;
 		op.getChild().accept(this);
 	}
 
 	public void visit(IndexScan op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		String baseTable = op.getTablename();
 		String attribute = op.getAttribute();
 		int lowkey = op.getLowKey();
@@ -124,15 +136,24 @@ public class PhysicalPlanPrinter {
 		String[] split = baseTable.split(" ");
 		if (split.length > 1)
 			baseTable = split[0];
-		System.out.print("IndexScan[" + baseTable + "," + attribute + "," + lowkey + "," + highkey + "]\n");
+		output.print("IndexScan[" + baseTable + "," + attribute + "," + lowkey + "," + highkey + "]\n");
 	}
 
 	public void visit(SortOperator op) {
 		for(int i = 0; i < nestLevel; i++)
-			System.out.print("-");
+			output.print("-");
 		ArrayList<String> sortCols = op.getColumns();
-		System.out.print("InMemorySort" + sortCols + '\n');
+		output.print("InMemorySort" + sortCols + '\n');
 		nestLevel++;
 		op.getChild().accept(this);
+	}
+	
+	/**
+	 * Just as it describes, the method which flushes and closes
+	 * the PrintStream output
+	 */
+	public void flushAndClose() {
+		output.flush();
+		output.close();
 	}
 }

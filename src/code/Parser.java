@@ -40,7 +40,7 @@ public class Parser {
 	 */
 	public static void main(String[] args) {
 		String configDir = args[0];
-		File config = new File(configDir + File.separator + "interpreter_config_file.txt");
+		File config = new File(configDir);
 		String inputDir = null;	
 		String outputDir = null;
 		String tempDir = null;
@@ -86,12 +86,17 @@ public class Parser {
 					LogicalPlanBuilder builderL = new LogicalPlanBuilder(fromItem, where, selectItems, joins, orderByElements, distinct);
 					//produces logical tree with root
 					LogicalOperator logRoot = builderL.getRoot();
-					//LogicalPlanPrinter printPL = new LogicalPlanPrinter(logRoot);
 					// prints the logical plan
+					LogicalPlanPrinter printPL = new LogicalPlanPrinter(logRoot, outputDir);
+					printPL.flushAndClose();
+					
 					PhysicalPlanBuilder builderP = new PhysicalPlanBuilder(logRoot/*, inputDir*/);
 					//produces physical tree with root
 					Operator phiRoot = builderP.getRoot();
-					PhysicalPlanPrinter printPP = new PhysicalPlanPrinter(phiRoot);
+					// prints the physical plan
+					PhysicalPlanPrinter printPP = new PhysicalPlanPrinter(phiRoot, outputDir);
+					printPP.flushAndClose();
+					
 					//get time before dump
 					long timeBefore = System.currentTimeMillis();
 					phiRoot.dump();
