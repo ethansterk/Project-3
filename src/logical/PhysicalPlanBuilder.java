@@ -311,19 +311,6 @@ public class PhysicalPlanBuilder {
 			leftBaseTables.add(rightBT);
 		}
 		ops.push(temp);
-		
-		/*
-		Operator temp;
-		if (ops.isEmpty())
-			temp = new BNLJOperator(first, second, unusable, 5, null);
-		else
-			temp = new BNLJOperator(first, second, null, 5, null);
-		for (int i = 2; i < numChildren - 1; i++) {
-			temp = new BNLJOperator(temp, ops.pop(), null, 5, null);
-		}
-		if (!ops.isEmpty())
-			temp = new BNLJOperator(temp, ops.pop(), unusable, 5, null);
-		ops.push(temp);*/
 	}
 
 	private Expression createExpressionFromString(Expression tempE, String stringE) {

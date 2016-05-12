@@ -17,6 +17,12 @@ public class Stats {
 	private int numTuples;
 	private ArrayList<ColStats> cols;
 	
+	/**
+	 * Initializes the stats for this particular schema.
+	 * @param relName
+	 * @param numTuples
+	 * @param colStats
+	 */
 	public Stats(String relName, int numTuples, ArrayList<ColStats> colStats) {
 		this.relName = relName;
 		this.numTuples = numTuples;

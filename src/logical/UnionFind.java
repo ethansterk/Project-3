@@ -12,11 +12,20 @@ public class UnionFind {
 	private HashMap<String,UnionFindElement> elementOfAttr;
 	private Expression unusable;
 	
+	/**
+	 * Initialize the UnionFind object.
+	 */
 	public UnionFind() {
 		elementOfAttr = new HashMap<String,UnionFindElement>();
 		unusable = null;
 	}
 	
+	/**
+	 * find method returns the element of the given attribute if one
+	 * exists. If one does not already exist, then one is created.
+	 * @param attr
+	 * @return
+	 */
 	public UnionFindElement find(String attr) {
 		if(elementOfAttr.containsKey(attr))
 			return elementOfAttr.get(attr);
@@ -26,6 +35,11 @@ public class UnionFind {
 		return el;
 	}
 	
+	/**
+	 * union merges two union find elements into one element.
+	 * @param el1
+	 * @param el2
+	 */
 	public void union(UnionFindElement el1, UnionFindElement el2) {
 		UnionFindElement merge = new UnionFindElement();
 		
@@ -69,14 +83,27 @@ public class UnionFind {
 		}
 	}
 	
+	/**
+	 * returns the unusable conditions
+	 * @return
+	 */
 	public Expression getUnusable() {
 		return unusable;
 	}
 	
+	/**
+	 * functions to append an Expression to the unusable condition
+	 * @param ex
+	 */
 	public void addToUnusable(Expression ex) {
 		unusable = MyUtils.safeConcatExpression(unusable, ex);
 	}
 
+	/**
+	 * functions that returns all the union find elements of this given
+	 * union find
+	 * @return
+	 */
 	public ArrayList<UnionFindElement> getElements() {
 		ArrayList<UnionFindElement> vals = new ArrayList<UnionFindElement>();
 		HashSet<UnionFindElement> valsSet = new HashSet<UnionFindElement>();

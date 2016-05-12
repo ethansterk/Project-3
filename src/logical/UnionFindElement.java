@@ -2,6 +2,13 @@ package logical;
 
 import java.util.ArrayList;
 
+/**
+ * The UnionFindElement class is used to help in pushing selections. For
+ * more explanation, see the UnionFind class.
+ * 
+ * @author Ethan Sterk (ejs334) and Laura Ng (ln233)
+ *
+ */
 public class UnionFindElement {
 
 	private ArrayList<String> attributes;
