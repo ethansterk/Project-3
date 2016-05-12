@@ -192,7 +192,7 @@ public class LogicalPlanBuilder {
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				}
 			}
-			/*ArrayList<String> attrs = el.getAttributes();
+			ArrayList<String> attrs = el.getAttributes();
 			for (String att : attrs) {
 				String[] split = att.split("\\."); // [R,A]
 				if (relName.equals(split[0]) && !col.equals(split[1])) {
@@ -200,7 +200,7 @@ public class LogicalPlanBuilder {
 					elExpr = createExpressionFromString(elExpr, stringE);
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				}
-			}*/
+			}
 		}
 		return e;
 	}

@@ -197,7 +197,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 	public void visit(EqualsTo arg0) {
 		arg0.getLeftExpression().accept(this);
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
+		if(isIndexSubExp && !nums.isEmpty()) {
 			// add expr to indexCond
 			if(indexCond != null)
 				indexCond = new AndExpression(indexCond, arg0);
@@ -231,7 +231,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		if(!nums.isEmpty())
 			intOnLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
+		if(isIndexSubExp && !nums.isEmpty()) {
 			// add expr to indexCond
 			if(indexCond != null)
 				indexCond = new AndExpression(indexCond, arg0);
@@ -269,7 +269,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		if(!nums.isEmpty())
 			intOnLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
+		if(isIndexSubExp && !nums.isEmpty()) {
 			// add expr to indexCond
 			if(indexCond != null)
 				indexCond = new AndExpression(indexCond, arg0);
@@ -325,7 +325,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		if(!nums.isEmpty())
 			intOnLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
+		if(isIndexSubExp && !nums.isEmpty()) {
 			// add expr to indexCond
 			if(indexCond != null)
 				indexCond = new AndExpression(indexCond, arg0);
@@ -363,7 +363,7 @@ public class IndexExpressionVisitor implements ExpressionVisitor {
 		if(!nums.isEmpty())
 			intOnLeft = true;
 		arg0.getRightExpression().accept(this);
-		if(isIndexSubExp) {
+		if(isIndexSubExp && !nums.isEmpty()) {
 			// add expr to indexCond
 			if(indexCond != null)
 				indexCond = new AndExpression(indexCond, arg0);
