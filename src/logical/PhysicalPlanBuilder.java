@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Stack;
 
 import code.DatabaseCatalog;
+import code.JoinEvaluateExpressionVisitor;
 import code.Stats;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.statement.select.Join;
@@ -236,16 +237,33 @@ public class PhysicalPlanBuilder {
 		List<Join> joins = DatabaseCatalog.getInstance().getJoins();
 		OptimizeJoinExpressionVisitor visitor = new OptimizeJoinExpressionVisitor(joins);
 		e.accept(visitor);
+		HashMap<String,Expression> selectConditions = visitor.getSelectConditions();
 		HashMap<String,Expression> joinConditions = visitor.getJoinConditions();
-		
+		/*for (String name: selectConditions.keySet()){
+
+            String key = name.toString();
+            String value = selectConditions.get(name).toString();  
+            System.out.println(key + " " + value);  
+        } 
+		for (String name: joinConditions.keySet()){
+
+            String key = name.toString();
+            String value = joinConditions.get(name).toString();  
+            System.out.println(key + " " + value);  
+        } */
 		
 		Operator first = ops.pop();
 		Operator second = ops.pop();
-		Operator temp = new BNLJOperator(first, second, null, 5, null);
+		Operator temp;
+		if (ops.isEmpty())
+			temp = new BNLJOperator(first, second, logicalJoin.getCondition(), 5, null);
+		else
+			temp = new BNLJOperator(first, second, null, 5, null);
 		for (int i = 2; i < numChildren - 1; i++) {
 			temp = new BNLJOperator(temp, ops.pop(), null, 5, null);
 		}
-		temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5, null);
+		if (!ops.isEmpty())
+			temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5, null);
 		ops.push(temp);
 		
 		//UNTOUCHED CODE BELOW

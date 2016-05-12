@@ -170,6 +170,9 @@ public class LogicalPlanBuilder {
 			if (eq != null) {
 				String stringE = attributeName + "=" + eq;
 				elExpr = createExpressionFromString(elExpr, stringE);
+				if (elExpr != null) {
+					e = MyUtils.safeConcatExpression(e, elExpr);
+				}
 			}
 			else {
 				Integer low = el.getLowBound();
@@ -185,11 +188,12 @@ public class LogicalPlanBuilder {
 					String stringE = attributeName + "<" + high;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
+				if (elExpr != null) {
+					e = MyUtils.safeConcatExpression(e, elExpr);
+				}
 			}
+			// TODO check for R.A = R.B
 			
-			if (elExpr != null) {
-				e = MyUtils.safeConcatExpression(e, elExpr);
-			}
 		}
 		return e;
 	}
