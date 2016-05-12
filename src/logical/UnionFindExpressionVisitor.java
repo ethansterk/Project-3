@@ -174,7 +174,6 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(EqualsTo arg0) {
-		uf.addToUnusable(arg0);
 		arg0.getLeftExpression().accept(this);
 		arg0.getRightExpression().accept(this);
 		int numVals = vals.size();
@@ -194,7 +193,6 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(GreaterThan arg0) {
-		uf.addToUnusable(arg0);
 		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
 		if (vals.size() > 0)
@@ -224,7 +222,6 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(GreaterThanEquals arg0) {
-		uf.addToUnusable(arg0);
 		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
 		if (vals.size() > 0)
@@ -272,7 +269,6 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(MinorThan arg0) {
-		uf.addToUnusable(arg0);
 		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
 		if (vals.size() > 0)
@@ -302,7 +298,6 @@ public class UnionFindExpressionVisitor implements ExpressionVisitor {
 
 	@Override
 	public void visit(MinorThanEquals arg0) {
-		uf.addToUnusable(arg0);
 		boolean valIsLeft = false;
 		arg0.getLeftExpression().accept(this);
 		if (vals.size() > 0)

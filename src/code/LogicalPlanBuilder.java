@@ -185,29 +185,26 @@ public class LogicalPlanBuilder {
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				elExpr = null;
 				if (high != null) {
-					String stringE = attributeName + "=<" + high;
+					String stringE = attributeName + "<=" + high;
 					elExpr = createExpressionFromString(elExpr, stringE);
 				}
 				if (elExpr != null) {
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				}
 			}
-			ArrayList<String> attrs = el.getAttributes();
+			/*ArrayList<String> attrs = el.getAttributes();
 			for (String att : attrs) {
-				String[] split = att.split("."); // [R,A]
-				System.out.println(att);
-				System.out.println(split[0]);
+				String[] split = att.split("\\."); // [R,A]
 				if (relName.equals(split[0]) && !col.equals(split[1])) {
 					String stringE = attributeName + "=" + att;
 					elExpr = createExpressionFromString(elExpr, stringE);
 					e = MyUtils.safeConcatExpression(e, elExpr);
 				}
-			}
+			}*/
 		}
 		return e;
 	}
 
-	// TODO: Site in acknowledgments: "From OH: Austin" 
 	private Expression createExpressionFromString(Expression e, String stringE) {
 		CCJSqlParser parser = new CCJSqlParser(new StringReader(stringE));
 		try {
