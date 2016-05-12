@@ -230,7 +230,7 @@ public class PhysicalPlanBuilder {
 		ArrayList<UnionFindElement> elements = uf.getElements();
 		
 		// keep track of which base tables we've used
-		ArrayList<String> baseTables = new ArrayList<String>();
+		ArrayList<String> leftBaseTables = new ArrayList<String>();
 		// start with first two tables -- check if element contains both in attributes
 		Operator first = ops.pop();
 		Operator second = ops.pop();
@@ -242,8 +242,8 @@ public class PhysicalPlanBuilder {
 		split = secondBT.split(" ");
 		if (split.length > 1)
 			secondBT = split[2];
-		baseTables.add(firstBT);
-		baseTables.add(secondBT);
+		leftBaseTables.add(firstBT);
+		leftBaseTables.add(secondBT);
 		// keep track of attributes on left and right of join that are equal
 		ArrayList<String> leftAtts = new ArrayList<String>();
 		ArrayList<String> rightAtts = new ArrayList<String>();
@@ -270,16 +270,46 @@ public class PhysicalPlanBuilder {
 				joinE = MyUtils.safeConcatExpression(joinE, tempE);
 			}
 		}
-		System.out.println("joinE = " + joinE);
 		
 		Operator temp;
 		temp = new BNLJOperator(first, second, joinE, 5, null);
-		for (int i = 2; i < numChildren - 1; i++) {
+		for (int i = 2; i < numChildren; i++) {
+			rightAtts.clear();
+			Operator rightOp = ops.pop();
+			String rightBT = rightOp.getBaseTables().get(0);
+			String[] s = rightBT.split(" ");
+			if (s.length > 1)
+				rightBT = s[2];
 			
-			temp = new BNLJOperator(temp, ops.pop(), null, 5, null);
+			for (UnionFindElement element : elements) {
+				ArrayList<String> atts = element.getAttributes();
+				if (atts.size() < 2)
+					continue;
+				for (String att : atts) { // R.A, S.B, R.B
+					String[] sp = att.split("\\."); // [R,A]
+					if (leftBaseTables.contains(sp[0])) {
+						leftAtts.add(att);
+					}
+					else if (rightBT.equals(sp[0])) {
+						rightAtts.add(att);
+					}
+				}
+			}
+			joinE = null;
+			if (leftAtts.size() > 0 && rightAtts.size() > 0) {
+				for (String rightAtt : rightAtts) {
+					String stringE = rightAtt + "=" + leftAtts.get(0);
+					Expression tempE = null;
+					tempE = createExpressionFromString(tempE, stringE);
+					joinE = MyUtils.safeConcatExpression(joinE, tempE);
+				}
+			}
+			if (i == numChildren)
+				joinE = MyUtils.safeConcatExpression(joinE, unusable);
+			temp = new BNLJOperator(temp, rightOp, joinE, 5, null);
+			leftAtts.addAll(rightAtts);
+			leftBaseTables.add(rightBT);
 		}
-		if (!ops.isEmpty())
-			temp = new BNLJOperator(temp, ops.pop(), unusable, 5, null);
 		ops.push(temp);
 		
 		/*
