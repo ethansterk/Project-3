@@ -68,7 +68,9 @@ public class PhysicalPlanPrinter {
 			unusableS = "[" + unusable.toString() + "]";
 		output.print("BNLJ" + unusableS + '\n');
 		nestLevel++;
+		int tempNestLevel = nestLevel;
 		op.getLeftChild().accept(this);
+		nestLevel = tempNestLevel;
 		op.getRightChild().accept(this);
 	}
 	

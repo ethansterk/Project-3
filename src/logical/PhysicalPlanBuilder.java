@@ -4,6 +4,7 @@ import index.Indexes;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -13,8 +14,11 @@ import java.util.Stack;
 
 import code.DatabaseCatalog;
 import code.JoinEvaluateExpressionVisitor;
+import code.MyUtils;
 import code.Stats;
 import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.parser.CCJSqlParser;
+import net.sf.jsqlparser.parser.ParseException;
 import net.sf.jsqlparser.statement.select.Join;
 import net.sf.jsqlparser.statement.select.OrderByElement;
 import physical.*;
@@ -210,99 +214,96 @@ public class PhysicalPlanBuilder {
 	 * @param logicalJoin
 	 */
 	public void visit(LogicalJoin logicalJoin) {
-		/*logicalJoin.getLeft().accept(this);
-		logicalJoin.getRight().accept(this);
-		Operator right = ops.pop();
-		Operator left = ops.pop();*/
 		
-		// has arbitrary number of children -- must choose join order
-		// have base tables R1, R2, ..., Rk
-		// iterate over all subsets of R in increasing order of size
 		int numChildren = logicalJoin.getChildren().size();
-		//for (int subset = 1; subset <= numChildren; subset++) { // for each subset length
-		//	for (int i = 0; i < numChildren; i++) { // for each combination of this subset
-				
-		//	}
-		//}
 		
-		//dumb join logic (doesn't optimize join, uses only BNLJ-5pages) so that something works
-		//how to split the condition?
-		//first accept all children (in reverse order), so first child is at top of stack
 		for (int i = numChildren - 1; i >= 0; i--) {
 			logicalJoin.getChildren().get(i).accept(this);
 		}
 		//then chain them all together, left-deep style
-		// TODO use a JoinEvalExprVisitor to get join conditions for each BNLJ
-		Expression e = logicalJoin.getUnionFind().getUnusable();
-		List<Join> joins = DatabaseCatalog.getInstance().getJoins();
-		OptimizeJoinExpressionVisitor visitor = new OptimizeJoinExpressionVisitor(joins);
-		if (e != null) e.accept(visitor);
-		HashMap<String,Expression> selectConditions = visitor.getSelectConditions();
-		HashMap<String,Expression> joinConditions = visitor.getJoinConditions();
-		/*for (String name: selectConditions.keySet()){
-
-            String key = name.toString();
-            String value = selectConditions.get(name).toString();  
-            System.out.println(key + " " + value);  
-        } 
-		for (String name: joinConditions.keySet()){
-
-            String key = name.toString();
-            String value = joinConditions.get(name).toString();  
-            System.out.println(key + " " + value);  
-        } */
+		Expression unusable = logicalJoin.getUnionFind().getUnusable();
 		
+		// TODO iterate through union find elements, find conditions that
+		// apply to each relation based on base table (Sailors AS S1)
+		
+		UnionFind uf = logicalJoin.getUnionFind();
+		ArrayList<UnionFindElement> elements = uf.getElements();
+		
+		// keep track of which base tables we've used
+		ArrayList<String> baseTables = new ArrayList<String>();
+		// start with first two tables -- check if element contains both in attributes
 		Operator first = ops.pop();
 		Operator second = ops.pop();
+		String firstBT = first.getBaseTables().get(0);
+		String secondBT = second.getBaseTables().get(0);
+		String[] split = firstBT.split(" ");
+		if (split.length > 1)
+			firstBT = split[2];
+		split = secondBT.split(" ");
+		if (split.length > 1)
+			secondBT = split[2];
+		baseTables.add(firstBT);
+		baseTables.add(secondBT);
+		// keep track of attributes on left and right of join that are equal
+		ArrayList<String> leftAtts = new ArrayList<String>();
+		ArrayList<String> rightAtts = new ArrayList<String>();
+		for (UnionFindElement element : elements) {
+			ArrayList<String> atts = element.getAttributes();
+			if (atts.size() < 2)
+				continue;
+			for (String att : atts) { // R.A, S.B, R.B
+				String[] s = att.split("\\."); // [R,A]
+				if (firstBT.equals(s[0])) {
+					leftAtts.add(att);
+				}
+				else if (secondBT.equals(s[0])) {
+					rightAtts.add(att);
+				}
+			}
+		}
+		Expression joinE = null;
+		if (leftAtts.size() > 0 && rightAtts.size() > 0) {
+			for (String rightAtt : rightAtts) {
+				String stringE = rightAtt + "=" + leftAtts.get(0);
+				Expression tempE = null;
+				tempE = createExpressionFromString(tempE, stringE);
+				joinE = MyUtils.safeConcatExpression(joinE, tempE);
+			}
+		}
+		System.out.println("joinE = " + joinE);
+		
+		Operator temp;
+		temp = new BNLJOperator(first, second, joinE, 5, null);
+		for (int i = 2; i < numChildren - 1; i++) {
+			
+			temp = new BNLJOperator(temp, ops.pop(), null, 5, null);
+		}
+		if (!ops.isEmpty())
+			temp = new BNLJOperator(temp, ops.pop(), unusable, 5, null);
+		ops.push(temp);
+		
+		/*
 		Operator temp;
 		if (ops.isEmpty())
-			temp = new BNLJOperator(first, second, logicalJoin.getCondition(), 5, null);
+			temp = new BNLJOperator(first, second, unusable, 5, null);
 		else
 			temp = new BNLJOperator(first, second, null, 5, null);
 		for (int i = 2; i < numChildren - 1; i++) {
 			temp = new BNLJOperator(temp, ops.pop(), null, 5, null);
 		}
 		if (!ops.isEmpty())
-			temp = new BNLJOperator(temp, ops.pop(), logicalJoin.getCondition(), 5, null);
-		ops.push(temp);
-		
-		//UNTOUCHED CODE BELOW
-//		Expression e = logicalJoin.getCondition();
-//		Operator newOp = null;
-//		switch(joinType) {
-//		case 0:
-//			newOp = new JoinOperator(left, right, e);
-//			break;
-//		case 1:
-//			int bufferSize = joinBufferSize;
-//			newOp = new BNLJOperator(left, right, e, bufferSize);
-//			break;
-//		case 2:
-//			String rightBaseTable = logicalJoin.getRightBaseTable();
-//			SortColumnExpressionVisitor visitor = new SortColumnExpressionVisitor(rightBaseTable);
-//			if (e != null)
-//				e.accept(visitor);
-//			// create two sorts as children (left and right)
-//			Operator leftOp = null;
-//			Operator rightOp = null;
-//			switch(sortType) {
-//			case 0:
-//				leftOp = new SortOperator(left, visitor.getLeftSortCols());
-//				rightOp = new SortOperator(right, visitor.getRightSortCols());
-//				break;
-//			case 1:
-//				int numSortBuffers = sortBufferSize;
-//				leftOp = new ExternalSortOperator(left, numSortBuffers, visitor.getLeftSortCols());
-//				rightOp = new ExternalSortOperator(right, numSortBuffers, visitor.getRightSortCols());
-//				break;
-//			}
-//			// create SMJOperator with sorts as its children
-//			newOp = new SMJOperator(leftOp, rightOp, visitor.getLeftSortCols(), visitor.getRightSortCols());
-//			break;
-//		default:
-//			System.out.println("ERR: Join Type selection.");
-//		}
-//		ops.push(newOp);
+			temp = new BNLJOperator(temp, ops.pop(), unusable, 5, null);
+		ops.push(temp);*/
+	}
+
+	private Expression createExpressionFromString(Expression tempE, String stringE) {
+		CCJSqlParser parser = new CCJSqlParser(new StringReader(stringE));
+		try {
+			tempE = parser.Expression();
+		} catch (ParseException e1) {
+			e1.printStackTrace();
+		}
+		return tempE;
 	}
 
 	/**
